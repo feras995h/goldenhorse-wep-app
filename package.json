@@ -1,0 +1,23 @@
+{
+  "name": "golden-horse-shipping",
+  "version": "1.0.0",
+  "description": "الحصان الذهبي لخدمات الشحن - Golden Horse Shipping Services",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "cd client && npm run dev",
+    "server": "cd server && npm run dev",
+    "build": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "start": "cd server && npm start",
+    "start:prod": "concurrently \"npm run start\" \"npm run serve\"",
+    "serve": "cd client && npm run preview",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "keywords": ["shipping", "logistics", "arabic", "rtl"],
+  "author": "Golden Horse Shipping Services",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

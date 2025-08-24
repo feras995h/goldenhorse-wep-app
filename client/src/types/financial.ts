@@ -1,0 +1,379 @@
+// Financial System Types and Interfaces
+
+// Base types
+export type Currency = 'LYD' | 'USD' | 'EUR' | 'CNY';
+export type PaymentMethod = 'cash' | 'bank_transfer' | 'check' | 'credit_card';
+export type DocumentStatus = 'draft' | 'approved' | 'cancelled' | 'completed';
+export type PaymentStatus = 'unpaid' | 'partially_paid' | 'paid' | 'overdue';
+
+// Chart of Accounts
+export interface Account {
+  id: string;
+  code: string;
+  name: string;
+  nameEn?: string;
+  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+  parentId?: string;
+  level: number;
+  isActive: boolean;
+  balance: number;
+  currency: Currency;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Journal Entries
+export interface JournalEntry {
+  id: string;
+  entryNumber: string;
+  date: string;
+  description: string;
+  reference?: string;
+  status: DocumentStatus;
+  type: 'manual' | 'automatic';
+  sourceDocument?: string;
+  sourceId?: string;
+  totalDebit: number;
+  totalCredit: number;
+  currency: Currency;
+  exchangeRate?: number;
+  attachments: string[];
+  createdBy: string;
+  approvedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  lines: JournalEntryLine[];
+}
+
+export interface JournalEntryLine {
+  id: string;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  description?: string;
+  debit: number;
+  credit: number;
+  currency: Currency;
+  exchangeRate?: number;
+}
+
+// Customers
+export interface Customer {
+  id: string;
+  code: string;
+  name: string;
+  nameEn?: string;
+  type: 'individual' | 'company';
+  email?: string;
+  phone?: string;
+  address?: string;
+  taxNumber?: string;
+  creditLimit: number;
+  paymentTerms: number; // days
+  currency: Currency;
+  isActive: boolean;
+  balance: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Invoices
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  type: 'shipping' | 'purchase' | 'service';
+  customerId: string;
+  customerName: string;
+  date: string;
+  dueDate: string;
+  status: PaymentStatus;
+  currency: Currency;
+  exchangeRate?: number;
+  subtotal: number;
+  taxAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  paymentTerms: number;
+  notes?: string;
+  shipmentId?: string;
+  attachments: string[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  lines: InvoiceLine[];
+  payments: InvoicePayment[];
+}
+
+export interface InvoiceLine {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  discountPercent: number;
+  taxPercent: number;
+  totalAmount: number;
+}
+
+export interface InvoicePayment {
+  id: string;
+  date: string;
+  amount: number;
+  method: PaymentMethod;
+  reference?: string;
+  notes?: string;
+  receiptId?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+// Treasury Operations
+export interface Receipt {
+  id: string;
+  receiptNumber: string;
+  date: string;
+  customerId?: string;
+  customerName?: string;
+  amount: number;
+  currency: Currency;
+  exchangeRate?: number;
+  method: PaymentMethod;
+  bankAccount?: string;
+  checkNumber?: string;
+  checkDate?: string;
+  reference?: string;
+  description: string;
+  status: DocumentStatus;
+  invoiceId?: string;
+  createdBy: string;
+  approvedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Payment {
+  id: string;
+  paymentNumber: string;
+  date: string;
+  payeeId?: string;
+  payeeName: string;
+  amount: number;
+  currency: Currency;
+  exchangeRate?: number;
+  method: PaymentMethod;
+  bankAccount?: string;
+  checkNumber?: string;
+  checkDate?: string;
+  reference?: string;
+  description: string;
+  status: DocumentStatus;
+  category: 'supplier' | 'employee' | 'expense' | 'other';
+  createdBy: string;
+  approvedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BankTransfer {
+  id: string;
+  transferNumber: string;
+  date: string;
+  fromAccount: string;
+  toAccount: string;
+  amount: number;
+  currency: Currency;
+  exchangeRate?: number;
+  description: string;
+  reference?: string;
+  status: DocumentStatus;
+  createdBy: string;
+  approvedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Treasury Transactions (Unified)
+export interface TreasuryTransaction {
+  id: string;
+  transactionNumber: string;
+  type: 'receipt' | 'payment' | 'transfer';
+  date: string;
+  amount: number;
+  currency: Currency;
+  exchangeRate?: number;
+  accountId: string;
+  accountName: string;
+  customerId?: string;
+  customerName?: string;
+  description: string;
+  reference?: string;
+  paymentMethod: 'cash' | 'check' | 'transfer' | 'card';
+  checkNumber?: string;
+  checkDate?: string;
+  bankName?: string;
+  status: 'pending' | 'completed' | 'cancelled';
+  notes?: string;
+  createdBy: string;
+  approvedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Employees and Payroll
+export interface Employee {
+  id: string;
+  employeeNumber: string;
+  name: string;
+  nameEn?: string;
+  position: string;
+  department: string;
+  branch: string;
+  hireDate: string;
+  salary: number;
+  currency: Currency;
+  bankAccount?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  nationalId?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PayrollEntry {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  month: string; // YYYY-MM format
+  basicSalary: number;
+  allowances: number;
+  overtime: number;
+  deductions: number;
+  advances: number;
+  netSalary: number;
+  currency: Currency;
+  status: DocumentStatus;
+  paymentDate?: string;
+  paymentMethod?: PaymentMethod;
+  notes?: string;
+  createdBy: string;
+  approvedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmployeeAdvance {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  date: string;
+  amount: number;
+  currency: Currency;
+  reason: string;
+  status: DocumentStatus;
+  remainingAmount: number;
+  paymentMethod: PaymentMethod;
+  approvedBy?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deductions: AdvanceDeduction[];
+}
+
+export interface AdvanceDeduction {
+  id: string;
+  month: string; // YYYY-MM format
+  amount: number;
+  payrollEntryId?: string;
+  createdAt: string;
+}
+
+// Fixed Assets
+export interface FixedAsset {
+  id: string;
+  assetNumber: string;
+  name: string;
+  nameEn?: string;
+  category: string;
+  branch: string;
+  purchaseDate: string;
+  purchasePrice: number;
+  currency: Currency;
+  depreciationMethod: 'straight_line' | 'declining_balance';
+  usefulLife: number; // years
+  salvageValue: number;
+  currentValue: number;
+  accumulatedDepreciation: number;
+  status: 'active' | 'disposed' | 'scrapped';
+  location?: string;
+  serialNumber?: string;
+  supplier?: string;
+  warrantyExpiry?: string;
+  notes?: string;
+  attachments: string[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  depreciationEntries: DepreciationEntry[];
+}
+
+export interface DepreciationEntry {
+  id: string;
+  date: string;
+  amount: number;
+  accumulatedAmount: number;
+  remainingValue: number;
+  journalEntryId?: string;
+  createdAt: string;
+}
+
+// Financial Reports
+export interface TrialBalanceEntry {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  debit: number;
+  credit: number;
+  balance: number;
+}
+
+export interface IncomeStatementEntry {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  amount: number;
+  type: 'revenue' | 'expense';
+}
+
+export interface BalanceSheetEntry {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  amount: number;
+  type: 'asset' | 'liability' | 'equity';
+}
+
+// API Response Types
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface FinancialSummary {
+  totalRevenue: number;
+  totalExpenses: number;
+  netIncome: number;
+  totalAssets: number;
+  totalLiabilities: number;
+  totalEquity: number;
+  cashBalance: number;
+  accountsReceivable: number;
+  accountsPayable: number;
+  currency: Currency;
+  asOfDate: string;
+}
