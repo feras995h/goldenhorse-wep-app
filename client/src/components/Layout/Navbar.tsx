@@ -8,7 +8,8 @@ import {
   Truck,
   Home,
   Menu,
-  X
+  X,
+  Calculator,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types/auth';

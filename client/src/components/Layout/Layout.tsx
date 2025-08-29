@@ -5,12 +5,12 @@ import Navbar from './Navbar';
 
 const Layout: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-golden-50 via-white to-golden-100">
+    <div className="min-h-screen bg-gradient-to-br from-golden-25 via-white to-golden-50">
       <div className="relative z-10">
         <Navbar />
         <Header />
         <main className="relative">
-          <div className="container section-sm">
+          <div className="container section-md">
             <div className="fade-in">
               <Outlet />
             </div>

@@ -41,10 +41,9 @@ const FormField: React.FC<FormFieldProps> = ({
   className = ''
 }) => {
   const baseInputClasses = `
-    block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400
-    focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
-    disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-    ${error ? 'border-red-300' : 'border-gray-300'}
+    form-input transition-professional
+    ${error ? 'border-danger-300 focus:ring-danger-500 focus:border-danger-500' : ''}
+    ${disabled ? 'opacity-75' : ''}
   `;
 
   const renderInput = () => {
@@ -112,14 +111,14 @@ const FormField: React.FC<FormFieldProps> = ({
   };
 
   return (
-    <div className={`space-y-1 ${className}`}>
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700">
+    <div className={`form-group ${className}`}>
+      <label htmlFor={name} className="form-label">
         {label}
-        {required && <span className="text-red-500 mr-1">*</span>}
+        {required && <span className="text-danger-500 mr-1">*</span>}
       </label>
       {renderInput()}
       {error && (
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="form-error">{error}</p>
       )}
     </div>
   );

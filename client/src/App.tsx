@@ -1,5 +1,4 @@
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { LogoProvider } from './contexts/LogoContext';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -12,7 +11,10 @@ import FinancialDashboard from './pages/FinancialDashboard';
 import AccountsManagement from './pages/AccountsManagement';
 import JournalEntries from './pages/JournalEntries';
 import CustomersManagement from './pages/CustomersManagement';
-import TreasuryManagement from './pages/TreasuryManagement';
+import AccountStatement from './pages/AccountStatement';
+import InstantReports from './pages/InstantReports';
+import PayrollManagement from './pages/PayrollManagement';
+import EmployeePayrollManagement from './pages/EmployeePayrollManagement';
 import EmployeeManagement from './pages/EmployeeManagement';
 import FixedAssetsManagement from './pages/FixedAssetsManagement';
 import FinancialReports from './pages/FinancialReports';
@@ -52,52 +54,23 @@ function App() {
             } />
             
             <Route path="financial" element={
-              <ProtectedRoute allowedRoles={['financial']}>
-                <FinancialDashboard />
+              <ProtectedRoute allowedRoles={['admin', 'financial']}>
+                <Outlet />
               </ProtectedRoute>
-            } />
-
-            <Route path="financial/accounts" element={
-              <ProtectedRoute allowedRoles={['financial']}>
-                <AccountsManagement />
-              </ProtectedRoute>
-            } />
-
-            <Route path="financial/journal" element={
-              <ProtectedRoute allowedRoles={['financial']}>
-                <JournalEntries />
-              </ProtectedRoute>
-            } />
-
-            <Route path="financial/customers" element={
-              <ProtectedRoute allowedRoles={['financial']}>
-                <CustomersManagement />
-              </ProtectedRoute>
-            } />
-
-            <Route path="financial/treasury" element={
-              <ProtectedRoute allowedRoles={['financial']}>
-                <TreasuryManagement />
-              </ProtectedRoute>
-            } />
-
-            <Route path="financial/payroll" element={
-              <ProtectedRoute allowedRoles={['financial']}>
-                <EmployeeManagement />
-              </ProtectedRoute>
-            } />
-
-            <Route path="financial/fixed-assets" element={
-              <ProtectedRoute allowedRoles={['financial']}>
-                <FixedAssetsManagement />
-              </ProtectedRoute>
-            } />
-
-            <Route path="financial/reports" element={
-              <ProtectedRoute allowedRoles={['financial']}>
-                <FinancialReports />
-              </ProtectedRoute>
-            } />
+            }>
+              <Route index element={<FinancialDashboard />} />
+              <Route path="accounts" element={<AccountsManagement />} />
+                                      <Route path="account-statement" element={<AccountStatement />} />
+                        <Route path="instant-reports" element={<InstantReports />} />
+                        <Route path="payroll" element={<PayrollManagement />} />
+                        <Route path="employee-payroll" element={<EmployeePayrollManagement />} />
+                        <Route path="journal" element={<JournalEntries />} />
+                        <Route path="customers" element={<CustomersManagement />} />
+                              <Route path="employees" element={<EmployeeManagement />} />
+              <Route path="fixed-assets" element={<FixedAssetsManagement />} />
+              <Route path="reports" element={<FinancialReports />} />
+              <Route path="settings" element={<SystemSettings />} />
+            </Route>
             
             <Route path="sales" element={
               <ProtectedRoute allowedRoles={['sales']}>

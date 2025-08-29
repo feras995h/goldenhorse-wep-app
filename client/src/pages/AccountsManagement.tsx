@@ -5,6 +5,7 @@ import DataTable from '../components/Financial/DataTable';
 import SearchFilter from '../components/Financial/SearchFilter';
 import Modal from '../components/Financial/Modal';
 import FormField from '../components/Financial/FormField';
+import AccountTree from '../components/Financial/AccountTree';
 import { Account } from '../types/financial';
 
 const AccountsManagement: React.FC = () => {
@@ -311,6 +312,9 @@ const AccountsManagement: React.FC = () => {
           حساب جديد
         </button>
       </div>
+
+      {/* Account Tree Visualization */}
+      <AccountTree accounts={accounts} onAccountSelect={(account) => openModal('edit', account)} />
 
       {/* Search and Filters */}
       <SearchFilter

@@ -14,10 +14,16 @@
     "serve": "cd client && npm run preview",
     "install-all": "npm install && cd client && npm install && cd ../server && npm install"
   },
-  "keywords": ["shipping", "logistics", "arabic", "rtl"],
+  "keywords": [
+    "shipping",
+    "logistics",
+    "arabic",
+    "rtl"
+  ],
   "author": "Golden Horse Shipping Services",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "postcss-import": "^16.1.1"
   }
 }

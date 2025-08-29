@@ -240,6 +240,11 @@ export interface Employee {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  // New fields for automatic account creation
+  salaryAccountId?: string;
+  advanceAccountId?: string;
+  custodyAccountId?: string;
+  currentBalance?: number; // For requirement #9
 }
 
 export interface PayrollEntry {
@@ -376,4 +381,13 @@ export interface FinancialSummary {
   accountsPayable: number;
   currency: Currency;
   asOfDate: string;
+  
+  // New fields for enhanced dashboard
+  dailyRevenue?: number;
+  monthlyRevenue?: number;
+  dailyExpenses?: number;
+  monthlyExpenses?: number;
+  bankBalance?: number;
+  dailyTransfersIn?: number;
+  dailyTransfersOut?: number;
 }

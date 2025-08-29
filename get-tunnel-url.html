@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Cloudflare Tunnel URL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .instructions {
+            background-color: #e3f2fd;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .step {
+            margin: 15px 0;
+            padding-left: 20px;
+            border-left: 3px solid #2196f3;
+        }
+        .command {
+            background-color: #333;
+            color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        .note {
+            background-color: #fff8e1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cloudflare Tunnel Setup Instructions</h1>
+        
+        <div class="instructions">
+            <h2>How to Get Your Tunnel URL</h2>
+            <div class="step">
+                <strong>Step 1:</strong> Open a new Command Prompt or PowerShell window
+            </div>
+            <div class="step">
+                <strong>Step 2:</strong> Navigate to your project directory:
+                <div class="command">cd "c:\Users\Default.DESKTOP-6KVI7UU\Desktop\منضومة وائل v2"</div>
+            </div>
+            <div class="step">
+                <strong>Step 3:</strong> Run the Cloudflare tunnel command:
+                <div class="command">cloudflared tunnel --url http://localhost:3000</div>
+            </div>
+            <div class="step">
+                <strong>Step 4:</strong> Look for a line in the output that looks like this:
+                <div class="command">INFO Your quick Tunnel has been created! Visit it at (it may take some time to be reachable): https://[random-subdomain].trycloudflare.com</div>
+            </div>
+        </div>
+        
+        <div class="note">
+            <strong>Note:</strong> With the updated Vite configuration that includes <code>allowedHosts: 'all'</code>, 
+            your application should now work with any Cloudflare tunnel URL without showing the "Blocked request" error.
+        </div>
+        
+        <h2>Troubleshooting</h2>
+        <p>If you still encounter the "Blocked request" error:</p>
+        <ol>
+            <li>Make sure your <code>vite.config.ts</code> file contains <code>allowedHosts: 'all'</code> in the server configuration</li>
+            <li>Restart your development server after making any configuration changes</li>
+            <li>Each time you start a new tunnel, you'll get a different URL which is normal for free Cloudflare tunnels</li>
+        </ol>
+    </div>
+</body>
+</html>

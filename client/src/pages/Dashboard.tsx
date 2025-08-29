@@ -33,19 +33,19 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 fade-in">
+    <div className="dashboard-section fade-in">
       {/* Welcome Section */}
-      <div className="card-professional bg-gradient-to-r from-white via-golden-50 to-white">
-        <div className="flex items-center justify-between">
+      <div className="dashboard-header">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-heading mb-2">
+            <h1 className="text-responsive-2xl font-bold text-gray-900 mb-3">
               مرحباً، {user?.name}
             </h1>
-            <p className="text-body text-lg mb-4">
+            <p className="text-responsive-lg text-gray-600 mb-4">
               {getWelcomeMessage(user?.role || '')}
             </p>
-            <div className="inline-flex items-center badge-primary">
-              <div className="w-2 h-2 bg-success-500 rounded-full ml-2"></div>
+            <div className="inline-flex items-center bg-success-100 text-success-800 rounded-full px-4 py-2">
+              <div className="w-2 h-2 bg-success-400 rounded-full ml-2 animate-pulse"></div>
               <span className="font-semibold">
                 {getRoleDisplayName(user?.role || '')}
               </span>
@@ -55,62 +55,65 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid-auto grid-4">
-        <div className="card-metric">
-          <div className="flex items-center">
-            <div className="p-3 bg-golden-100 rounded-lg ml-4">
-              <Package className="h-7 w-7 text-golden-600" />
-            </div>
-            <div>
-              <p className="text-caption mb-1 font-medium">إجمالي الشحنات</p>
-              <p className="text-3xl font-bold text-dark-800">1,234</p>
-              <div className="w-full bg-golden-200 rounded-full h-2 mt-2">
-                <div className="bg-golden-500 h-2 rounded-full" style={{ width: '75%' }}></div>
+      <div>
+        <h2 className="dashboard-section-title">الإحصائيات السريعة</h2>
+        <div className="dashboard-stats-grid">
+          <div className="card-stat border-golden-500">
+            <div className="flex items-center">
+              <div className="icon-container-lg bg-gradient-to-br from-golden-400 to-golden-600 ml-4">
+                <Package className="h-7 w-7 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 mb-1">إجمالي الشحنات</p>
+                <p className="text-3xl font-bold text-gray-900">1,234</p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                  <div className="bg-golden-500 h-2 rounded-full transition-all duration-300" style={{ width: '75%' }}></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="card-metric">
-          <div className="flex items-center">
-            <div className="p-3 bg-success-100 rounded-lg ml-4">
-              <TrendingUp className="h-7 w-7 text-success-600" />
-            </div>
-            <div>
-              <p className="text-caption mb-1 font-medium">الإيرادات الشهرية</p>
-              <p className="text-3xl font-bold text-dark-800">$45,678</p>
-              <div className="w-full bg-golden-200 rounded-full h-2 mt-2">
-                <div className="bg-success-500 h-2 rounded-full" style={{ width: '85%' }}></div>
+          <div className="card-stat border-success-500">
+            <div className="flex items-center">
+              <div className="icon-container-lg bg-gradient-to-br from-success-400 to-success-600 ml-4">
+                <TrendingUp className="h-7 w-7 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 mb-1">الإيرادات الشهرية</p>
+                <p className="text-3xl font-bold text-gray-900">$45,678</p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                  <div className="bg-success-500 h-2 rounded-full transition-all duration-300" style={{ width: '85%' }}></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="card-metric">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-lg ml-4">
-              <Users className="h-7 w-7 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-caption mb-1 font-medium">العملاء النشطون</p>
-              <p className="text-3xl font-bold text-dark-800">567</p>
-              <div className="w-full bg-golden-200 rounded-full h-2 mt-2">
-                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
+          <div className="card-stat border-blue-500">
+            <div className="flex items-center">
+              <div className="icon-container-lg bg-gradient-to-br from-blue-400 to-blue-600 ml-4">
+                <Users className="h-7 w-7 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 mb-1">العملاء النشطون</p>
+                <p className="text-3xl font-bold text-gray-900">567</p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                  <div className="bg-blue-500 h-2 rounded-full transition-all duration-300" style={{ width: '60%' }}></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="card-metric">
-          <div className="flex items-center">
-            <div className="p-3 bg-purple-100 rounded-lg ml-4">
-              <Truck className="h-7 w-7 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-caption mb-1 font-medium">الشحنات قيد التنفيذ</p>
-              <p className="text-3xl font-bold text-dark-800">89</p>
-              <div className="w-full bg-golden-200 rounded-full h-2 mt-2">
-                <div className="bg-purple-500 h-2 rounded-full" style={{ width: '40%' }}></div>
+          <div className="card-stat border-purple-500">
+            <div className="flex items-center">
+              <div className="icon-container-lg bg-gradient-to-br from-purple-400 to-purple-600 ml-4">
+                <Truck className="h-7 w-7 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 mb-1">الشحنات قيد التنفيذ</p>
+                <p className="text-3xl font-bold text-gray-900">89</p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                  <div className="bg-purple-500 h-2 rounded-full transition-all duration-300" style={{ width: '40%' }}></div>
+                </div>
               </div>
             </div>
           </div>
@@ -118,44 +121,46 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="card-professional">
-        <h2 className="text-subheading mb-6">الإجراءات السريعة</h2>
-        <div className="grid-auto grid-3">
-          <button className="card-hover p-6 text-right group">
-            <div className="flex items-start">
-              <div className="w-12 h-12 bg-golden-100 rounded-lg flex items-center justify-center mb-4">
-                <Package className="h-6 w-6 text-golden-600" />
+      <div>
+        <h2 className="dashboard-section-title">الإجراءات السريعة</h2>
+        <div className="card">
+          <div className="grid-responsive-3">
+            <button className="card-feature group border-golden-500 p-6 text-right hover:border-golden-600">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-golden-100 rounded-lg flex items-center justify-center mb-4">
+                  <Package className="h-6 w-6 text-golden-600" />
+                </div>
+                <div className="mr-4 flex-1">
+                  <h3 className="font-semibold text-gray-900 text-lg mb-2 group-hover:text-golden-700 transition-colors">شحنة جديدة</h3>
+                  <p className="text-sm text-gray-600">إنشاء شحنة جديدة للعملاء</p>
+                </div>
               </div>
-              <div className="mr-4 flex-1">
-                <h3 className="font-semibold text-dark-800 text-lg mb-2">شحنة جديدة</h3>
-                <p className="text-caption">إنشاء شحنة جديدة للعملاء</p>
-              </div>
-            </div>
-          </button>
+            </button>
 
-          <button className="card-hover p-6 text-right group">
-            <div className="flex items-start">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <Users className="h-6 w-6 text-blue-600" />
+            <button className="card-feature group border-blue-500 p-6 text-right hover:border-blue-600">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="mr-4 flex-1">
+                  <h3 className="font-semibold text-gray-900 text-lg mb-2 group-hover:text-blue-700 transition-colors">عميل جديد</h3>
+                  <p className="text-sm text-gray-600">إضافة عميل جديد للنظام</p>
+                </div>
               </div>
-              <div className="mr-4 flex-1">
-                <h3 className="font-semibold text-dark-800 text-lg mb-2">عميل جديد</h3>
-                <p className="text-caption">إضافة عميل جديد للنظام</p>
-              </div>
-            </div>
-          </button>
+            </button>
 
-          <button className="card-hover p-6 text-right group">
-            <div className="flex items-start">
-              <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center mb-4">
-                <TrendingUp className="h-6 w-6 text-success-600" />
+            <button className="card-feature group border-success-500 p-6 text-right hover:border-success-600">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center mb-4">
+                  <TrendingUp className="h-6 w-6 text-success-600" />
+                </div>
+                <div className="mr-4 flex-1">
+                  <h3 className="font-semibold text-gray-900 text-lg mb-2 group-hover:text-success-700 transition-colors">التقارير</h3>
+                  <p className="text-sm text-gray-600">عرض التقارير والإحصائيات</p>
+                </div>
               </div>
-              <div className="mr-4 flex-1">
-                <h3 className="font-semibold text-dark-800 text-lg mb-2">التقارير</h3>
-                <p className="text-caption">عرض التقارير والإحصائيات</p>
-              </div>
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
       </div>
     </div>

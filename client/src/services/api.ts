@@ -154,6 +154,16 @@ export const financialAPI = {
     return response.data;
   },
 
+  getEmployeeSummary: async () => {
+    const response = await api.get('/financial/employees/summary');
+    return response.data;
+  },
+
+  getEmployeeAccountStatement: async (employeeId: string) => {
+    const response = await api.get(`/financial/employees/${employeeId}/account-statement`);
+    return response.data;
+  },
+
   // Journal Entries
   getJournalEntries: async (params?: {
     page?: number;
@@ -184,41 +194,7 @@ export const financialAPI = {
   },
 
   approveJournalEntry: async (id: string) => {
-    const response = await api.post(`/financial/journal-entries/${id}/approve`);
-    return response.data;
-  },
-
-  // Treasury Transactions
-  getTreasuryTransactions: async (params?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    type?: string;
-    status?: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }) => {
-    const response = await api.get('/financial/treasury', { params });
-    return response.data;
-  },
-
-  createTreasuryTransaction: async (transactionData: any) => {
-    const response = await api.post('/financial/treasury', transactionData);
-    return response.data;
-  },
-
-  updateTreasuryTransaction: async (id: string, transactionData: any) => {
-    const response = await api.put(`/financial/treasury/${id}`, transactionData);
-    return response.data;
-  },
-
-  getTreasuryTransaction: async (id: string) => {
-    const response = await api.get(`/financial/treasury/${id}`);
-    return response.data;
-  },
-
-  approveTreasuryTransaction: async (id: string) => {
-    const response = await api.post(`/financial/treasury/${id}/approve`);
+    const response = await api.post(`/financial/journal-entries/${id}/submit`);
     return response.data;
   },
 
@@ -313,6 +289,108 @@ export const financialAPI = {
   // Financial Summary
   getFinancialSummary: async () => {
     const response = await api.get('/financial/summary');
+    return response.data;
+  },
+
+  // Account Statement
+  getAccountStatement: async (accountId: string, params: {
+    fromDate: string;
+    toDate: string;
+  }) => {
+    const response = await api.get(`/financial/accounts/${accountId}/statement`, { params });
+    return response.data;
+  },
+
+  // Instant Reports
+  getInstantReports: async (params: {
+    period?: string;
+  }) => {
+    const response = await api.get('/financial/instant-reports', { params });
+    return response.data;
+  },
+
+  // Payroll Management
+  getPayrollEntries: async (params: {
+    page?: number;
+    limit?: number;
+    month?: number;
+    year?: number;
+    status?: string;
+    department?: string;
+  }) => {
+    const response = await api.get('/financial/payroll', { params });
+    return response.data;
+  },
+
+  createPayrollEntry: async (data: {
+    employeeId: string;
+    month: number;
+    year: number;
+    basicSalary: number;
+    allowances?: number;
+    deductions?: number;
+    overtime?: number;
+    bonuses?: number;
+    paymentMethod?: 'bank' | 'cash';
+    remarks?: string;
+  }) => {
+    const response = await api.post('/financial/payroll', data);
+    return response.data;
+  },
+
+  updatePayrollEntry: async (id: string, data: {
+    basicSalary?: number;
+    allowances?: number;
+    deductions?: number;
+    overtime?: number;
+    bonuses?: number;
+    paymentMethod?: 'bank' | 'cash';
+    remarks?: string;
+  }) => {
+    const response = await api.put(`/financial/payroll/${id}`, data);
+    return response.data;
+  },
+
+  approvePayrollEntry: async (id: string) => {
+    const response = await api.post(`/financial/payroll/${id}/approve`);
+    return response.data;
+  },
+
+  payPayrollEntry: async (id: string) => {
+    const response = await api.post(`/financial/payroll/${id}/pay`);
+    return response.data;
+  },
+
+  // Employee Advances
+  getEmployeeAdvances: async (params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    employeeId?: string;
+  }) => {
+    const response = await api.get('/financial/advances', { params });
+    return response.data;
+  },
+
+  createAdvanceRequest: async (data: {
+    employeeId: string;
+    amount: number;
+    reason: string;
+    paymentMethod?: 'bank' | 'cash';
+    installments?: number;
+    remarks?: string;
+  }) => {
+    const response = await api.post('/financial/advances', data);
+    return response.data;
+  },
+
+  approveAdvanceRequest: async (id: string) => {
+    const response = await api.post(`/financial/advances/${id}/approve`);
+    return response.data;
+  },
+
+  payAdvanceRequest: async (id: string) => {
+    const response = await api.post(`/financial/advances/${id}/pay`);
     return response.data;
   },
 };

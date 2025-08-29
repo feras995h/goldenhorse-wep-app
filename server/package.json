@@ -6,7 +6,20 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:seed": "sequelize-cli db:seed:all",
+    "db:reset": "sequelize-cli db:drop && sequelize-cli db:create && sequelize-cli db:migrate && sequelize-cli db:seed:all",
+    "db:test-connection": "node -e \"import('./src/models/index.js').then(({sequelize}) => sequelize.authenticate().then(() => { console.log('✅ Database connection successful'); process.exit(0); }).catch(err => { console.error('❌ Database connection failed:', err.message); process.exit(1); }))\"",
+    "db:show-tables": "node -e \"import('./src/models/index.js').then(({sequelize}) => sequelize.showAllSchemas().then(schemas => { console.log('📊 Database schemas:', schemas); process.exit(0); }).catch(err => { console.error('❌ Error showing schemas:', err.message); process.exit(1); }))\"",
+    "backup-json-data": "node src/scripts/migrateData.js backup",
+    "migrate-data": "node src/scripts/migrateData.js",
+    "verify-migration": "node src/scripts/migrateData.js verify",
+    "clear-data": "node src/scripts/clearData.js",
+    "reset-counters": "node src/scripts/clearData.js reset-counters",
+    "seed-basic-data": "node src/scripts/seedBasicData.js",
+    "test": "echo \"No tests configured yet\"",
+    "test-integration": "echo \"No integration tests configured yet\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -17,9 +30,13 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "path": "^0.12.7",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "pg": "^8.11.3",
+    "sequelize": "^6.35.2",
+    "pg-hstore": "^2.3.4"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.2",
+    "sequelize-cli": "^6.6.2"
   }
 }

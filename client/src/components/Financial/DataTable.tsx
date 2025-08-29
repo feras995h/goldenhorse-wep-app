@@ -53,7 +53,7 @@ const DataTable: React.FC<DataTableProps> = ({
     }
 
     return (
-      <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-t">
+      <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-200">
         <div className="text-sm text-gray-700">
           عرض {((current - 1) * pagination.pageSize) + 1} إلى{' '}
           {Math.min(current * pagination.pageSize, pagination.total)} من{' '}
@@ -64,7 +64,7 @@ const DataTable: React.FC<DataTableProps> = ({
           <button
             onClick={() => onChange(1)}
             disabled={current === 1}
-            className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-secondary p-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronsRight className="h-4 w-4" />
           </button>
@@ -72,7 +72,7 @@ const DataTable: React.FC<DataTableProps> = ({
           <button
             onClick={() => onChange(current - 1)}
             disabled={current === 1}
-            className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-secondary p-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -82,10 +82,10 @@ const DataTable: React.FC<DataTableProps> = ({
               <button
                 key={page}
                 onClick={() => onChange(page)}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-professional ${
                   page === current
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-golden-600 text-white shadow-sm'
+                    : 'btn btn-secondary'
                 }`}
               >
                 {page}
@@ -96,7 +96,7 @@ const DataTable: React.FC<DataTableProps> = ({
           <button
             onClick={() => onChange(current + 1)}
             disabled={current === totalPages}
-            className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-secondary p-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -104,7 +104,7 @@ const DataTable: React.FC<DataTableProps> = ({
           <button
             onClick={() => onChange(totalPages)}
             disabled={current === totalPages}
-            className="p-2 rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-secondary p-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronsLeft className="h-4 w-4" />
           </button>
@@ -127,17 +127,17 @@ const DataTable: React.FC<DataTableProps> = ({
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden fade-in">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="table">
+          <thead className="table-header">
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                  className={`table-header-cell ${
                     column.align === 'center' ? 'text-center' :
-                    column.align === 'right' ? 'text-right' : 'text-right'
+                    column.align === 'left' ? 'text-left' : 'text-right'
                   }`}
                   style={{ width: column.width }}
                 >
@@ -146,29 +146,36 @@ const DataTable: React.FC<DataTableProps> = ({
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="table-body">
             {data.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
                   className="px-6 py-12 text-center text-gray-500"
                 >
-                  {emptyText}
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-2xl text-gray-400">📄</span>
+                    </div>
+                    <span>{emptyText}</span>
+                  </div>
                 </td>
               </tr>
             ) : (
               data.map((record, index) => (
                 <tr
                   key={record.id || index}
-                  className={`hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`table-row transition-professional ${
+                    onRowClick ? 'cursor-pointer hover:bg-golden-50' : ''
+                  }`}
                   onClick={() => onRowClick?.(record)}
                 >
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${
+                      className={`table-cell ${
                         column.align === 'center' ? 'text-center' :
-                        column.align === 'right' ? 'text-right' : 'text-right'
+                        column.align === 'left' ? 'text-left' : 'text-right'
                       }`}
                     >
                       {column.render

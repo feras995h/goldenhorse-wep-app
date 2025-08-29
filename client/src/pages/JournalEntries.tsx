@@ -57,13 +57,20 @@ const JournalEntries: React.FC = () => {
       };
       
       const response = await financialAPI.getJournalEntries(params);
-      setJournalEntries(response.data);
+      // Ensure each entry has details array
+      const entriesWithDetails = response.data.map((entry: any) => ({
+        ...entry,
+        details: entry.details || []
+      }));
+      setJournalEntries(entriesWithDetails);
       setPagination(prev => ({
         ...prev,
         total: response.total
       }));
     } catch (error) {
       console.error('Error loading journal entries:', error);
+      // Set empty array to prevent undefined errors
+      setJournalEntries([]);
     } finally {
       setLoading(false);
     }
@@ -72,9 +79,10 @@ const JournalEntries: React.FC = () => {
   const loadAccounts = async () => {
     try {
       const response = await financialAPI.getAccounts();
-      setAccounts(response.data);
+      setAccounts(response.data || []);
     } catch (error) {
       console.error('Error loading accounts:', error);
+      setAccounts([]);
     }
   };
 
@@ -121,14 +129,17 @@ const JournalEntries: React.FC = () => {
         date: entry.date,
         description: entry.description,
         reference: entry.reference || '',
-        type: entry.type,
-        currency: entry.currency,
-        lines: entry.lines.map(line => ({
-          accountId: line.accountId,
-          description: line.description || '',
-          debit: line.debit,
-          credit: line.credit
-        }))
+        type: 'manual',
+        currency: 'LYD',
+        lines: entry.details ? entry.details.map((detail: any) => ({
+          accountId: detail.accountId,
+          description: detail.description || '',
+          debit: detail.debit || 0,
+          credit: detail.credit || 0
+        })) : [
+          { accountId: '', description: '', debit: 0, credit: 0 },
+          { accountId: '', description: '', debit: 0, credit: 0 }
+        ]
       });
     }
     
@@ -145,42 +156,57 @@ const JournalEntries: React.FC = () => {
   const addLine = () => {
     setFormData(prev => ({
       ...prev,
-      lines: [...prev.lines, { accountId: '', description: '', debit: 0, credit: 0 }]
+      lines: [...(prev.lines || []), { accountId: '', description: '', debit: 0, credit: 0 }]
     }));
   };
 
   const removeLine = (index: number) => {
-    if (formData.lines.length > 2) {
+    if ((formData.lines || []).length > 2) {
       setFormData(prev => ({
         ...prev,
-        lines: prev.lines.filter((_, i) => i !== index)
+        lines: (prev.lines || []).filter((_, i) => i !== index)
       }));
     }
   };
 
   const updateLine = (index: number, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      lines: prev.lines.map((line, i) => 
-        i === index ? { ...line, [field]: value } : line
-      )
-    }));
+    setFormData(prev => {
+      const updatedLines = [...(prev.lines || [])];
+      updatedLines[index] = { ...updatedLines[index], [field]: value };
+      
+      // If account is filled and this is the last line, add a new empty line
+      if (field === 'accountId' && value && index === updatedLines.length - 1) {
+        updatedLines.push({ accountId: '', description: '', debit: 0, credit: 0 });
+      }
+      
+      return { ...prev, lines: updatedLines };
+    });
+  };
+
+  // Function to remove empty lines before saving
+  const removeEmptyLines = (lines: any[]) => {
+    return lines.filter(line => 
+      line.accountId || line.description || (line.debit && line.debit !== 0) || (line.credit && line.credit !== 0)
+    );
   };
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
     
-    if (!formData.date) {
+    if (!formData.date || (formData.date || '').toString().trim() === '') {
       errors.date = 'التاريخ مطلوب';
     }
     
-    if (!formData.description.trim()) {
-      errors.description = 'الوصف مطلوب';
+    if (!(formData.description || '').trim()) {
+      errors.description = 'البيان مطلوب';
     }
     
+    // Remove empty lines before validation
+    const filteredLines = removeEmptyLines(formData.lines || []);
+    
     // Validate lines
-    const totalDebit = formData.lines.reduce((sum, line) => sum + (parseFloat(line.debit.toString()) || 0), 0);
-    const totalCredit = formData.lines.reduce((sum, line) => sum + (parseFloat(line.credit.toString()) || 0), 0);
+      const totalDebit = filteredLines.reduce((sum, line) => sum + (parseFloat(line.debit?.toString() || '0') || 0), 0);
+  const totalCredit = filteredLines.reduce((sum, line) => sum + (parseFloat(line.credit?.toString() || '0') || 0), 0);
     
     if (Math.abs(totalDebit - totalCredit) > 0.01) {
       errors.balance = 'إجمالي المدين يجب أن يساوي إجمالي الدائن';
@@ -191,11 +217,11 @@ const JournalEntries: React.FC = () => {
     }
     
     // Validate each line
-    formData.lines.forEach((line, index) => {
+    filteredLines.forEach((line, index) => {
       if (!line.accountId) {
         errors[`line_${index}_account`] = 'الحساب مطلوب';
       }
-      if (!line.debit && !line.credit) {
+      if ((!line.debit || line.debit === 0) && (!line.credit || line.credit === 0)) {
         errors[`line_${index}_amount`] = 'المبلغ مطلوب';
       }
     });
@@ -210,12 +236,15 @@ const JournalEntries: React.FC = () => {
     try {
       setSubmitting(true);
       
+      // Remove empty lines before submitting
+      const filteredLines = removeEmptyLines(formData.lines || []);
+      
       const submitData = {
         ...formData,
-        lines: formData.lines.map(line => ({
+        lines: filteredLines.map(line => ({
           ...line,
-          debit: parseFloat(line.debit.toString()) || 0,
-          credit: parseFloat(line.credit.toString()) || 0
+          debit: parseFloat(line.debit?.toString() || '0') || 0,
+          credit: parseFloat(line.credit?.toString() || '0') || 0
         }))
       };
       
@@ -260,12 +289,12 @@ const JournalEntries: React.FC = () => {
     },
     {
       key: 'description',
-      title: 'الوصف',
+      title: 'البيان',
       render: (value: string, record: JournalEntry) => (
         <div>
           <div className="font-medium">{value}</div>
           {record.reference && (
-            <div className="text-sm text-gray-500">مرجع: {record.reference}</div>
+            <div className="text-sm text-gray-500">ملاحظات: {record.reference}</div>
           )}
         </div>
       )
@@ -274,19 +303,19 @@ const JournalEntries: React.FC = () => {
       key: 'type',
       title: 'النوع',
       width: '100px',
-      render: (value: string) => value === 'manual' ? 'يدوي' : 'تلقائي'
+      render: () => 'يدوي'
     },
     {
       key: 'totalDebit',
       title: 'إجمالي المدين',
       width: '120px',
       align: 'left' as const,
-      render: (value: number, record: JournalEntry) => (
+      render: (value: number) => (
         <div className="text-left">
           <span className="text-green-600">
             {new Intl.NumberFormat('ar-LY').format(value)}
           </span>
-          <span className="text-gray-500 text-sm mr-1">{record.currency}</span>
+          <span className="text-gray-500 text-sm mr-1">د.ل</span>
         </div>
       )
     },
@@ -297,7 +326,7 @@ const JournalEntries: React.FC = () => {
       render: (value: string) => {
         const statusLabels = {
           draft: { label: 'مسودة', color: 'bg-yellow-100 text-yellow-800' },
-          approved: { label: 'معتمد', color: 'bg-green-100 text-green-800' },
+          posted: { label: 'معتمد', color: 'bg-green-100 text-green-800' },
           cancelled: { label: 'ملغي', color: 'bg-red-100 text-red-800' }
         };
         const status = statusLabels[value as keyof typeof statusLabels];
@@ -355,7 +384,7 @@ const JournalEntries: React.FC = () => {
 
   const statusOptions = [
     { value: 'draft', label: 'مسودة' },
-    { value: 'approved', label: 'معتمد' },
+    { value: 'posted', label: 'معتمد' },
     { value: 'cancelled', label: 'ملغي' }
   ];
 
@@ -364,13 +393,20 @@ const JournalEntries: React.FC = () => {
     { value: 'automatic', label: 'تلقائي' }
   ];
 
-  const accountOptions = accounts.map(acc => ({
+  const accountOptions = (accounts || []).map(acc => ({
     value: acc.id,
     label: `${acc.code} - ${acc.name}`
   }));
 
-  const totalDebit = formData.lines.reduce((sum, line) => sum + (parseFloat(line.debit.toString()) || 0), 0);
-  const totalCredit = formData.lines.reduce((sum, line) => sum + (parseFloat(line.credit.toString()) || 0), 0);
+  // Add search filter for accounts
+  const [accountSearch, setAccountSearch] = useState('');
+
+  const filteredAccountOptions = (accountOptions || []).filter(option => 
+    option.label.toLowerCase().includes(accountSearch.toLowerCase())
+  );
+
+  const totalDebit = (formData.lines || []).reduce((sum, line) => sum + (parseFloat(line.debit?.toString() || '0') || 0), 0);
+  const totalCredit = (formData.lines || []).reduce((sum, line) => sum + (parseFloat(line.credit?.toString() || '0') || 0), 0);
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
 
   return (
@@ -472,7 +508,7 @@ const JournalEntries: React.FC = () => {
               label="التاريخ"
               name="date"
               type="date"
-              value={formData.date}
+              value={formData.date || new Date().toISOString().split('T')[0]}
               onChange={(value) => setFormData(prev => ({ ...prev, date: value as string }))}
               required
               error={formErrors.date}
@@ -483,7 +519,7 @@ const JournalEntries: React.FC = () => {
               label="النوع"
               name="type"
               type="select"
-              value={formData.type}
+              value={formData.type || 'manual'}
               onChange={(value) => setFormData(prev => ({ ...prev, type: value as string }))}
               options={typeOptions}
               disabled={modalMode === 'view'}
@@ -493,7 +529,7 @@ const JournalEntries: React.FC = () => {
               label="العملة"
               name="currency"
               type="select"
-              value={formData.currency}
+              value={formData.currency || 'LYD'}
               onChange={(value) => setFormData(prev => ({ ...prev, currency: value as string }))}
               options={[
                 { value: 'LYD', label: 'دينار ليبي' },
@@ -504,9 +540,9 @@ const JournalEntries: React.FC = () => {
           </div>
 
           <FormField
-            label="الوصف"
+            label="البيان"
             name="description"
-            value={formData.description}
+                                  value={formData.description || ''}
             onChange={(value) => setFormData(prev => ({ ...prev, description: value as string }))}
             required
             error={formErrors.description}
@@ -514,9 +550,9 @@ const JournalEntries: React.FC = () => {
           />
 
           <FormField
-            label="المرجع"
+            label="ملاحظات"
             name="reference"
-            value={formData.reference}
+                          value={formData.reference || ''}
             onChange={(value) => setFormData(prev => ({ ...prev, reference: value as string }))}
             disabled={modalMode === 'view'}
           />
@@ -536,27 +572,35 @@ const JournalEntries: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {formData.lines.map((line, index) => (
+              {(formData.lines || []).map((line, index) => (
                 <div key={index} className="grid grid-cols-12 gap-3 items-end p-3 bg-gray-50 rounded-lg">
                   <div className="col-span-4">
                     <FormField
                       label="الحساب"
                       name={`line_${index}_account`}
                       type="select"
-                      value={line.accountId}
+                      value={line.accountId || ''}
                       onChange={(value) => updateLine(index, 'accountId', value)}
-                      options={accountOptions}
+                      options={filteredAccountOptions}
                       placeholder="اختر الحساب"
                       error={formErrors[`line_${index}_account`]}
                       disabled={modalMode === 'view'}
+                    />
+                    {/* Search input for accounts */}
+                    <input
+                      type="text"
+                      placeholder="بحث في الحسابات..."
+                      value={accountSearch}
+                      onChange={(e) => setAccountSearch(e.target.value)}
+                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   
                   <div className="col-span-3">
                     <FormField
-                      label="الوصف"
+                      label="البيان"
                       name={`line_${index}_description`}
-                      value={line.description}
+                      value={line.description || ''}
                       onChange={(value) => updateLine(index, 'description', value)}
                       disabled={modalMode === 'view'}
                     />
@@ -567,7 +611,7 @@ const JournalEntries: React.FC = () => {
                       label="مدين"
                       name={`line_${index}_debit`}
                       type="number"
-                      value={line.debit}
+                      value={line.debit || 0}
                       onChange={(value) => updateLine(index, 'debit', value)}
                       min={0}
                       step={0.01}
@@ -580,7 +624,7 @@ const JournalEntries: React.FC = () => {
                       label="دائن"
                       name={`line_${index}_credit`}
                       type="number"
-                      value={line.credit}
+                      value={line.credit || 0}
                       onChange={(value) => updateLine(index, 'credit', value)}
                       min={0}
                       step={0.01}
@@ -588,7 +632,7 @@ const JournalEntries: React.FC = () => {
                     />
                   </div>
                   
-                  {modalMode !== 'view' && formData.lines.length > 2 && (
+                  {modalMode !== 'view' && (formData.lines || []).length > 2 && (
                     <div className="col-span-1">
                       <button
                         onClick={() => removeLine(index)}

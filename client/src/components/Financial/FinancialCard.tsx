@@ -15,9 +15,9 @@ interface FinancialCardProps {
 
 const colorClasses = {
   green: {
-    bg: 'bg-green-500',
-    text: 'text-green-600',
-    lightBg: 'bg-green-50',
+    bg: 'bg-success-500',
+    text: 'text-success-600',
+    lightBg: 'bg-success-50',
   },
   blue: {
     bg: 'bg-blue-500',
@@ -25,14 +25,14 @@ const colorClasses = {
     lightBg: 'bg-blue-50',
   },
   red: {
-    bg: 'bg-red-500',
-    text: 'text-red-600',
-    lightBg: 'bg-red-50',
+    bg: 'bg-danger-500',
+    text: 'text-danger-600',
+    lightBg: 'bg-danger-50',
   },
   yellow: {
-    bg: 'bg-yellow-500',
-    text: 'text-yellow-600',
-    lightBg: 'bg-yellow-50',
+    bg: 'bg-warning-500',
+    text: 'text-warning-600',
+    lightBg: 'bg-warning-50',
   },
   purple: {
     bg: 'bg-purple-500',
@@ -67,16 +67,16 @@ const FinancialCard: React.FC<FinancialCardProps> = ({
   };
 
   return (
-    <div className="card-metric">
+    <div className="card-hover transition-professional">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-caption font-medium mb-2">{title}</p>
+          <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
           <div className="flex items-baseline">
-            <p className="text-3xl font-bold text-dark-800">
+            <p className="text-3xl font-bold text-gray-900">
               {formatValue(value)}
             </p>
             {typeof value === 'number' && (
-              <span className="text-sm text-dark-500 mr-2">{currency}</span>
+              <span className="text-sm text-gray-500 mr-2">{currency}</span>
             )}
           </div>
           {trend && (
@@ -88,11 +88,11 @@ const FinancialCard: React.FC<FinancialCardProps> = ({
               >
                 {trend.isPositive ? '+' : ''}{trend.value}%
               </span>
-              <span className="text-caption mr-2">من الشهر الماضي</span>
+              <span className="text-sm text-gray-500 mr-2">من الشهر الماضي</span>
             </div>
           )}
         </div>
-        <div className={`p-4 rounded-xl ${colors.lightBg}`}>
+        <div className={`p-4 rounded-xl ${colors.lightBg} transition-professional`}>
           <Icon className={`h-8 w-8 ${colors.text}`} />
         </div>
       </div>
