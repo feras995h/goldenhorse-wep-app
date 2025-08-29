@@ -127,6 +127,10 @@ body {
     @apply btn border-2 border-golden-600 text-golden-600 hover:bg-golden-600 hover:text-white focus:ring-golden-500;
   }
 
+  .btn-icon {
+    @apply btn p-2 rounded-lg;
+  }
+
   /* Form Components */
   .form-input {
     @apply w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-golden-500 focus:border-golden-500 transition-colors duration-200;

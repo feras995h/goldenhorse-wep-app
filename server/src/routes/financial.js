@@ -854,6 +854,54 @@ router.post('/employees', authenticateToken, requireFinancialAccess, async (req,
   }
 });
 
+// GET /api/financial/employees/:id/salaries - Get employee salaries
+router.get('/employees/:id/salaries', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const salaries = await PayrollEntry.findAll({
+      where: { employeeId: id },
+      order: [['month', 'DESC'], ['year', 'DESC']]
+    });
+    
+    res.json(salaries);
+  } catch (error) {
+    console.error('Error fetching employee salaries:', error);
+    res.status(500).json({ message: 'خطأ في جلب رواتب الموظف' });
+  }
+});
+
+// GET /api/financial/employees/:id/advances - Get employee advances
+router.get('/employees/:id/advances', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const advances = await EmployeeAdvance.findAll({
+      where: { employeeId: id },
+      order: [['requestDate', 'DESC']]
+    });
+    
+    res.json(advances);
+  } catch (error) {
+    console.error('Error fetching employee advances:', error);
+    res.status(500).json({ message: 'خطأ في جلب سلف الموظف' });
+  }
+});
+
+// GET /api/financial/employees/:id/bonds - Get employee bonds
+router.get('/employees/:id/bonds', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // For now, return empty array as bonds table might not exist
+    // This can be implemented when the bonds table is created
+    res.json([]);
+  } catch (error) {
+    console.error('Error fetching employee bonds:', error);
+    res.status(500).json({ message: 'خطأ في جلب عهود الموظف' });
+  }
+});
+
 // ==================== FIXED ASSETS ROUTES ====================
 
 // GET /api/financial/fixed-assets - Get fixed assets

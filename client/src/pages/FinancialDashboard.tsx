@@ -59,11 +59,11 @@ const FinancialDashboard: React.FC = () => {
       href: '/financial/customers'
     },
     {
-      title: 'إدارة الموظفين والرواتب',
-      description: 'إدارة الموظفين والرواتب والسلف والمستحقات',
+      title: 'كشف حساب الموظفين',
+      description: 'عرض بيانات الموظفين ورواتبهم وسلفهم وعهودهم',
       icon: UserCheck,
       color: 'red' as const,
-      href: '/financial/employee-payroll'
+      href: '/financial/employee-accounts'
     },
     {
       title: 'الأصول الثابتة',

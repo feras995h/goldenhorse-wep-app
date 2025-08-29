@@ -13,9 +13,7 @@ import JournalEntries from './pages/JournalEntries';
 import CustomersManagement from './pages/CustomersManagement';
 import AccountStatement from './pages/AccountStatement';
 import InstantReports from './pages/InstantReports';
-import PayrollManagement from './pages/PayrollManagement';
-import EmployeePayrollManagement from './pages/EmployeePayrollManagement';
-import EmployeeManagement from './pages/EmployeeManagement';
+import EmployeeAccountStatement from './pages/EmployeeAccountStatement';
 import FixedAssetsManagement from './pages/FixedAssetsManagement';
 import FinancialReports from './pages/FinancialReports';
 import SalesDashboard from './pages/SalesDashboard';
@@ -62,11 +60,9 @@ function App() {
               <Route path="accounts" element={<AccountsManagement />} />
                                       <Route path="account-statement" element={<AccountStatement />} />
                         <Route path="instant-reports" element={<InstantReports />} />
-                        <Route path="payroll" element={<PayrollManagement />} />
-                        <Route path="employee-payroll" element={<EmployeePayrollManagement />} />
                         <Route path="journal" element={<JournalEntries />} />
                         <Route path="customers" element={<CustomersManagement />} />
-                              <Route path="employees" element={<EmployeeManagement />} />
+                        <Route path="employee-accounts" element={<EmployeeAccountStatement />} />
               <Route path="fixed-assets" element={<FixedAssetsManagement />} />
               <Route path="reports" element={<FinancialReports />} />
               <Route path="settings" element={<SystemSettings />} />

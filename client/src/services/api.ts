@@ -362,13 +362,20 @@ export const financialAPI = {
   },
 
   // Employee Advances
-  getEmployeeAdvances: async (params: {
-    page?: number;
-    limit?: number;
-    status?: string;
-    employeeId?: string;
-  }) => {
-    const response = await api.get('/financial/advances', { params });
+  getEmployeeAdvances: async (employeeId: string) => {
+    const response = await api.get(`/financial/employees/${employeeId}/advances`);
+    return response.data;
+  },
+
+  // Employee Salaries
+  getEmployeeSalaries: async (employeeId: string) => {
+    const response = await api.get(`/financial/employees/${employeeId}/salaries`);
+    return response.data;
+  },
+
+  // Employee Bonds
+  getEmployeeBonds: async (employeeId: string) => {
+    const response = await api.get(`/financial/employees/${employeeId}/bonds`);
     return response.data;
   },
 
