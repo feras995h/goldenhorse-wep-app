@@ -93,7 +93,7 @@ const TailAdminHeader: React.FC<TailAdminHeaderProps> = ({
       sales: 'المبيعات',
       'customer-service': 'خدمات العملاء',
       operations: 'العمليات',
-      accounts: 'إدارة الحسابات',
+      accounts: 'دليل الحسابات',
       journal: 'قيود اليومية',
       customers: 'إدارة العملاء',
 

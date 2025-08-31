@@ -17,25 +17,11 @@ const FinancialDashboard: React.FC = () => {
 
   const quickActions = [
     {
-      title: 'إدارة الحسابات',
+      title: 'دليل الحسابات',
       description: 'دليل الحسابات والأرصدة',
       icon: Calculator,
       color: 'blue' as const,
-      href: '/financial/accounts'
-    },
-    {
-      title: 'كشف حساب دفتر الأستاذ',
-      description: 'عرض حركة الحساب خلال فترة محددة',
-      icon: FileText,
-      color: 'orange' as const,
-      href: '/financial/account-statement'
-    },
-    {
-      title: 'التقارير الفورية',
-      description: 'تقارير فورية عن المقبوضات والمدفوعات والمبيعات',
-      icon: BarChart3,
-      color: 'teal' as const,
-      href: '/financial/instant-reports'
+      href: '/financial/chart-of-accounts'
     },
     {
       title: 'قيود اليومية',
@@ -45,11 +31,46 @@ const FinancialDashboard: React.FC = () => {
       href: '/financial/journal'
     },
     {
-      title: 'الفواتير',
-      description: 'إدارة فواتير العملاء والموردين',
-      icon: Receipt,
+      title: 'كشف الحساب',
+      description: 'عرض حركة الحساب خلال فترة محددة',
+      icon: FileText,
+      color: 'orange' as const,
+      href: '/financial/account-statement'
+    },
+    {
+      title: 'الأصول الثابتة',
+      description: 'إدارة الأصول والاستهلاك',
+      icon: Building,
+      color: 'green' as const,
+      href: '/financial/fixed-assets'
+    },
+    {
+      title: 'القيد الافتتاحي',
+      description: 'إدارة الأرصدة الافتتاحية',
+      icon: BarChart3,
       color: 'purple' as const,
-      href: '/financial/invoices'
+      href: '/financial/opening-balance'
+    },
+    {
+      title: 'مراقبة الحسابات',
+      description: 'مراقبة الحسابات الرئيسية',
+      icon: UserCheck,
+      color: 'red' as const,
+      href: '/financial/account-monitoring'
+    },
+    {
+      title: 'تقارير الفواتير',
+      description: 'تقارير الفواتير المسددة وغير المسددة',
+      icon: Receipt,
+      color: 'indigo' as const,
+      href: '/financial/invoice-reports'
+    },
+    {
+      title: 'التقارير الفورية',
+      description: 'تقارير فورية عن المقبوضات والمدفوعات والمبيعات',
+      icon: BarChart3,
+      color: 'teal' as const,
+      href: '/financial/instant-reports'
     },
     {
       title: 'العملاء',
@@ -64,13 +85,6 @@ const FinancialDashboard: React.FC = () => {
       icon: UserCheck,
       color: 'red' as const,
       href: '/financial/employee-accounts'
-    },
-    {
-      title: 'الأصول الثابتة',
-      description: 'إدارة الأصول والاستهلاك',
-      icon: Building,
-      color: 'green' as const,
-      href: '/financial/fixed-assets'
     },
     {
       title: 'التقارير المالية',

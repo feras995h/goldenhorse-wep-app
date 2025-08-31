@@ -8,7 +8,8 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import SystemSettings from './pages/SystemSettings';
 import FinancialDashboard from './pages/FinancialDashboard';
-import AccountsManagement from './pages/AccountsManagement';
+
+import ChartOfAccounts from './pages/ChartOfAccounts';
 import JournalEntries from './pages/JournalEntries';
 import CustomersManagement from './pages/CustomersManagement';
 import AccountStatement from './pages/AccountStatement';
@@ -16,6 +17,9 @@ import InstantReports from './pages/InstantReports';
 import EmployeeAccountStatement from './pages/EmployeeAccountStatement';
 import FixedAssetsManagement from './pages/FixedAssetsManagement';
 import FinancialReports from './pages/FinancialReports';
+import OpeningBalanceEntry from './pages/OpeningBalanceEntry';
+import AccountMonitoring from './pages/AccountMonitoring';
+import InvoiceReports from './pages/InvoiceReports';
 import SalesDashboard from './pages/SalesDashboard';
 import CustomerServiceDashboard from './pages/CustomerServiceDashboard';
 import OperationsDashboard from './pages/OperationsDashboard';
@@ -57,14 +61,18 @@ function App() {
               </ProtectedRoute>
             }>
               <Route index element={<FinancialDashboard />} />
-              <Route path="accounts" element={<AccountsManagement />} />
-                                      <Route path="account-statement" element={<AccountStatement />} />
-                        <Route path="instant-reports" element={<InstantReports />} />
-                        <Route path="journal" element={<JournalEntries />} />
-                        <Route path="customers" element={<CustomersManagement />} />
-                        <Route path="employee-accounts" element={<EmployeeAccountStatement />} />
+              <Route path="accounts" element={<ChartOfAccounts />} />
+              <Route path="chart-of-accounts" element={<ChartOfAccounts />} />
+              <Route path="account-statement" element={<AccountStatement />} />
+              <Route path="instant-reports" element={<InstantReports />} />
+              <Route path="journal" element={<JournalEntries />} />
+              <Route path="customers" element={<CustomersManagement />} />
+              <Route path="employee-accounts" element={<EmployeeAccountStatement />} />
               <Route path="fixed-assets" element={<FixedAssetsManagement />} />
               <Route path="reports" element={<FinancialReports />} />
+              <Route path="opening-balance" element={<OpeningBalanceEntry />} />
+              <Route path="account-monitoring" element={<AccountMonitoring />} />
+              <Route path="invoice-reports" element={<InvoiceReports />} />
               <Route path="settings" element={<SystemSettings />} />
             </Route>
             

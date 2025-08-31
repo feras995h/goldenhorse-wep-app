@@ -296,6 +296,37 @@ const FixedAssetsManagement: React.FC = () => {
       )
     },
     {
+      key: 'salvageValue',
+      title: 'قيمة الخردة',
+      width: '120px',
+      align: 'left' as const,
+      render: (value: number, record: FixedAsset) => (
+        <div className="text-left">
+          <span className="text-orange-600">
+            {new Intl.NumberFormat('ar-LY').format(value)}
+          </span>
+          <span className="text-gray-500 text-sm mr-1">{record.currency}</span>
+        </div>
+      )
+    },
+    {
+      key: 'bookValue',
+      title: 'القيمة الدفترية',
+      width: '140px',
+      align: 'left' as const,
+      render: (_: any, record: FixedAsset) => {
+        const bookValue = record.purchasePrice - record.accumulatedDepreciation;
+        return (
+          <div className="text-left">
+            <span className="text-purple-600">
+              {new Intl.NumberFormat('ar-LY').format(bookValue)}
+            </span>
+            <span className="text-gray-500 text-sm mr-1">{record.currency}</span>
+          </div>
+        );
+      }
+    },
+    {
       key: 'status',
       title: 'الحالة',
       width: '100px',

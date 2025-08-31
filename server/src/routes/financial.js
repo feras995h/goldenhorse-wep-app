@@ -104,9 +104,26 @@ router.get('/accounts', authenticateToken, requireFinancialAccess, async (req, r
 // POST /api/financial/accounts - Create new account
 router.post('/accounts', authenticateToken, requireFinancialAccess, async (req, res) => {
   try {
+    // Derive rootType and reportType from type field
+    const typeMapping = {
+      'asset': { rootType: 'Asset', reportType: 'Balance Sheet' },
+      'liability': { rootType: 'Liability', reportType: 'Balance Sheet' },
+      'equity': { rootType: 'Equity', reportType: 'Balance Sheet' },
+      'revenue': { rootType: 'Income', reportType: 'Profit and Loss' },
+      'expense': { rootType: 'Expense', reportType: 'Profit and Loss' }
+    };
+
+    const mapping = typeMapping[req.body.type];
+    if (!mapping) {
+      return res.status(400).json({ message: 'نوع الحساب غير صحيح' });
+    }
+
     const accountData = {
       id: uuidv4(),
       ...req.body,
+      parentId: req.body.parentId || null, // Convert empty string to null
+      rootType: mapping.rootType,
+      reportType: mapping.reportType,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -127,10 +144,32 @@ router.put('/accounts/:id', authenticateToken, requireFinancialAccess, async (re
       return res.status(404).json({ message: 'الحساب غير موجود' });
     }
     
-    await account.update({
-      ...req.body,
-      updatedAt: new Date()
-    });
+    // Derive rootType and reportType from type field if type is being updated
+    let updateData = { 
+      ...req.body, 
+      parentId: req.body.parentId || null, // Convert empty string to null
+      updatedAt: new Date() 
+    };
+    
+    if (req.body.type) {
+      const typeMapping = {
+        'asset': { rootType: 'Asset', reportType: 'Balance Sheet' },
+        'liability': { rootType: 'Liability', reportType: 'Balance Sheet' },
+        'equity': { rootType: 'Equity', reportType: 'Balance Sheet' },
+        'revenue': { rootType: 'Income', reportType: 'Profit and Loss' },
+        'expense': { rootType: 'Expense', reportType: 'Profit and Loss' }
+      };
+
+      const mapping = typeMapping[req.body.type];
+      if (!mapping) {
+        return res.status(400).json({ message: 'نوع الحساب غير صحيح' });
+      }
+
+      updateData.rootType = mapping.rootType;
+      updateData.reportType = mapping.reportType;
+    }
+    
+    await account.update(updateData);
     
     res.json(account);
   } catch (error) {
@@ -164,6 +203,50 @@ router.delete('/accounts/:id', authenticateToken, requireFinancialAccess, async 
   } catch (error) {
     console.error('Error deleting account:', error);
     res.status(500).json({ message: 'خطأ في حذف الحساب' });
+  }
+});
+
+// POST /api/financial/accounts/fix-fields - Fix missing rootType and reportType fields
+router.post('/accounts/fix-fields', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const typeMapping = {
+      'asset': { rootType: 'Asset', reportType: 'Balance Sheet' },
+      'liability': { rootType: 'Liability', reportType: 'Balance Sheet' },
+      'equity': { rootType: 'Equity', reportType: 'Balance Sheet' },
+      'revenue': { rootType: 'Income', reportType: 'Profit and Loss' },
+      'expense': { rootType: 'Expense', reportType: 'Profit and Loss' }
+    };
+
+    // Find all accounts that are missing rootType or reportType
+    const accounts = await Account.findAll({
+      where: {
+        [models.sequelize.Op.or]: [
+          { rootType: null },
+          { reportType: null }
+        ]
+      }
+    });
+    
+    let updatedCount = 0;
+    
+    for (const account of accounts) {
+      const mapping = typeMapping[account.type];
+      if (mapping) {
+        await account.update({
+          rootType: mapping.rootType,
+          reportType: mapping.reportType
+        });
+        updatedCount++;
+      }
+    }
+    
+    res.json({ 
+      message: `تم تحديث ${updatedCount} حساب بنجاح`,
+      updatedCount 
+    });
+  } catch (error) {
+    console.error('Error fixing account fields:', error);
+    res.status(500).json({ message: 'خطأ في تحديث الحسابات' });
   }
 });
 

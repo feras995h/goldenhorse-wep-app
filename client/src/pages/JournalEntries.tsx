@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, FileText, Edit, Eye, CheckCircle } from 'lucide-react';
+import { Plus, Edit, Eye, CheckCircle, Trash2, X, Save } from 'lucide-react';
 import { financialAPI } from '../services/api';
 import DataTable from '../components/Financial/DataTable';
 import SearchFilter from '../components/Financial/SearchFilter';
@@ -33,8 +33,32 @@ const JournalEntries: React.FC = () => {
     type: 'manual',
     currency: 'LYD',
     lines: [
-      { accountId: '', description: '', debit: 0, credit: 0 },
-      { accountId: '', description: '', debit: 0, credit: 0 }
+      {
+        id: '',
+        accountId: '',
+        accountCode: '',
+        accountName: '',
+        description: '',
+        debit: 0,
+        credit: 0,
+        exchangeRate: 1,
+        balance: 0,
+        totalDebit: 0,
+        totalCredit: 0
+      },
+      {
+        id: '',
+        accountId: '',
+        accountCode: '',
+        accountName: '',
+        description: '',
+        debit: 0,
+        credit: 0,
+        exchangeRate: 1,
+        balance: 0,
+        totalDebit: 0,
+        totalCredit: 0
+      }
     ]
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -113,17 +137,7 @@ const JournalEntries: React.FC = () => {
     setSelectedEntry(entry || null);
     
     if (mode === 'create') {
-      setFormData({
-        date: new Date().toISOString().split('T')[0],
-        description: '',
-        reference: '',
-        type: 'manual',
-        currency: 'LYD',
-        lines: [
-          { accountId: '', description: '', debit: 0, credit: 0 },
-          { accountId: '', description: '', debit: 0, credit: 0 }
-        ]
-      });
+      clearForm();
     } else if (entry) {
       setFormData({
         date: entry.date,
@@ -131,14 +145,45 @@ const JournalEntries: React.FC = () => {
         reference: entry.reference || '',
         type: 'manual',
         currency: 'LYD',
-        lines: entry.details ? entry.details.map((detail: any) => ({
+                 lines: (entry as any).details ? (entry as any).details.map((detail: any) => ({
+          id: detail.id || '',
           accountId: detail.accountId,
+          accountCode: detail.accountCode || '',
+          accountName: detail.accountName || '',
           description: detail.description || '',
           debit: detail.debit || 0,
-          credit: detail.credit || 0
+          credit: detail.credit || 0,
+          exchangeRate: detail.exchangeRate || 1,
+          balance: detail.balance || 0,
+          totalDebit: detail.totalDebit || 0,
+          totalCredit: detail.totalCredit || 0
         })) : [
-          { accountId: '', description: '', debit: 0, credit: 0 },
-          { accountId: '', description: '', debit: 0, credit: 0 }
+          {
+            id: '',
+            accountId: '',
+            accountCode: '',
+            accountName: '',
+            description: '',
+            debit: 0,
+            credit: 0,
+            exchangeRate: 1,
+            balance: 0,
+            totalDebit: 0,
+            totalCredit: 0
+          },
+          {
+            id: '',
+            accountId: '',
+            accountCode: '',
+            accountName: '',
+            description: '',
+            debit: 0,
+            credit: 0,
+            exchangeRate: 1,
+            balance: 0,
+            totalDebit: 0,
+            totalCredit: 0
+          }
         ]
       });
     }
@@ -156,27 +201,66 @@ const JournalEntries: React.FC = () => {
   const addLine = () => {
     setFormData(prev => ({
       ...prev,
-      lines: [...(prev.lines || []), { accountId: '', description: '', debit: 0, credit: 0 }]
+      lines: [...(prev.lines || []), {
+        id: '',
+        accountId: '',
+        accountCode: '',
+        accountName: '',
+        description: '',
+        debit: 0,
+        credit: 0,
+        exchangeRate: 1,
+        balance: 0,
+        totalDebit: 0,
+        totalCredit: 0
+      }]
     }));
   };
 
-  const removeLine = (index: number) => {
-    if ((formData.lines || []).length > 2) {
-      setFormData(prev => ({
-        ...prev,
-        lines: (prev.lines || []).filter((_, i) => i !== index)
-      }));
-    }
-  };
+  // Function to remove line (currently not used but kept for future use)
+  // const removeLine = (index: number) => {
+  //   if ((formData.lines || []).length > 2) {
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       lines: (prev.lines || []).filter((_, i) => i !== index)
+  //     }));
+  //   }
+  // };
 
   const updateLine = (index: number, field: string, value: any) => {
     setFormData(prev => {
       const updatedLines = [...(prev.lines || [])];
       updatedLines[index] = { ...updatedLines[index], [field]: value };
       
+      // Calculate totals based on debit/credit and exchange rate
+      if (field === 'debit' || field === 'credit' || field === 'exchangeRate') {
+        const line = updatedLines[index];
+        const debit = parseFloat(line.debit?.toString() || '0') || 0;
+        const credit = parseFloat(line.credit?.toString() || '0') || 0;
+        const exchangeRate = parseFloat(line.exchangeRate?.toString() || '1') || 1;
+        
+        updatedLines[index] = {
+          ...line,
+          totalDebit: debit * exchangeRate,
+          totalCredit: credit * exchangeRate
+        };
+      }
+      
       // If account is filled and this is the last line, add a new empty line
       if (field === 'accountId' && value && index === updatedLines.length - 1) {
-        updatedLines.push({ accountId: '', description: '', debit: 0, credit: 0 });
+        updatedLines.push({
+          id: '',
+          accountId: '',
+          accountCode: '',
+          accountName: '',
+          description: '',
+          debit: 0,
+          credit: 0,
+          exchangeRate: 1,
+          balance: 0,
+          totalDebit: 0,
+          totalCredit: 0
+        });
       }
       
       return { ...prev, lines: updatedLines };
@@ -382,50 +466,87 @@ const JournalEntries: React.FC = () => {
     }
   ];
 
-  const statusOptions = [
-    { value: 'draft', label: 'مسودة' },
-    { value: 'posted', label: 'معتمد' },
-    { value: 'cancelled', label: 'ملغي' }
-  ];
+  // Status options (currently not used but kept for future use)
+  // const statusOptions = [
+  //   { value: 'draft', label: 'مسودة' },
+  //   { value: 'posted', label: 'معتمد' },
+  //   { value: 'cancelled', label: 'ملغي' }
+  // ];
+
+  const clearForm = () => {
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      description: '',
+      reference: '',
+      type: 'manual',
+      currency: 'LYD',
+      lines: [
+        {
+          id: '',
+          accountId: '',
+          accountCode: '',
+          accountName: '',
+          description: '',
+          debit: 0,
+          credit: 0,
+          exchangeRate: 1,
+          balance: 0,
+          totalDebit: 0,
+          totalCredit: 0
+        },
+        {
+          id: '',
+          accountId: '',
+          accountCode: '',
+          accountName: '',
+          description: '',
+          debit: 0,
+          credit: 0,
+          exchangeRate: 1,
+          balance: 0,
+          totalDebit: 0,
+          totalCredit: 0
+        }
+      ]
+    });
+    setFormErrors({});
+  };
+
+  const getTotalDebit = () => {
+    return formData.lines.reduce((sum, line) => sum + line.totalDebit, 0);
+  };
+
+  const getTotalCredit = () => {
+    return formData.lines.reduce((sum, line) => sum + line.totalCredit, 0);
+  };
+
+  const isBalanced = Math.abs(getTotalDebit() - getTotalCredit()) < 0.01;
 
   const typeOptions = [
     { value: 'manual', label: 'يدوي' },
-    { value: 'automatic', label: 'تلقائي' }
+    { value: 'system', label: 'نظام' }
   ];
 
-  const accountOptions = (accounts || []).map(acc => ({
-    value: acc.id,
-    label: `${acc.code} - ${acc.name}`
-  }));
-
-  // Add search filter for accounts
-  const [accountSearch, setAccountSearch] = useState('');
-
-  const filteredAccountOptions = (accountOptions || []).filter(option => 
-    option.label.toLowerCase().includes(accountSearch.toLowerCase())
-  );
-
-  const totalDebit = (formData.lines || []).reduce((sum, line) => sum + (parseFloat(line.debit?.toString() || '0') || 0), 0);
-  const totalCredit = (formData.lines || []).reduce((sum, line) => sum + (parseFloat(line.credit?.toString() || '0') || 0), 0);
-  const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
+  // Filtered account options (currently not used but kept for future use)
+  // const filteredAccountOptions = accounts.map(account => ({
+  //   value: account.id,
+  //   label: `${account.code} - ${account.name}`
+  // }));
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <FileText className="h-8 w-8 text-green-600 ml-3" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">قيود اليومية</h1>
-            <p className="text-gray-600">إدارة القيود المحاسبية</p>
-          </div>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">قيود اليومية</h1>
+          <p className="text-gray-600">إدارة القيود المحاسبية واليومية</p>
         </div>
         <button
           onClick={() => openModal('create')}
-          className="btn-primary flex items-center"
+          className="btn-primary"
         >
-          <Plus className="h-5 w-5 ml-2" />
-          قيد جديد
+          <Plus className="h-4 w-4 ml-2" />
+          إضافة قيد جديد
         </button>
       </div>
 
@@ -438,7 +559,12 @@ const JournalEntries: React.FC = () => {
             key: 'status',
             label: 'الحالة',
             value: statusFilter,
-            options: statusOptions,
+            options: [
+              { value: '', label: 'جميع الحالات' },
+              { value: 'draft', label: 'مسودة' },
+              { value: 'posted', label: 'معتمد' },
+              { value: 'cancelled', label: 'ملغي' }
+            ],
             onChange: handleStatusFilter
           },
           {
@@ -478,22 +604,44 @@ const JournalEntries: React.FC = () => {
         size="xl"
         footer={
           modalMode !== 'view' ? (
-            <>
-              <button
-                onClick={closeModal}
-                className="btn-secondary"
-                disabled={submitting}
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={handleSubmit}
-                className="btn-primary"
-                disabled={submitting || !isBalanced}
-              >
-                {submitting ? 'جاري الحفظ...' : 'حفظ'}
-              </button>
-            </>
+            <div className="flex justify-between items-center">
+              <div className="flex space-x-3 space-x-reverse">
+                <button
+                  onClick={clearForm}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <Trash2 className="h-4 w-4 ml-2" />
+                  مسح الحقول
+                </button>
+                <button
+                  onClick={addLine}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة سطر جديد
+                </button>
+              </div>
+              <div className="flex space-x-3 space-x-reverse">
+                <button
+                  onClick={closeModal}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <X className="h-4 w-4 ml-2" />
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500 disabled:opacity-50"
+                  disabled={submitting || !isBalanced}
+                >
+                  <Save className="h-4 w-4 ml-2" />
+                  {submitting ? 'جاري الحفظ...' : 'حفظ القيد'}
+                </button>
+              </div>
+            </div>
           ) : (
             <button onClick={closeModal} className="btn-secondary">
               إغلاق
@@ -503,7 +651,7 @@ const JournalEntries: React.FC = () => {
       >
         <div className="space-y-6">
           {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               label="التاريخ"
               name="date"
@@ -516,25 +664,12 @@ const JournalEntries: React.FC = () => {
             />
             
             <FormField
-              label="النوع"
-              name="type"
-              type="select"
-              value={formData.type || 'manual'}
-              onChange={(value) => setFormData(prev => ({ ...prev, type: value as string }))}
-              options={typeOptions}
-              disabled={modalMode === 'view'}
-            />
-            
-            <FormField
-              label="العملة"
-              name="currency"
-              type="select"
-              value={formData.currency || 'LYD'}
-              onChange={(value) => setFormData(prev => ({ ...prev, currency: value as string }))}
-              options={[
-                { value: 'LYD', label: 'دينار ليبي' },
-                { value: 'USD', label: 'دولار أمريكي' }
-              ]}
+              label="المرجع"
+              name="reference"
+              type="text"
+              value={formData.reference || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, reference: value as string }))}
+              placeholder="رقم المرجع أو الوثيقة"
               disabled={modalMode === 'view'}
             />
           </div>
@@ -542,140 +677,203 @@ const JournalEntries: React.FC = () => {
           <FormField
             label="البيان"
             name="description"
-                                  value={formData.description || ''}
+            type="textarea"
+            value={formData.description || ''}
             onChange={(value) => setFormData(prev => ({ ...prev, description: value as string }))}
             required
             error={formErrors.description}
+            placeholder="وصف تفصيلي للقيد"
             disabled={modalMode === 'view'}
           />
 
-          <FormField
-            label="ملاحظات"
-            name="reference"
-                          value={formData.reference || ''}
-            onChange={(value) => setFormData(prev => ({ ...prev, reference: value as string }))}
-            disabled={modalMode === 'view'}
-          />
-
-          {/* Journal Entry Lines */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
+          {/* Journal Lines Table */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium text-gray-900">تفاصيل القيد</h3>
-              {modalMode !== 'view' && (
-                <button
-                  onClick={addLine}
-                  className="btn-secondary text-sm"
-                >
-                  إضافة سطر
-                </button>
+              {formErrors.lines && (
+                <span className="text-sm text-red-600">{formErrors.lines}</span>
               )}
             </div>
+            
+            {/* Table Header */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="grid grid-cols-12 gap-3 text-sm font-medium text-gray-700">
+                <div className="col-span-2">رقم الحساب</div>
+                <div className="col-span-2">الحساب</div>
+                <div className="col-span-2">البيان</div>
+                <div className="col-span-1">مدين</div>
+                <div className="col-span-1">دائن</div>
+                <div className="col-span-1">المعدل</div>
+                <div className="col-span-1">الرصيد</div>
+                <div className="col-span-1">إجمالي مدين</div>
+                <div className="col-span-1">إجمالي دائن</div>
+              </div>
+            </div>
 
-            <div className="space-y-3">
+            {/* Table Rows */}
+            <div className="space-y-2 max-h-96 overflow-y-auto">
               {(formData.lines || []).map((line, index) => (
-                <div key={index} className="grid grid-cols-12 gap-3 items-end p-3 bg-gray-50 rounded-lg">
-                  <div className="col-span-4">
-                    <FormField
-                      label="الحساب"
-                      name={`line_${index}_account`}
-                      type="select"
-                      value={line.accountId || ''}
-                      onChange={(value) => updateLine(index, 'accountId', value)}
-                      options={filteredAccountOptions}
-                      placeholder="اختر الحساب"
-                      error={formErrors[`line_${index}_account`]}
-                      disabled={modalMode === 'view'}
-                    />
-                    {/* Search input for accounts */}
-                    <input
-                      type="text"
-                      placeholder="بحث في الحسابات..."
-                      value={accountSearch}
-                      onChange={(e) => setAccountSearch(e.target.value)}
-                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  
-                  <div className="col-span-3">
-                    <FormField
-                      label="البيان"
-                      name={`line_${index}_description`}
-                      value={line.description || ''}
-                      onChange={(value) => updateLine(index, 'description', value)}
-                      disabled={modalMode === 'view'}
-                    />
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <FormField
-                      label="مدين"
-                      name={`line_${index}_debit`}
-                      type="number"
-                      value={line.debit || 0}
-                      onChange={(value) => updateLine(index, 'debit', value)}
-                      min={0}
-                      step={0.01}
-                      disabled={modalMode === 'view'}
-                    />
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <FormField
-                      label="دائن"
-                      name={`line_${index}_credit`}
-                      type="number"
-                      value={line.credit || 0}
-                      onChange={(value) => updateLine(index, 'credit', value)}
-                      min={0}
-                      step={0.01}
-                      disabled={modalMode === 'view'}
-                    />
-                  </div>
-                  
-                  {modalMode !== 'view' && (formData.lines || []).length > 2 && (
-                    <div className="col-span-1">
-                      <button
-                        onClick={() => removeLine(index)}
-                        className="text-red-600 hover:text-red-800 p-2"
-                        title="حذف السطر"
-                      >
-                        ×
-                      </button>
+                <div key={line.id || index} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="grid grid-cols-12 gap-3 items-center">
+                    {/* Account Code */}
+                    <div className="col-span-2">
+                      <input
+                        type="text"
+                        value={line.accountCode || ''}
+                        onChange={(e) => {
+                          const account = accounts.find(acc => acc.code === e.target.value);
+                          if (account) {
+                            updateLine(index, 'accountId', account.id);
+                            updateLine(index, 'accountCode', account.code);
+                            updateLine(index, 'accountName', account.name);
+                          }
+                          updateLine(index, 'accountCode', e.target.value);
+                        }}
+                        placeholder="رقم الحساب"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm"
+                        disabled={modalMode === 'view'}
+                      />
                     </div>
-                  )}
+
+                    {/* Account Name */}
+                    <div className="col-span-2">
+                      <input
+                        type="text"
+                        value={line.accountName || ''}
+                        onChange={(e) => {
+                          const account = accounts.find(acc => acc.name.includes(e.target.value));
+                          if (account) {
+                            updateLine(index, 'accountId', account.id);
+                            updateLine(index, 'accountCode', account.code);
+                            updateLine(index, 'accountName', account.name);
+                          }
+                          updateLine(index, 'accountName', e.target.value);
+                        }}
+                        placeholder="اسم الحساب"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm"
+                        disabled={modalMode === 'view'}
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div className="col-span-2">
+                      <input
+                        type="text"
+                        value={line.description || ''}
+                        onChange={(e) => updateLine(index, 'description', e.target.value)}
+                        placeholder="بيان السطر"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm"
+                        disabled={modalMode === 'view'}
+                      />
+                    </div>
+
+                    {/* Debit */}
+                    <div className="col-span-1">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={line.debit || ''}
+                        onChange={(e) => {
+                          const debitValue = parseFloat(e.target.value) || 0;
+                          updateLine(index, 'debit', debitValue);
+                          // Clear credit if debit is entered
+                          if (debitValue > 0) {
+                            updateLine(index, 'credit', 0);
+                          }
+                        }}
+                        placeholder="0.00"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm text-left"
+                        disabled={modalMode === 'view'}
+                      />
+                    </div>
+
+                    {/* Credit */}
+                    <div className="col-span-1">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={line.credit || ''}
+                        onChange={(e) => {
+                          const creditValue = parseFloat(e.target.value) || 0;
+                          updateLine(index, 'credit', creditValue);
+                          // Clear debit if credit is entered
+                          if (creditValue > 0) {
+                            updateLine(index, 'debit', 0);
+                          }
+                        }}
+                        placeholder="0.00"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm text-left"
+                        disabled={modalMode === 'view'}
+                      />
+                    </div>
+
+                    {/* Exchange Rate */}
+                    <div className="col-span-1">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={line.exchangeRate || 1}
+                        onChange={(e) => updateLine(index, 'exchangeRate', e.target.value)}
+                        placeholder="1.00"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm text-left"
+                        disabled={modalMode === 'view'}
+                      />
+                    </div>
+
+                    {/* Balance */}
+                    <div className="col-span-1">
+                      <span className="text-sm text-gray-600">
+                        {line.balance?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+
+                    {/* Total Debit */}
+                    <div className="col-span-1">
+                      <span className="text-sm text-green-600 font-medium">
+                        {line.totalDebit?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+
+                    {/* Total Credit */}
+                    <div className="col-span-1">
+                      <span className="text-sm text-blue-600 font-medium">
+                        {line.totalCredit?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Totals */}
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <span className="text-gray-600">إجمالي المدين: </span>
                   <span className="font-semibold text-green-600">
-                    {new Intl.NumberFormat('ar-LY').format(totalDebit)}
+                    {new Intl.NumberFormat('ar-LY').format(getTotalDebit())}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">إجمالي الدائن: </span>
                   <span className="font-semibold text-blue-600">
-                    {new Intl.NumberFormat('ar-LY').format(totalCredit)}
+                    {new Intl.NumberFormat('ar-LY').format(getTotalCredit())}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">الفرق: </span>
                   <span className={`font-semibold ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
-                    {new Intl.NumberFormat('ar-LY').format(Math.abs(totalDebit - totalCredit))}
+                    {new Intl.NumberFormat('ar-LY').format(Math.abs(getTotalDebit() - getTotalCredit()))}
                   </span>
                 </div>
               </div>
-              
               {formErrors.balance && (
-                <p className="text-red-600 text-sm mt-2">{formErrors.balance}</p>
-              )}
-              
-              {formErrors.amount && (
-                <p className="text-red-600 text-sm mt-2">{formErrors.amount}</p>
+                <div className="mt-2 text-center">
+                  <span className="text-sm text-red-600">{formErrors.balance}</span>
+                </div>
               )}
             </div>
           </div>

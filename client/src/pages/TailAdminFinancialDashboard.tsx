@@ -220,7 +220,7 @@ const TailAdminFinancialDashboard: React.FC = () => {
 
   const quickActions = [
     {
-      title: 'إدارة الحسابات',
+      title: 'دليل الحسابات',
       description: 'دليل الحسابات والأرصدة',
       icon: Calculator,
       color: 'primary' as const,

@@ -17,6 +17,7 @@
 
 /* Golden color theme variables */
 :root {
+  --golden-25: #fffdf7;
   --golden-50: #fffbeb;
   --golden-100: #fef3c7;
   --golden-200: #fde68a;
@@ -57,6 +58,21 @@ body {
 /* =============================================== */
 /* COMPONENT LAYER - Custom Reusable Classes */
 /* =============================================== */
+
+/* Custom Golden Colors for Tailwind */
+@layer utilities {
+  .bg-golden-25 {
+    background-color: var(--golden-25);
+  }
+  
+  .text-golden-25 {
+    color: var(--golden-25);
+  }
+  
+  .border-golden-25 {
+    border-color: var(--golden-25);
+  }
+}
 
 @layer components {
   /* Container Classes */
@@ -179,6 +195,171 @@ body {
     @apply animate-spin rounded-full border-t-2 border-r-2 border-golden-600;
   }
 
+  /* Enhanced Navigation Styles */
+  .nav-dropdown {
+    @apply absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50;
+  }
+
+  .nav-dropdown-item {
+    @apply flex items-center px-4 py-2 text-sm transition-colors duration-200;
+  }
+
+  .nav-dropdown-item-active {
+    @apply nav-dropdown-item bg-golden-50 text-golden-700 border-r-2 border-golden-500;
+  }
+
+  .nav-dropdown-item-inactive {
+    @apply nav-dropdown-item text-gray-700 hover:bg-gray-50 hover:text-golden-600;
+  }
+
+  /* Notification Styles */
+  .notification-item {
+    @apply p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors duration-200;
+  }
+
+  .notification-item-unread {
+    @apply notification-item bg-blue-50;
+  }
+
+  .notification-badge {
+    @apply absolute -top-1 -right-1 bg-danger-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center;
+  }
+
+  /* Search Bar Styles */
+  .search-bar {
+    @apply block w-full pr-10 pl-3 py-2 border border-white/20 rounded-lg leading-5 bg-white/10 backdrop-blur-sm placeholder-white/70 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-sm;
+  }
+
+  .search-bar-mobile {
+    @apply block w-full pr-10 pl-3 py-2 border border-white/20 rounded-lg leading-5 bg-white/10 backdrop-blur-sm placeholder-white/70 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-sm;
+  }
+
+  /* Profile Dropdown Styles */
+  .profile-dropdown {
+    @apply absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50;
+  }
+
+  .profile-dropdown-item {
+    @apply w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors duration-200;
+  }
+
+  .profile-dropdown-item-danger {
+    @apply profile-dropdown-item text-red-600 hover:bg-red-50;
+  }
+
+  /* Recent Pages Styles */
+  .recent-page-link {
+    @apply px-2 py-1 text-xs bg-white/10 hover:bg-white/20 text-white rounded transition-colors duration-200;
+  }
+
+  /* Badge Styles */
+  .badge {
+    @apply text-xs px-1.5 py-0.5 rounded-full font-medium;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger-500 text-white;
+  }
+
+  .badge-golden {
+    @apply badge bg-golden-100 text-golden-700;
+  }
+
+  .badge-new {
+    @apply badge bg-green-500 text-white;
+  }
+
+  .badge-updated {
+    @apply badge bg-blue-500 text-white;
+  }
+
+  /* Enhanced Button Styles */
+  .btn-header {
+    @apply p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors duration-200;
+  }
+
+  .btn-header-active {
+    @apply btn-header text-white bg-white/20;
+  }
+
+  /* Mobile Menu Enhancements */
+  .mobile-menu-item {
+    @apply flex items-center px-3 py-2 rounded-md text-base font-medium transition-colors duration-200;
+  }
+
+  .mobile-menu-item-active {
+    @apply mobile-menu-item bg-golden-600 text-white;
+  }
+
+  .mobile-menu-item-inactive {
+    @apply mobile-menu-item text-white hover:text-golden-200 hover:bg-golden-600;
+  }
+
+  /* Animation Enhancements */
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+
+  /* Glass Effect */
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-sm border border-white/20;
+  }
+
+  .glass-effect-hover {
+    @apply glass-effect hover:bg-white/20 transition-colors duration-200;
+  }
+
+  /* Enhanced Shadow Effects */
+  .shadow-professional-xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .shadow-golden {
+    box-shadow: 0 4px 14px 0 rgba(251, 191, 36, 0.39);
+  }
+
+  .shadow-golden-hover {
+    box-shadow: 0 8px 25px 0 rgba(251, 191, 36, 0.5);
+  }
+
+  /* Responsive Enhancements */
+  @media (max-width: 1024px) {
+    .nav-dropdown {
+      @apply w-56;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .nav-dropdown {
+      @apply w-full left-0 right-0;
+    }
+    
+    .profile-dropdown {
+      @apply w-full left-0 right-0;
+    }
+  }
+
+  /* Dark Mode Support (Future Enhancement) */
+  .dark .nav-dropdown {
+    @apply bg-gray-800 border-gray-700;
+  }
+
+  .dark .nav-dropdown-item-inactive {
+    @apply text-gray-300 hover:bg-gray-700 hover:text-white;
+  }
+
+  .dark .profile-dropdown {
+    @apply bg-gray-800 border-gray-700;
+  }
+
+  .dark .profile-dropdown-item {
+    @apply text-gray-300 hover:bg-gray-700;
+  }
+
   /* Table Components */
   .table {
     @apply w-full divide-y divide-gray-200;
@@ -215,27 +396,6 @@ body {
 
   .modal-content {
     @apply relative bg-white rounded-lg shadow-professional-xl mx-auto my-8 max-w-md w-full mx-4;
-  }
-
-  /* Badge Components */
-  .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-  }
-
-  .badge-success {
-    @apply badge bg-success-100 text-success-800;
-  }
-
-  .badge-warning {
-    @apply badge bg-warning-100 text-warning-800;
-  }
-
-  .badge-danger {
-    @apply badge bg-danger-100 text-danger-800;
-  }
-
-  .badge-info {
-    @apply badge bg-blue-100 text-blue-800;
   }
 
   /* Status Indicators */

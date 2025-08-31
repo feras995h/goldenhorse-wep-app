@@ -15,6 +15,10 @@ import {
   ChevronDown,
   ChevronUp,
   Calculator,
+  Tree,
+  Eye,
+  FileText,
+  TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { UserRole } from '../../../types/auth';
@@ -66,18 +70,40 @@ const navigationItems: NavigationItem[] = [
         icon: <DollarSign className="h-4 w-4" />,
         roles: ['financial']
       },
+
       {
-        id: 'financial-accounts',
-        path: '/financial/accounts',
-        label: 'إدارة الحسابات',
-        icon: <Building className="h-4 w-4" />,
+        id: 'financial-chart-of-accounts',
+        path: '/financial/chart-of-accounts',
+        label: 'دليل الحسابات',
+        icon: <Tree className="h-4 w-4" />,
         roles: ['financial']
       },
       {
         id: 'financial-journal',
         path: '/financial/journal',
         label: 'قيود اليومية',
-        icon: <Settings className="h-4 w-4" />,
+        icon: <Calculator className="h-4 w-4" />,
+        roles: ['financial']
+      },
+      {
+        id: 'financial-account-statement',
+        path: '/financial/account-statement',
+        label: 'كشف الحساب',
+        icon: <Calculator className="h-4 w-4" />,
+        roles: ['financial']
+      },
+      {
+        id: 'financial-opening-balance',
+        path: '/financial/opening-balance',
+        label: 'القيد الافتتاحي',
+        icon: <TrendingUp className="h-4 w-4" />,
+        roles: ['financial']
+      },
+      {
+        id: 'financial-account-monitoring',
+        path: '/financial/account-monitoring',
+        label: 'مراقبة الحسابات',
+        icon: <Eye className="h-4 w-4" />,
         roles: ['financial']
       },
       {
@@ -87,7 +113,6 @@ const navigationItems: NavigationItem[] = [
         icon: <Headphones className="h-4 w-4" />,
         roles: ['financial']
       },
-
       {
         id: 'financial-payroll',
         path: '/financial/payroll',
@@ -110,9 +135,11 @@ const navigationItems: NavigationItem[] = [
         roles: ['financial']
       },
       {
-        name: 'كشف الحساب',
-        href: '/financial/statement',
-        icon: Calculator,
+        id: 'financial-invoice-reports',
+        path: '/financial/invoice-reports',
+        label: 'تقارير الفواتير',
+        icon: <FileText className="h-4 w-4" />,
+        roles: ['financial']
       },
     ]
   },

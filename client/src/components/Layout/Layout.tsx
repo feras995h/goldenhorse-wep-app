@@ -7,8 +7,8 @@ const Layout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-golden-25 via-white to-golden-50">
       <div className="relative z-10">
-        <Navbar />
         <Header />
+        <Navbar />
         <main className="relative">
           <div className="container section-md">
             <div className="fade-in">
