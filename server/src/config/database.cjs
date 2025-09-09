@@ -1,5 +1,24 @@
 require('dotenv').config();
 
+// Parse DATABASE_URL if provided
+let dbConfig = {};
+if (process.env.DATABASE_URL) {
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    dbConfig = {
+      dialect: url.protocol.replace(':', '') === 'postgresql' ? 'postgres' : url.protocol.replace(':', ''),
+      host: url.hostname,
+      port: parseInt(url.port) || 5432,
+      database: url.pathname.replace('/', ''),
+      username: url.username,
+      password: url.password,
+    };
+    console.log('✅ Using DATABASE_URL for database configuration');
+  } catch (error) {
+    console.error('❌ Error parsing DATABASE_URL:', error.message);
+  }
+}
+
 module.exports = {
   development: {
     dialect: process.env.DB_DIALECT || 'sqlite',
@@ -28,12 +47,12 @@ module.exports = {
     logging: false
   },
   production: {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    dialect: 'postgres',
+    username: dbConfig.username || process.env.DB_USERNAME,
+    password: dbConfig.password || process.env.DB_PASSWORD,
+    database: dbConfig.database || process.env.DB_NAME,
+    host: dbConfig.host || process.env.DB_HOST,
+    port: dbConfig.port || process.env.DB_PORT || 5432,
+    dialect: dbConfig.dialect || 'postgres',
     logging: false,
     pool: {
       max: 10,
