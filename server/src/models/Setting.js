@@ -27,14 +27,7 @@ export default (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    isPublic: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
-    category: {
-      type: DataTypes.STRING(50),
-      allowNull: true
-    }
+
   }, {
     tableName: 'settings',
     timestamps: true,
@@ -44,12 +37,6 @@ export default (sequelize) => {
       {
         unique: true,
         fields: ['key']
-      },
-      {
-        fields: ['category']
-      },
-      {
-        fields: ['isPublic']
       }
     ],
     hooks: {
@@ -97,32 +84,24 @@ export default (sequelize) => {
   };
 
   Setting.set = async function(key, value, options = {}) {
-    const { type = 'string', description, isPublic = false, category } = options;
+    const { type = 'string', description } = options;
     
     let [setting] = await this.findOrCreate({
       where: { key },
-      defaults: { value, type, description, isPublic, category }
+      defaults: { value, type, description }
     });
 
     if (setting) {
       setting.value = value;
       setting.type = type;
       if (description !== undefined) setting.description = description;
-      if (isPublic !== undefined) setting.isPublic = isPublic;
-      if (category !== undefined) setting.category = category;
       await setting.save();
     }
 
     return setting;
   };
 
-  Setting.getByCategory = function(category) {
-    return this.findAll({ where: { category } });
-  };
 
-  Setting.getPublic = function() {
-    return this.findAll({ where: { isPublic: true } });
-  };
 
   return Setting;
 };

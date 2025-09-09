@@ -103,6 +103,46 @@ export default (sequelize) => {
     notes: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    branch: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    currency: {
+      type: DataTypes.ENUM('LYD', 'USD', 'EUR', 'CNY'),
+      defaultValue: 'LYD'
+    },
+    salaryAccountId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'accounts',
+        key: 'id'
+      }
+    },
+    advanceAccountId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'accounts',
+        key: 'id'
+      }
+    },
+    custodyAccountId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'accounts',
+        key: 'id'
+      }
+    },
+    currentBalance: {
+      type: DataTypes.DECIMAL(15, 2),
+      defaultValue: 0.00,
+      validate: {
+        min: -999999999999.99,
+        max: 999999999999.99
+      }
     }
   }, {
     tableName: 'employees',

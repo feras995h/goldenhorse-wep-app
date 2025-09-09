@@ -7,6 +7,14 @@ export default (sequelize) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
+    entryNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      unique: true,
+      validate: {
+        len: [1, 50]
+      }
+    },
     employeeId: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -15,20 +23,11 @@ export default (sequelize) => {
         key: 'id'
       }
     },
-    month: {
-      type: DataTypes.INTEGER,
+    date: {
+      type: DataTypes.DATEONLY,
       allowNull: false,
       validate: {
-        min: 1,
-        max: 12
-      }
-    },
-    year: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      validate: {
-        min: 2000,
-        max: 2100
+        isDate: true
       }
     },
     basicSalary: {
@@ -64,71 +63,14 @@ export default (sequelize) => {
       }
     },
     status: {
-      type: DataTypes.ENUM('draft', 'calculated', 'approved', 'paid', 'cancelled'),
+      type: DataTypes.ENUM('draft', 'approved', 'paid', 'cancelled'),
       defaultValue: 'draft'
     },
-    currency: {
-      type: DataTypes.STRING(3),
-      defaultValue: 'LYD',
-      validate: {
-        len: [3, 3]
-      }
-    },
-    paymentDate: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-      validate: {
-        isDate: true
-      }
-    },
-    paymentMethod: {
-      type: DataTypes.ENUM('cash', 'bank_transfer', 'check'),
-      allowNull: true
-    },
-    bankAccount: {
-      type: DataTypes.STRING(50),
-      allowNull: true
-    },
-    checkNumber: {
-      type: DataTypes.STRING(50),
-      allowNull: true
-    },
-    remarks: {
+    notes: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id'
-      }
-    },
-    approvedAt: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    approvedBy: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'users',
-        key: 'id'
-      }
-    },
-    paidAt: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    paidBy: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'users',
-        key: 'id'
-      }
-    }
+
   }, {
     tableName: 'payroll_entries',
     timestamps: true,
@@ -136,20 +78,21 @@ export default (sequelize) => {
     updatedAt: 'updatedAt',
     indexes: [
       {
+        unique: true,
+        fields: ['entryNumber']
+      },
+      {
         fields: ['employeeId']
       },
       {
-        fields: ['month', 'year']
+        fields: ['date']
       },
       {
         fields: ['status']
       },
       {
-        fields: ['createdBy']
-      },
-      {
         unique: true,
-        fields: ['employeeId', 'month', 'year']
+        fields: ['employeeId', 'date']
       }
     ],
     hooks: {
@@ -160,13 +103,7 @@ export default (sequelize) => {
         }
       },
       beforeUpdate: (entry) => {
-        if (entry.changed('status')) {
-          if (entry.status === 'approved') {
-            entry.approvedAt = new Date();
-          } else if (entry.status === 'paid') {
-            entry.paidAt = new Date();
-          }
-        }
+        // Add any update logic here if needed
       }
     }
   });
@@ -196,33 +133,30 @@ export default (sequelize) => {
     return this.status === 'approved';
   };
 
-  PayrollEntry.prototype.approve = function(approvedBy) {
+  PayrollEntry.prototype.approve = function() {
     this.status = 'approved';
-    this.approvedBy = approvedBy;
-    this.approvedAt = new Date();
     return this.save();
   };
 
-  PayrollEntry.prototype.pay = function(paidBy, paymentDate) {
+  PayrollEntry.prototype.pay = function() {
     this.status = 'paid';
-    this.paidBy = paidBy;
-    this.paidAt = new Date();
-    if (paymentDate) {
-      this.paymentDate = paymentDate;
-    }
     return this.save();
   };
 
   // Class methods
+  PayrollEntry.findByEntryNumber = function(entryNumber) {
+    return this.findOne({ where: { entryNumber } });
+  };
+
   PayrollEntry.findByEmployee = function(employeeId) {
     return this.findAll({
       where: { employeeId },
-      order: [['year', 'DESC'], ['month', 'DESC']]
+      order: [['date', 'DESC']]
     });
   };
 
-  PayrollEntry.findByMonthYear = function(month, year) {
-    return this.findAll({ where: { month, year } });
+  PayrollEntry.findByDate = function(date) {
+    return this.findAll({ where: { date } });
   };
 
   PayrollEntry.findByStatus = function(status) {
@@ -240,9 +174,6 @@ export default (sequelize) => {
   // Associations
   PayrollEntry.associate = (models) => {
     PayrollEntry.belongsTo(models.Employee, { foreignKey: 'employeeId', as: 'employee' });
-    PayrollEntry.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-    PayrollEntry.belongsTo(models.User, { foreignKey: 'approvedBy', as: 'approver' });
-    PayrollEntry.belongsTo(models.User, { foreignKey: 'paidBy', as: 'payer' });
   };
 
   return PayrollEntry;

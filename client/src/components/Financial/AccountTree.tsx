@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, FileText, Shield } from 'lucide-react';
 import { Account } from '../../types/financial';
 
 interface AccountTreeNode {
@@ -63,9 +63,32 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
     });
   };
 
+  const getAccountTypeColor = (type: string) => {
+    const colors = {
+      asset: 'text-blue-600',
+      liability: 'text-red-600',
+      equity: 'text-green-600',
+      revenue: 'text-purple-600',
+      expense: 'text-orange-600'
+    };
+    return colors[type as keyof typeof colors] || 'text-gray-600';
+  };
+
+  const getAccountTypeLabel = (type: string) => {
+    const types = {
+      asset: 'أصول',
+      liability: 'خصوم',
+      equity: 'حقوق ملكية',
+      revenue: 'إيرادات',
+      expense: 'مصروفات'
+    };
+    return types[type as keyof typeof types] || type;
+  };
+
   const renderTreeNode = (node: AccountTreeNode) => {
     const isExpanded = expandedNodes.has(node.account.id);
     const hasChildren = node.children.length > 0;
+    const isParentAccount = hasChildren || accounts.some(acc => acc.parentId === node.account.id);
     
     return (
       <div key={node.account.id} className="mb-1">
@@ -95,21 +118,61 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
           )}
           
           <div className="flex-1 flex items-center">
-            <span className="font-medium text-gray-900 ml-2">
-              {node.account.code}
-            </span>
-            <span className="text-gray-700">
-              {node.account.name}
-            </span>
-            {node.account.nameEn && (
-              <span className="text-gray-500 text-sm mr-2">
-                ({node.account.nameEn})
-              </span>
-            )}
+            {/* Account Icon */}
+            <div className="mr-2">
+              {isParentAccount ? (
+                <Folder className={`h-4 w-4 ${getAccountTypeColor(node.account.type)}`} />
+              ) : (
+                <FileText className={`h-4 w-4 ${getAccountTypeColor(node.account.type)}`} />
+              )}
+            </div>
+            
+            {/* Account Code and Name */}
+            <div className="flex-1">
+              <div className="flex items-center">
+                <span className="font-medium text-gray-900 ml-2">
+                  {node.account.code}
+                </span>
+                <span className="text-gray-700">
+                  {node.account.name}
+                </span>
+                {node.account.isSystemAccount && (
+                  <Shield className="h-3 w-3 text-blue-600 mr-1" title="حساب نظام أساسي" />
+                )}
+                {node.account.nameEn && (
+                  <span className="text-gray-500 text-sm mr-2">
+                    ({node.account.nameEn})
+                  </span>
+                )}
+              </div>
+              
+              {/* Account Type and Parent Info */}
+              <div className="flex items-center mt-1">
+                <span className={`text-xs px-2 py-1 rounded-full ${getAccountTypeColor(node.account.type)} bg-opacity-10`}>
+                  {getAccountTypeLabel(node.account.type)}
+                </span>
+                {node.account.parentId && (
+                  <span className="text-xs text-gray-500 mr-2">
+                    حساب فرعي
+                  </span>
+                )}
+                {hasChildren && (
+                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full mr-2">
+                    {node.children.length} حساب فرعي
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
           
-          <div className="text-gray-500 text-sm">
-            {node.account.balance?.toLocaleString()} {node.account.currency}
+          {/* Balance */}
+          <div className="text-gray-500 text-sm text-left">
+            <div className="font-medium">
+              {node.account.balance?.toLocaleString()} {node.account.currency}
+            </div>
+            <div className="text-xs text-gray-400">
+              {node.account.balance && node.account.balance >= 0 ? 'مدين' : 'دائن'}
+            </div>
           </div>
         </div>
         
@@ -124,10 +187,30 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
 
   return (
     <div className="border border-gray-200 rounded-lg p-4 bg-white">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">شجرة الحسابات</h3>
-      <div className="space-y-1">
-        {treeData.map(node => renderTreeNode(node))}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">شجرة الحسابات</h3>
+        <div className="flex items-center space-x-4 space-x-reverse text-xs text-gray-500">
+          <div className="flex items-center">
+            <Folder className="h-3 w-3 mr-1" />
+            <span>حساب رئيسي</span>
+          </div>
+          <div className="flex items-center">
+            <FileText className="h-3 w-3 mr-1" />
+            <span>حساب فرعي</span>
+          </div>
+        </div>
       </div>
+      
+      {treeData.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <p>لا توجد حسابات لعرضها</p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {treeData.map(node => renderTreeNode(node))}
+        </div>
+      )}
     </div>
   );
 };

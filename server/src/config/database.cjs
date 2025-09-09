@@ -2,13 +2,15 @@ require('dotenv').config();
 
 module.exports = {
   development: {
+    dialect: process.env.DB_DIALECT || 'sqlite',
+    storage: process.env.DB_STORAGE || './database/development.sqlite',
+    // PostgreSQL settings (used when DB_DIALECT=postgres)
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     database: process.env.DB_NAME || 'golden_horse_dev',
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
-    dialect: 'postgres',
-    logging: console.log,
+    logging: false, // Disable SQL logging in development
     pool: {
       max: 5,
       min: 0,

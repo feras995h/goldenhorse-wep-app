@@ -20,9 +20,20 @@ export default (sequelize) => {
       allowNull: true
     },
     permissions: {
-      type: DataTypes.JSON,
+      type: DataTypes.TEXT, // Use TEXT for SQLite compatibility
       allowNull: true,
-      defaultValue: {}
+      defaultValue: '{}',
+      get() {
+        const value = this.getDataValue('permissions');
+        try {
+          return value ? JSON.parse(value) : {};
+        } catch {
+          return {};
+        }
+      },
+      set(value) {
+        this.setDataValue('permissions', JSON.stringify(value || {}));
+      }
     },
     isActive: {
       type: DataTypes.BOOLEAN,

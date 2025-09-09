@@ -1,34 +1,7 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
+import models from '../models/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Helper function to read JSON data
-const readJsonFile = async (filename) => {
-  try {
-    const filePath = path.join(__dirname, '../data', filename);
-    const data = await fs.readFile(filePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error(`Error reading ${filename}:`, error);
-    return [];
-  }
-};
-
-// Helper function to write JSON data
-const writeJsonFile = async (filename, data) => {
-  try {
-    const filePath = path.join(__dirname, '../data', filename);
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
-    return true;
-  } catch (error) {
-    console.error(`Error writing ${filename}:`, error);
-    return false;
-  }
-};
+const { Account, GLEntry } = models;
 
 /**
  * GL Entry Controller - Core double-entry bookkeeping engine
@@ -56,19 +29,15 @@ class GLEntryController {
         return { success: true, message: 'Validation passed', validated: true };
       }
       
-      // Read existing GL entries
-      const existingGLEntries = await readJsonFile('gl_entries.json');
-      
       // Process and create GL entries
       const processedEntries = [];
       for (let entry of glEntries) {
         const glEntry = await this.processGLEntry(entry, userId);
         processedEntries.push(glEntry);
-        existingGLEntries.push(glEntry);
       }
       
-      // Save GL entries
-      await writeJsonFile('gl_entries.json', existingGLEntries);
+      // Save GL entries using Sequelize
+      const createdEntries = await GLEntry.bulkCreate(processedEntries);
       
       // Update account balances if required
       if (updateBalances) {
@@ -96,8 +65,7 @@ class GLEntryController {
    * Process a single GL entry with ERPNext-like structure
    */
   async processGLEntry(entry, userId) {
-    const accounts = await readJsonFile('accounts.json');
-    const account = accounts.find(acc => acc.id === entry.accountId);
+    const account = await Account.findByPk(entry.accountId);
     
     if (!account) {
       throw new Error(`Account with ID ${entry.accountId} not found`);
@@ -180,8 +148,7 @@ class GLEntryController {
       totalCredits += credit;
       
       // Validate account exists and is ledger account
-      const accounts = await readJsonFile('accounts.json');
-      const account = accounts.find(acc => acc.id === entry.accountId);
+      const account = await Account.findByPk(entry.accountId);
       
       if (!account) {
         errors.push(`Account with ID ${entry.accountId} does not exist`);
@@ -224,16 +191,16 @@ class GLEntryController {
    * Update account balances after GL entry creation
    */
   async updateAccountBalances(glEntries) {
-    const accounts = await readJsonFile('accounts.json');
+    const accounts = await Account.findAll();
     const updatedAccounts = new Map();
     
     for (let glEntry of glEntries) {
-      const accountId = glEntry.account;
+      const accountId = glEntry.accountId || glEntry.account;
       
       if (!updatedAccounts.has(accountId)) {
         const account = accounts.find(acc => acc.id === accountId);
         if (account) {
-          updatedAccounts.set(accountId, { ...account });
+          updatedAccounts.set(accountId, { ...account.dataValues });
         }
       }
       
@@ -253,25 +220,27 @@ class GLEntryController {
       }
     }
     
-    // Update accounts in the main array
+    // Update accounts using Sequelize
     for (let [accountId, updatedAccount] of updatedAccounts) {
-      const index = accounts.findIndex(acc => acc.id === accountId);
-      if (index !== -1) {
-        accounts[index] = updatedAccount;
-      }
+      await Account.update(
+        { 
+          balance: updatedAccount.balance,
+          updatedAt: new Date()
+        },
+        { where: { id: accountId } }
+      );
     }
     
     // Update parent account balances (hierarchical aggregation)
-    await this.updateParentAccountBalances(accounts);
-    
-    // Save updated accounts
-    await writeJsonFile('accounts.json', accounts);
+    await this.updateParentAccountBalances();
   }
   
   /**
    * Update parent account balances (aggregate from children)
    */
-  async updateParentAccountBalances(accounts) {
+  async updateParentAccountBalances() {
+    const accounts = await Account.findAll();
+    
     // Process accounts level by level (bottom-up)
     const maxLevel = Math.max(...accounts.map(acc => acc.level));
     
@@ -284,8 +253,15 @@ class GLEntryController {
           if (parent && parent.isGroup) {
             // For group accounts, balance is sum of all children
             const children = accounts.filter(acc => acc.parentId === parent.id);
-            parent.balance = children.reduce((sum, child) => sum + child.balance, 0);
-            parent.updatedAt = new Date().toISOString();
+            const newBalance = children.reduce((sum, child) => sum + parseFloat(child.balance || 0), 0);
+            
+            await Account.update(
+              { 
+                balance: newBalance,
+                updatedAt: new Date()
+              },
+              { where: { id: parent.id } }
+            );
           }
         }
       }
@@ -297,14 +273,13 @@ class GLEntryController {
    */
   async cancelGLEntries(voucherType, voucherNo, userId) {
     try {
-      const glEntries = await readJsonFile('gl_entries.json');
-      
-      // Find entries to cancel
-      const entriesToCancel = glEntries.filter(
-        entry => entry.voucherType === voucherType && 
-                entry.voucherNo === voucherNo && 
-                !entry.isCancelled
-      );
+      const entriesToCancel = await GLEntry.findAll({
+        where: {
+          voucherType,
+          voucherNo,
+          isCancelled: false
+        }
+      });
       
       if (entriesToCancel.length === 0) {
         return { success: false, message: 'لم يتم العثور على قيود للإلغاء' };
@@ -312,32 +287,41 @@ class GLEntryController {
       
       // Create reverse entries
       const reverseEntries = entriesToCancel.map(entry => ({
-        ...entry,
         id: uuidv4(),
-        debit: entry.credit, // Reverse debit and credit
-        credit: entry.debit,
-        debitInAccountCurrency: entry.creditInAccountCurrency,
-        creditInAccountCurrency: entry.debitInAccountCurrency,
-        remarks: `Cancellation of ${entry.voucherType} ${entry.voucherNo}: ${entry.remarks}`,
         postingDate: new Date().toISOString().split('T')[0],
-        createdAt: new Date().toISOString(),
+        accountId: entry.accountId,
+        debit: parseFloat(entry.credit || 0), // Reverse debit and credit
+        credit: parseFloat(entry.debit || 0),
+        voucherType: entry.voucherType,
+        voucherNo: entry.voucherNo,
+        remarks: `Cancellation of ${entry.voucherType} ${entry.voucherNo}: ${entry.remarks}`,
+        currency: entry.currency || 'LYD',
+        exchangeRate: entry.exchangeRate || 1.0,
         createdBy: userId,
         isCancelled: false,
         againstVoucherType: entry.voucherType,
-        againstVoucher: entry.voucherNo
+        againstVoucher: entry.voucherNo,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }));
       
       // Mark original entries as cancelled
-      entriesToCancel.forEach(entry => {
-        entry.isCancelled = true;
-        entry.updatedAt = new Date().toISOString();
-      });
+      await GLEntry.update(
+        { 
+          isCancelled: true,
+          updatedAt: new Date()
+        },
+        {
+          where: {
+            voucherType,
+            voucherNo,
+            isCancelled: false
+          }
+        }
+      );
       
       // Add reverse entries
-      glEntries.push(...reverseEntries);
-      
-      // Save updated GL entries
-      await writeJsonFile('gl_entries.json', glEntries);
+      await GLEntry.bulkCreate(reverseEntries);
       
       // Update account balances
       await this.updateAccountBalances(reverseEntries);
@@ -364,52 +348,65 @@ class GLEntryController {
    */
   async getGeneralLedger(filters = {}) {
     try {
-      const glEntries = await readJsonFile('gl_entries.json');
-      const accounts = await readJsonFile('accounts.json');
-      
-      let filteredEntries = glEntries.filter(entry => !entry.isCancelled);
+      let whereClause = { isCancelled: false };
       
       // Apply filters
       if (filters.accountId) {
-        filteredEntries = filteredEntries.filter(entry => entry.account === filters.accountId);
+        whereClause.accountId = filters.accountId;
       }
       
       if (filters.fromDate) {
-        filteredEntries = filteredEntries.filter(entry => entry.postingDate >= filters.fromDate);
+        whereClause.postingDate = { 
+          ...whereClause.postingDate,
+          [models.sequelize.Op.gte]: filters.fromDate 
+        };
       }
       
       if (filters.toDate) {
-        filteredEntries = filteredEntries.filter(entry => entry.postingDate <= filters.toDate);
+        whereClause.postingDate = { 
+          ...whereClause.postingDate,
+          [models.sequelize.Op.lte]: filters.toDate 
+        };
       }
       
       if (filters.voucherType) {
-        filteredEntries = filteredEntries.filter(entry => entry.voucherType === filters.voucherType);
+        whereClause.voucherType = filters.voucherType;
       }
       
       if (filters.party) {
-        filteredEntries = filteredEntries.filter(entry => entry.party === filters.party);
+        whereClause.party = filters.party;
       }
       
-      // Sort by posting date
-      filteredEntries.sort((a, b) => new Date(a.postingDate) - new Date(b.postingDate));
+      const filteredEntries = await GLEntry.findAll({
+        where: whereClause,
+        order: [['postingDate', 'ASC'], ['createdAt', 'ASC']],
+        include: [
+          {
+            model: Account,
+            as: 'account',
+            attributes: ['id', 'code', 'name', 'type']
+          }
+        ]
+      });
       
       // Calculate running balance
       let runningBalance = 0;
       const entriesWithBalance = filteredEntries.map(entry => {
-        const account = accounts.find(acc => acc.id === entry.account);
+        const account = entry.account;
         
         // Calculate balance change based on account type
         let balanceChange = 0;
         if (['asset', 'expense'].includes(account.type)) {
-          balanceChange = entry.debit - entry.credit;
+          balanceChange = parseFloat(entry.debit || 0) - parseFloat(entry.credit || 0);
         } else {
-          balanceChange = entry.credit - entry.debit;
+          balanceChange = parseFloat(entry.credit || 0) - parseFloat(entry.debit || 0);
         }
         
         runningBalance += balanceChange;
         
         return {
-          ...entry,
+          ...entry.dataValues,
+          account: account.dataValues,
           balanceChange,
           runningBalance
         };
@@ -437,30 +434,32 @@ class GLEntryController {
    */
   async getAccountBalance(accountId, asOfDate = null) {
     try {
-      const glEntries = await readJsonFile('gl_entries.json');
-      const accounts = await readJsonFile('accounts.json');
-      
-      const account = accounts.find(acc => acc.id === accountId);
+      const account = await Account.findByPk(accountId);
       if (!account) {
         return { success: false, message: 'الحساب غير موجود' };
       }
       
-      let relevantEntries = glEntries.filter(
-        entry => entry.account === accountId && !entry.isCancelled
-      );
+      let whereClause = { 
+        accountId: accountId, 
+        isCancelled: false 
+      };
       
       if (asOfDate) {
-        relevantEntries = relevantEntries.filter(
-          entry => entry.postingDate <= asOfDate
-        );
+        whereClause.postingDate = {
+          [models.sequelize.Op.lte]: asOfDate
+        };
       }
+      
+      const relevantEntries = await GLEntry.findAll({
+        where: whereClause
+      });
       
       let balance = 0;
       for (let entry of relevantEntries) {
         if (['asset', 'expense'].includes(account.type)) {
-          balance += entry.debit - entry.credit;
+          balance += parseFloat(entry.debit || 0) - parseFloat(entry.credit || 0);
         } else {
-          balance += entry.credit - entry.debit;
+          balance += parseFloat(entry.credit || 0) - parseFloat(entry.debit || 0);
         }
       }
       

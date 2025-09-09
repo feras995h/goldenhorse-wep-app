@@ -510,7 +510,7 @@ export async function up(queryInterface, Sequelize) {
       type: DataTypes.TEXT
     },
     repaymentSchedule: {
-      type: DataTypes.JSONB
+      type: DataTypes.TEXT // Use TEXT for SQLite compatibility
     },
     status: {
       type: DataTypes.ENUM('pending', 'approved', 'paid', 'repaid', 'cancelled'),

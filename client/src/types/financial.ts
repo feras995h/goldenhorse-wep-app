@@ -9,18 +9,106 @@ export type PaymentStatus = 'unpaid' | 'partially_paid' | 'paid' | 'overdue';
 // Chart of Accounts
 export interface Account {
   id: string;
-  code: string;
-  name: string;
-  nameEn?: string;
-  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
-  parentId?: string;
-  level: number;
-  isActive: boolean;
-  balance: number;
-  currency: Currency;
+  code: string; // رقم الحساب - فريد ويمكن أن يكون هرمي أو تسلسلي
+  name: string; // اسم الحساب
+  nameEn?: string; // الاسم بالإنجليزية
+  type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'; // التصنيف
+  accountType: 'main' | 'sub'; // نوع الحساب: رئيسي أو فرعي
+  level: number; // المستوى - يحدد عمق الحساب في الشجرة
+  parentId?: string; // الحساب الأب
+  parentCode?: string; // رقم الحساب الأب
+  parentName?: string; // اسم الحساب الأب
+  isActive: boolean; // الحالة: نشط / غير نشط
+  balance: number; // الرصيد الحالي
+  currency: Currency; // العملة
+  nature: 'debit' | 'credit'; // طبيعة الحساب المالية: مدين أو دائن
+  description?: string; // الوصف / الملاحظات
+  notes?: string; // ملاحظات إضافية
+  isSystemAccount?: boolean; // حساب نظام أساسي
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
+
+// الحسابات الأساسية الافتراضية
+export const DEFAULT_ACCOUNTS = [
+  {
+    code: '1000',
+    name: 'الأصول',
+    nameEn: 'Assets',
+    type: 'asset' as const,
+    accountType: 'main' as const,
+    level: 1,
+    isActive: true,
+    balance: 0,
+    currency: 'LYD' as Currency,
+    nature: 'debit' as const,
+    description: 'حساب الأصول الأساسي - يشمل جميع الأصول المملوكة للشركة',
+    notes: 'حساب نظام أساسي - لا يمكن حذفه أو تعديله',
+    isSystemAccount: true
+  },
+  {
+    code: '2000',
+    name: 'المصروفات',
+    nameEn: 'Expenses',
+    type: 'expense' as const,
+    accountType: 'main' as const,
+    level: 1,
+    isActive: true,
+    balance: 0,
+    currency: 'LYD' as Currency,
+    nature: 'debit' as const,
+    description: 'حساب المصروفات الأساسي - يشمل جميع المصروفات التشغيلية',
+    notes: 'حساب نظام أساسي - لا يمكن حذفه أو تعديله',
+    isSystemAccount: true
+  },
+  {
+    code: '3000',
+    name: 'الالتزامات',
+    nameEn: 'Liabilities',
+    type: 'liability' as const,
+    accountType: 'main' as const,
+    level: 1,
+    isActive: true,
+    balance: 0,
+    currency: 'LYD' as Currency,
+    nature: 'credit' as const,
+    description: 'حساب الالتزامات الأساسي - يشمل جميع الديون والالتزامات',
+    notes: 'حساب نظام أساسي - لا يمكن حذفه أو تعديله',
+    isSystemAccount: true
+  },
+  {
+    code: '4000',
+    name: 'حقوق الملكية',
+    nameEn: 'Equity',
+    type: 'equity' as const,
+    accountType: 'main' as const,
+    level: 1,
+    isActive: true,
+    balance: 0,
+    currency: 'LYD' as Currency,
+    nature: 'credit' as const,
+    description: 'حساب حقوق الملكية الأساسي - يشمل رأس المال والأرباح المحتجزة',
+    notes: 'حساب نظام أساسي - لا يمكن حذفه أو تعديله',
+    isSystemAccount: true
+  },
+  {
+    code: '5000',
+    name: 'الإيرادات',
+    nameEn: 'Revenue',
+    type: 'revenue' as const,
+    accountType: 'main' as const,
+    level: 1,
+    isActive: true,
+    balance: 0,
+    currency: 'LYD' as Currency,
+    nature: 'credit' as const,
+    description: 'حساب الإيرادات الأساسي - يشمل جميع الإيرادات التشغيلية',
+    notes: 'حساب نظام أساسي - لا يمكن حذفه أو تعديله',
+    isSystemAccount: true
+  }
+];
 
 // Journal Entries
 export interface JournalEntry {

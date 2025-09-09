@@ -150,20 +150,7 @@ const navigationItems: NavigationItem[] = [
     icon: <ShoppingCart className="h-5 w-5" />,
     roles: ['sales']
   },
-  {
-    id: 'customer-service',
-    path: '/customer-service',
-    label: 'خدمات العملاء',
-    icon: <Headphones className="h-5 w-5" />,
-    roles: ['customer_service']
-  },
-  {
-    id: 'operations',
-    path: '/operations',
-    label: 'العمليات',
-    icon: <Truck className="h-5 w-5" />,
-    roles: ['operations']
-  }
+
 ];
 
 const TailAdminSidebar: React.FC<TailAdminSidebarProps> = ({

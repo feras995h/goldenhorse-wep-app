@@ -39,10 +39,7 @@ export default (sequelize) => {
       type: DataTypes.STRING(50),
       allowNull: true
     },
-    accountType: {
-      type: DataTypes.STRING(50),
-      allowNull: true
-    },
+
     parentId: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -90,6 +87,24 @@ export default (sequelize) => {
     description: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    accountType: {
+      type: DataTypes.ENUM('main', 'sub'),
+      allowNull: false,
+      defaultValue: 'main'
+    },
+    nature: {
+      type: DataTypes.ENUM('debit', 'credit'),
+      allowNull: false,
+      defaultValue: 'debit'
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    isSystemAccount: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   }, {
     tableName: 'accounts',

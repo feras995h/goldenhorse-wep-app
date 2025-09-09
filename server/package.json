@@ -18,25 +18,46 @@
     "clear-data": "node src/scripts/clearData.js",
     "reset-counters": "node src/scripts/clearData.js reset-counters",
     "seed-basic-data": "node src/scripts/seedBasicData.js",
-    "test": "echo \"No tests configured yet\"",
-    "test-integration": "echo \"No integration tests configured yet\""
+    "seed-dummy-data": "node src/scripts/seedDummyData.js",
+    "seed-dummy-data-simple": "node src/scripts/seedDummyDataSimple.js",
+    "seed-dummy-data-final": "node src/scripts/seedDummyDataFinal.js",
+    "seed-dummy-data-working": "node src/scripts/seedDummyDataWorking.js",
+    "seed-dummy-data-complete": "node src/scripts/seedDummyDataComplete.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "TEST_VERBOSE=true jest --verbose",
+    "test-integration": "jest --testPathPattern=integration",
+    "check-deployment": "node src/scripts/checkDeployment.js",
+    "deploy": "node src/scripts/checkDeployment.js && npm run db:migrate && npm run seed-basic-data"
   },
   "dependencies": {
+    "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^7.5.1",
+    "express-validator": "^7.2.1",
     "fs-extra": "^11.3.1",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
     "path": "^0.12.7",
-    "uuid": "^11.1.0",
     "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4",
     "sequelize": "^6.35.2",
-    "pg-hstore": "^2.3.4"
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0",
+    "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.28.3",
+    "jest": "^30.1.3",
     "nodemon": "^3.0.2",
-    "sequelize-cli": "^6.6.2"
+    "sequelize-cli": "^6.6.2",
+    "supertest": "^7.1.4"
   }
 }

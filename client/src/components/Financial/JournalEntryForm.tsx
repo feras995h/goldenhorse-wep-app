@@ -33,11 +33,31 @@ const JournalEntryForm: React.FC<JournalEntryFormProps> = ({
   const totalCreditConverted = totalCredit * formData.exchangeRate;
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
 
-  // Auto-add new line when last line has account
+  // Function to check if a line is empty
+  const isLineEmpty = (line: JournalEntryLine) => {
+    return !line.accountId && 
+           !line.description && 
+           (!line.debit || line.debit === 0) && 
+           (!line.credit || line.credit === 0);
+  };
+
+  // Function to check if a line has data
+  const isLineFilled = (line: JournalEntryLine) => {
+    return line.accountId && 
+           (line.description || (line.debit && line.debit > 0) || (line.credit && line.credit > 0));
+  };
+
+  // Auto-add new line when second line (index 1) is filled
   useEffect(() => {
-    const lastLine = formData.lines[formData.lines.length - 1];
-    if (lastLine && lastLine.accountId && !lastLine.description && lastLine.debit === 0 && lastLine.credit === 0) {
-      addLine();
+    const lines = formData.lines;
+    if (lines.length >= 2) {
+      const secondLine = lines[1];
+      const lastLine = lines[lines.length - 1];
+      
+      // If second line is filled and last line is empty, add a new line
+      if (isLineFilled(secondLine) && isLineEmpty(lastLine)) {
+        addLine();
+      }
     }
   }, [formData.lines]);
 
@@ -96,6 +116,12 @@ const JournalEntryForm: React.FC<JournalEntryFormProps> = ({
 
     newLines[index] = line;
     onFormDataChange({ ...formData, lines: newLines });
+  };
+
+  // Function to clean empty lines before saving
+  const cleanEmptyLines = () => {
+    const cleanedLines = formData.lines.filter(line => !isLineEmpty(line));
+    onFormDataChange({ ...formData, lines: cleanedLines });
   };
 
   const searchAccounts = async (searchTerm: string, searchField: 'accountCode' | 'accountName') => {
@@ -200,14 +226,24 @@ const JournalEntryForm: React.FC<JournalEntryFormProps> = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-gray-900">تفاصيل القيد</h3>
-          <button
-            type="button"
-            onClick={addLine}
-            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-golden-600 hover:bg-golden-700"
-          >
-            <Plus className="h-4 w-4 ml-1" />
-            إضافة سطر
-          </button>
+          <div className="flex space-x-2 space-x-reverse">
+            <button
+              type="button"
+              onClick={cleanEmptyLines}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <Minus className="h-4 w-4 ml-1" />
+              تنظيف الأسطر الفارغة
+            </button>
+            <button
+              type="button"
+              onClick={addLine}
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-golden-600 hover:bg-golden-700"
+            >
+              <Plus className="h-4 w-4 ml-1" />
+              إضافة سطر
+            </button>
+          </div>
         </div>
 
         {/* Lines Table */}
@@ -237,7 +273,7 @@ const JournalEntryForm: React.FC<JournalEntryFormProps> = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {formData.lines.map((line, index) => (
-                <tr key={index} className="hover:bg-gray-50">
+                <tr key={index} className={`hover:bg-gray-50 ${isLineEmpty(line) ? 'bg-yellow-50' : ''}`}>
                   {/* Account Selection */}
                   <td className="px-3 py-4 whitespace-nowrap">
                     <div className="relative">

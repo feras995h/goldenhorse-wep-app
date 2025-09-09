@@ -23,11 +23,7 @@ export default (sequelize) => {
       type: DataTypes.STRING(200),
       allowNull: true
     },
-    type: {
-      type: DataTypes.ENUM('individual', 'company'),
-      allowNull: false,
-      defaultValue: 'individual'
-    },
+
     email: {
       type: DataTypes.STRING(100),
       allowNull: true,
@@ -55,21 +51,8 @@ export default (sequelize) => {
         max: 999999999999.99
       }
     },
-    paymentTerms: {
-      type: DataTypes.INTEGER,
-      defaultValue: 30,
-      validate: {
-        min: 0,
-        max: 365
-      }
-    },
-    currency: {
-      type: DataTypes.STRING(3),
-      defaultValue: 'LYD',
-      validate: {
-        len: [3, 3]
-      }
-    },
+
+
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
@@ -82,33 +65,31 @@ export default (sequelize) => {
         max: 999999999999.99
       }
     },
-    accountId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'accounts',
-        key: 'id'
-      }
-    },
+
     contactPerson: {
       type: DataTypes.STRING(100),
       allowNull: true
     },
-    contactPhone: {
-      type: DataTypes.STRING(20),
-      allowNull: true
+    type: {
+      type: DataTypes.ENUM('individual', 'company'),
+      allowNull: false,
+      defaultValue: 'individual'
     },
-    contactEmail: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
+    paymentTerms: {
+      type: DataTypes.INTEGER,
+      defaultValue: 30,
       validate: {
-        isEmail: true
+        min: 0,
+        max: 365
       }
     },
-    notes: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    }
+    currency: {
+      type: DataTypes.ENUM('LYD', 'USD', 'EUR', 'CNY'),
+      defaultValue: 'LYD'
+    },
+
+
+
   }, {
     tableName: 'customers',
     timestamps: true,
@@ -119,15 +100,11 @@ export default (sequelize) => {
         unique: true,
         fields: ['code']
       },
-      {
-        fields: ['type']
-      },
+
       {
         fields: ['isActive']
       },
-      {
-        fields: ['accountId']
-      },
+
       {
         fields: ['email']
       }

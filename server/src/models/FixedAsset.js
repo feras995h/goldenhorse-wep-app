@@ -7,7 +7,7 @@ export default (sequelize) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
-    code: {
+    assetNumber: {
       type: DataTypes.STRING(50),
       allowNull: false,
       unique: true,
@@ -19,10 +19,7 @@ export default (sequelize) => {
       type: DataTypes.STRING(200),
       allowNull: false
     },
-    nameEn: {
-      type: DataTypes.STRING(200),
-      allowNull: true
-    },
+
     category: {
       type: DataTypes.ENUM('buildings', 'machinery', 'vehicles', 'equipment', 'furniture', 'computers', 'other'),
       allowNull: false,
@@ -35,7 +32,7 @@ export default (sequelize) => {
         isDate: true
       }
     },
-    cost: {
+    purchaseCost: {
       type: DataTypes.DECIMAL(15, 2),
       allowNull: false,
       validate: {
@@ -63,22 +60,7 @@ export default (sequelize) => {
       type: DataTypes.ENUM('straight_line', 'declining_balance', 'sum_of_years', 'units_of_production'),
       defaultValue: 'straight_line'
     },
-    depreciationRate: {
-      type: DataTypes.DECIMAL(5, 2),
-      allowNull: false,
-      validate: {
-        min: 0,
-        max: 100
-      }
-    },
-    accumulatedDepreciation: {
-      type: DataTypes.DECIMAL(15, 2),
-      defaultValue: 0.00,
-      validate: {
-        min: 0,
-        max: 999999999999.99
-      }
-    },
+
     currentValue: {
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0.00,
@@ -95,75 +77,13 @@ export default (sequelize) => {
       type: DataTypes.STRING(200),
       allowNull: true
     },
-    department: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    responsiblePerson: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    supplier: {
-      type: DataTypes.STRING(200),
-      allowNull: true
-    },
-    warrantyExpiry: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-      validate: {
-        isDate: true
-      }
-    },
-    lastMaintenanceDate: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-      validate: {
-        isDate: true
-      }
-    },
-    nextMaintenanceDate: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-      validate: {
-        isDate: true
-      }
-    },
+
     description: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    notes: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    createdBy: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id'
-      }
-    },
-    disposedAt: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    disposedBy: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'users',
-        key: 'id'
-      }
-    },
-    disposalAmount: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: true,
-      validate: {
-        min: 0,
-        max: 999999999999.99
-      }
-    }
+
+
   }, {
     tableName: 'fixed_assets',
     timestamps: true,
@@ -172,49 +92,36 @@ export default (sequelize) => {
     indexes: [
       {
         unique: true,
-        fields: ['code']
+        fields: ['assetNumber']
       },
       {
         fields: ['category']
       },
       {
         fields: ['status']
-      },
-      {
-        fields: ['department']
-      },
-      {
-        fields: ['createdBy']
       }
     ],
     hooks: {
       beforeCreate: (asset) => {
         // Calculate current value initially
-        asset.currentValue = asset.cost;
+        asset.currentValue = asset.purchaseCost;
       },
       beforeUpdate: (asset) => {
-        // Update current value based on accumulated depreciation
-        asset.currentValue = asset.cost - asset.accumulatedDepreciation;
-        
-        if (asset.changed('status') && asset.status === 'disposed') {
-          asset.disposedAt = new Date();
-        }
+        // Add any update logic here if needed
       }
     }
   });
 
   // Instance methods
   FixedAsset.prototype.getCost = function() {
-    return parseFloat(this.cost) || 0;
+    return parseFloat(this.purchaseCost) || 0;
   };
 
   FixedAsset.prototype.getCurrentValue = function() {
     return parseFloat(this.currentValue) || 0;
   };
 
-  FixedAsset.prototype.getAccumulatedDepreciation = function() {
-    return parseFloat(this.accumulatedDepreciation) || 0;
-  };
+
 
   FixedAsset.prototype.getSalvageValue = function() {
     return parseFloat(this.salvageValue) || 0;
@@ -235,27 +142,20 @@ export default (sequelize) => {
   };
 
   FixedAsset.prototype.calculateDepreciation = function() {
-    const annualDepreciation = (this.cost - this.salvageValue) / this.usefulLife;
+    const annualDepreciation = (this.purchaseCost - this.salvageValue) / this.usefulLife;
     return annualDepreciation;
   };
 
-  FixedAsset.prototype.addDepreciation = function(amount) {
-    this.accumulatedDepreciation += amount;
-    this.currentValue = this.cost - this.accumulatedDepreciation;
-    return this.save();
-  };
 
-  FixedAsset.prototype.dispose = function(disposedBy, disposalAmount = 0) {
+
+  FixedAsset.prototype.dispose = function() {
     this.status = 'disposed';
-    this.disposedBy = disposedBy;
-    this.disposedAt = new Date();
-    this.disposalAmount = disposalAmount;
     return this.save();
   };
 
   // Class methods
-  FixedAsset.findByCode = function(code) {
-    return this.findOne({ where: { code } });
+  FixedAsset.findByAssetNumber = function(assetNumber) {
+    return this.findOne({ where: { assetNumber } });
   };
 
   FixedAsset.findActive = function() {
@@ -266,9 +166,7 @@ export default (sequelize) => {
     return this.findAll({ where: { category } });
   };
 
-  FixedAsset.findByDepartment = function(department) {
-    return this.findAll({ where: { department } });
-  };
+
 
   FixedAsset.findDisposed = function() {
     return this.findAll({ where: { status: 'disposed' } });
@@ -286,8 +184,7 @@ export default (sequelize) => {
 
   // Associations
   FixedAsset.associate = (models) => {
-    FixedAsset.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-    FixedAsset.belongsTo(models.User, { foreignKey: 'disposedBy', as: 'disposer' });
+    // Add associations if needed
   };
 
   return FixedAsset;

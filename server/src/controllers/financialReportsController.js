@@ -1,23 +1,8 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import GLEntryController from './glEntryController.js';
+import models from '../models/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { Account, GLEntry } = models;
 const glController = new GLEntryController();
-
-// Helper function to read JSON data
-const readJsonFile = async (filename) => {
-  try {
-    const filePath = path.join(__dirname, '../data', filename);
-    const data = await fs.readFile(filePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error(`Error reading ${filename}:`, error);
-    return [];
-  }
-};
 
 /**
  * Financial Reports Controller
@@ -34,8 +19,13 @@ class FinancialReportsController {
    */
   async getTrialBalance(asOfDate = null, showZeroBalance = false) {
     try {
-      const accounts = await readJsonFile('accounts.json');
-      const glEntries = await readJsonFile('gl_entries.json');
+      const accounts = await Account.findAll({
+        where: { isActive: true },
+        order: [['code', 'ASC']]
+      });
+      const glEntries = await GLEntry.findAll({
+        where: { isCancelled: false }
+      });
       
       if (!asOfDate) {
         asOfDate = new Date().toISOString().split('T')[0];
@@ -63,10 +53,10 @@ class FinancialReportsController {
       
       // Aggregate GL entries by account
       relevantEntries.forEach(entry => {
-        if (accountBalances.has(entry.account)) {
-          const accountData = accountBalances.get(entry.account);
-          accountData.totalDebit += entry.debit;
-          accountData.totalCredit += entry.credit;
+        if (accountBalances.has(entry.accountId)) {
+          const accountData = accountBalances.get(entry.accountId);
+          accountData.totalDebit += parseFloat(entry.debit || 0);
+          accountData.totalCredit += parseFloat(entry.credit || 0);
         }
       });
       
@@ -159,8 +149,10 @@ class FinancialReportsController {
    */
   async getBalanceSheet(asOfDate = null) {
     try {
-      const accounts = await readJsonFile('accounts.json');
-      const glEntries = await readJsonFile('gl_entries.json');
+      const accounts = await Account.findAll({
+        where: { isActive: true },
+        order: [['code', 'ASC']]
+      });
       
       if (!asOfDate) {
         asOfDate = new Date().toISOString().split('T')[0];
@@ -281,8 +273,16 @@ class FinancialReportsController {
    */
   async getProfitAndLoss(fromDate, toDate) {
     try {
-      const accounts = await readJsonFile('accounts.json');
-      const glEntries = await readJsonFile('gl_entries.json');
+      const accounts = await Account.findAll({
+        where: { 
+          isActive: true,
+          type: { [models.sequelize.Op.in]: ['revenue', 'expense'] }
+        },
+        order: [['code', 'ASC']]
+      });
+      const glEntries = await GLEntry.findAll({
+        where: { isCancelled: false }
+      });
       
       if (!fromDate || !toDate) {
         // Default to current fiscal year
@@ -321,10 +321,10 @@ class FinancialReportsController {
       
       // Aggregate GL entries
       relevantEntries.forEach(entry => {
-        if (accountBalances.has(entry.account)) {
-          const accountData = accountBalances.get(entry.account);
-          accountData.totalDebit += entry.debit;
-          accountData.totalCredit += entry.credit;
+        if (accountBalances.has(entry.accountId)) {
+          const accountData = accountBalances.get(entry.accountId);
+          accountData.totalDebit += parseFloat(entry.debit || 0);
+          accountData.totalCredit += parseFloat(entry.credit || 0);
         }
       });
       
@@ -469,15 +469,21 @@ class FinancialReportsController {
    */
   async getAccountsReceivableAging(asOfDate = null) {
     try {
-      const customers = await readJsonFile('customers.json');
-      const glEntries = await readJsonFile('gl_entries.json');
+      const customers = await models.Customer.findAll({
+        where: { isActive: true }
+      });
+      const glEntries = await GLEntry.findAll({
+        where: { isCancelled: false }
+      });
       
       if (!asOfDate) {
         asOfDate = new Date().toISOString().split('T')[0];
       }
       
       // Find receivable accounts
-      const accounts = await readJsonFile('accounts.json');
+      const accounts = await Account.findAll({
+        where: { isActive: true }
+      });
       const receivableAccounts = accounts.filter(
         acc => acc.accountCategory === 'receivable' || acc.accountType === 'Receivable'
       );
@@ -584,8 +590,12 @@ class FinancialReportsController {
    * @returns {Map} Map of account ID to balance
    */
   async getAccountBalancesAsOf(asOfDate) {
-    const glEntries = await readJsonFile('gl_entries.json');
-    const accounts = await readJsonFile('accounts.json');
+    const glEntries = await GLEntry.findAll({
+      where: { isCancelled: false }
+    });
+    const accounts = await Account.findAll({
+      where: { isActive: true }
+    });
     
     const accountBalances = new Map();
     
@@ -600,15 +610,15 @@ class FinancialReportsController {
     );
     
     relevantEntries.forEach(entry => {
-      const currentBalance = accountBalances.get(entry.account) || 0;
-      const account = accounts.find(acc => acc.id === entry.account);
+      const currentBalance = accountBalances.get(entry.accountId) || 0;
+      const account = accounts.find(acc => acc.id === entry.accountId);
       
       if (account) {
         // Calculate balance based on account type
         if (['asset', 'expense'].includes(account.type)) {
-          accountBalances.set(entry.account, currentBalance + entry.debit - entry.credit);
+          accountBalances.set(entry.accountId, currentBalance + parseFloat(entry.debit || 0) - parseFloat(entry.credit || 0));
         } else {
-          accountBalances.set(entry.account, currentBalance + entry.credit - entry.debit);
+          accountBalances.set(entry.accountId, currentBalance + parseFloat(entry.credit || 0) - parseFloat(entry.debit || 0));
         }
       }
     });

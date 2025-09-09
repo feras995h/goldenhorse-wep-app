@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Eye, CheckCircle, Trash2, X, Save } from 'lucide-react';
+import { Plus, Edit, Eye, CheckCircle, Trash2, X, Save, Minus } from 'lucide-react';
 import { financialAPI } from '../services/api';
 import DataTable from '../components/Financial/DataTable';
 import SearchFilter from '../components/Financial/SearchFilter';
@@ -246,32 +246,58 @@ const JournalEntries: React.FC = () => {
         };
       }
       
-      // If account is filled and this is the last line, add a new empty line
-      if (field === 'accountId' && value && index === updatedLines.length - 1) {
-        updatedLines.push({
-          id: '',
-          accountId: '',
-          accountCode: '',
-          accountName: '',
-          description: '',
-          debit: 0,
-          credit: 0,
-          exchangeRate: 1,
-          balance: 0,
-          totalDebit: 0,
-          totalCredit: 0
-        });
+      // Check if second line (index 1) is filled and last line is empty, then add new line
+      if (updatedLines.length >= 2) {
+        const secondLine = updatedLines[1];
+        const lastLine = updatedLines[updatedLines.length - 1];
+        
+        // Function to check if a line is filled
+        const isLineFilled = (line: any) => {
+          return line.accountId && 
+                 (line.description || (line.debit && line.debit > 0) || (line.credit && line.credit > 0));
+        };
+        
+        // Function to check if a line is empty
+        const isLineEmpty = (line: any) => {
+          return !line.accountId && 
+                 !line.description && 
+                 (!line.debit || line.debit === 0) && 
+                 (!line.credit || line.credit === 0);
+        };
+        
+        // If second line is filled and last line is empty, add a new line
+        if (isLineFilled(secondLine) && isLineEmpty(lastLine)) {
+          updatedLines.push({
+            id: '',
+            accountId: '',
+            accountCode: '',
+            accountName: '',
+            description: '',
+            debit: 0,
+            credit: 0,
+            exchangeRate: 1,
+            balance: 0,
+            totalDebit: 0,
+            totalCredit: 0
+          });
+        }
       }
       
       return { ...prev, lines: updatedLines };
     });
   };
 
+  // Function to check if a line is empty
+  const isLineEmpty = (line: any) => {
+    return !line.accountId && 
+           !line.description && 
+           (!line.debit || line.debit === 0) && 
+           (!line.credit || line.credit === 0);
+  };
+
   // Function to remove empty lines before saving
   const removeEmptyLines = (lines: any[]) => {
-    return lines.filter(line => 
-      line.accountId || line.description || (line.debit && line.debit !== 0) || (line.credit && line.credit !== 0)
-    );
+    return lines.filter(line => !isLineEmpty(line));
   };
 
   const validateForm = () => {
@@ -605,25 +631,36 @@ const JournalEntries: React.FC = () => {
         footer={
           modalMode !== 'view' ? (
             <div className="flex justify-between items-center">
-              <div className="flex space-x-3 space-x-reverse">
-                <button
-                  onClick={clearForm}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
-                  disabled={submitting}
-                >
-                  <Trash2 className="h-4 w-4 ml-2" />
-                  مسح الحقول
-                </button>
-                <button
-                  onClick={addLine}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
-                  disabled={submitting}
-                >
-                  <Plus className="h-4 w-4 ml-2" />
-                  إضافة سطر جديد
-                </button>
-              </div>
-              <div className="flex space-x-3 space-x-reverse">
+                          <div className="flex space-x-3 space-x-reverse">
+              <button
+                onClick={clearForm}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                disabled={submitting}
+              >
+                <Trash2 className="h-4 w-4 ml-2" />
+                مسح الحقول
+              </button>
+              <button
+                onClick={() => {
+                  const cleanedLines = removeEmptyLines(formData.lines || []);
+                  setFormData(prev => ({ ...prev, lines: cleanedLines }));
+                }}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                disabled={submitting}
+              >
+                <Minus className="h-4 w-4 ml-2" />
+                تنظيف الأسطر الفارغة
+              </button>
+              <button
+                onClick={addLine}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                disabled={submitting}
+              >
+                <Plus className="h-4 w-4 ml-2" />
+                إضافة سطر جديد
+              </button>
+            </div>
+            <div className="flex space-x-3 space-x-reverse">
                 <button
                   onClick={closeModal}
                   className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
@@ -689,7 +726,12 @@ const JournalEntries: React.FC = () => {
           {/* Journal Lines Table */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">تفاصيل القيد</h3>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">تفاصيل القيد</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  سيتم إضافة سطر جديد تلقائياً عند تعبئة السطر الثاني، والأسطر الفارغة ستظهر باللون الأصفر
+                </p>
+              </div>
               {formErrors.lines && (
                 <span className="text-sm text-red-600">{formErrors.lines}</span>
               )}
@@ -713,7 +755,7 @@ const JournalEntries: React.FC = () => {
             {/* Table Rows */}
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {(formData.lines || []).map((line, index) => (
-                <div key={line.id || index} className="bg-white border border-gray-200 rounded-lg p-4">
+                <div key={line.id || index} className={`border border-gray-200 rounded-lg p-4 ${isLineEmpty(line) ? 'bg-yellow-50' : 'bg-white'}`}>
                   <div className="grid grid-cols-12 gap-3 items-center">
                     {/* Account Code */}
                     <div className="col-span-2">

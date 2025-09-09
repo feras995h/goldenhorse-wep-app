@@ -17,8 +17,15 @@ export async function up(queryInterface, Sequelize) {
       type: DataTypes.TEXT
     },
     permissions: {
-      type: DataTypes.JSONB,
-      defaultValue: {}
+      type: DataTypes.TEXT, // Use TEXT for SQLite compatibility
+      defaultValue: '{}',
+      get() {
+        const value = this.getDataValue('permissions');
+        return value ? JSON.parse(value) : {};
+      },
+      set(value) {
+        this.setDataValue('permissions', JSON.stringify(value || {}));
+      }
     },
     createdAt: {
       type: DataTypes.DATE,

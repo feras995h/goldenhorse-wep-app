@@ -402,4 +402,245 @@ export const financialAPI = {
   },
 };
 
+export const salesAPI = {
+  // Customers
+  getCustomers: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: 'individual' | 'company';
+    status?: 'active' | 'inactive';
+  }) => {
+    const response = await api.get('/sales/customers', { params });
+    return response.data;
+  },
+
+  getCustomer: async (id: string) => {
+    const response = await api.get(`/sales/customers/${id}`);
+    return response.data;
+  },
+
+  createCustomer: async (customerData: {
+    code: string;
+    name: string;
+    nameEn?: string;
+    type?: 'individual' | 'company';
+    email?: string;
+    phone?: string;
+    address?: string;
+    taxNumber?: string;
+    creditLimit?: number;
+    paymentTerms?: number;
+    currency?: 'LYD' | 'USD' | 'EUR' | 'CNY';
+    contactPerson?: string;
+  }) => {
+    const response = await api.post('/sales/customers', customerData);
+    return response.data;
+  },
+
+  updateCustomer: async (id: string, customerData: {
+    code?: string;
+    name?: string;
+    nameEn?: string;
+    type?: 'individual' | 'company';
+    email?: string;
+    phone?: string;
+    address?: string;
+    taxNumber?: string;
+    creditLimit?: number;
+    paymentTerms?: number;
+    currency?: 'LYD' | 'USD' | 'EUR' | 'CNY';
+    contactPerson?: string;
+  }) => {
+    const response = await api.put(`/sales/customers/${id}`, customerData);
+    return response.data;
+  },
+
+  deleteCustomer: async (id: string) => {
+    const response = await api.delete(`/sales/customers/${id}`);
+    return response.data;
+  },
+
+  // Invoices
+  getInvoices: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+    customerId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }) => {
+    const response = await api.get('/sales/invoices', { params });
+    return response.data;
+  },
+
+  getInvoice: async (id: string) => {
+    const response = await api.get(`/sales/invoices/${id}`);
+    return response.data;
+  },
+
+  createInvoice: async (invoiceData: {
+    customerId: string;
+    date: string;
+    dueDate: string;
+    items: Array<{
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+    }>;
+    notes?: string;
+    terms?: string;
+  }) => {
+    const response = await api.post('/sales/invoices', invoiceData);
+    return response.data;
+  },
+
+  updateInvoice: async (id: string, invoiceData: any) => {
+    const response = await api.put(`/sales/invoices/${id}`, invoiceData);
+    return response.data;
+  },
+
+  // Payments
+  getPayments: async (params?: {
+    page?: number;
+    limit?: number;
+    customerId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }) => {
+    const response = await api.get('/sales/payments', { params });
+    return response.data;
+  },
+
+  createPayment: async (paymentData: {
+    customerId: string;
+    amount: number;
+    date: string;
+    paymentMethod?: 'cash' | 'bank' | 'card' | 'check';
+    description?: string;
+    reference?: string;
+  }) => {
+    const response = await api.post('/sales/payments', paymentData);
+    return response.data;
+  },
+
+  // Analytics
+  getSalesAnalytics: async (params?: {
+    period?: 'week' | 'month' | 'quarter' | 'year';
+  }) => {
+    const response = await api.get('/sales/analytics', { params });
+    return response.data;
+  },
+
+  // Sales Summary
+  getSalesSummary: async () => {
+    try {
+      const response = await api.get('/sales/summary');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching sales summary:', error);
+      // Return default data if API fails
+      return {
+        totalSales: 0,
+        totalOrders: 0,
+        activeCustomers: 0,
+        averageOrderValue: 0,
+        monthlyGrowth: 0,
+        totalInvoices: 0,
+        totalPayments: 0,
+        lowStockItems: 0
+      };
+    }
+  },
+
+  // Inventory (placeholder for future implementation)
+  getInventory: async () => {
+    // This would be implemented when inventory management is added
+    return {
+      data: [],
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 0
+    };
+  }
+};
+
+// Admin API for user and role management
+export const adminAPI = {
+  // Users management
+  getUsers: async (params?: { page?: number; limit?: number; search?: string; role?: string; isActive?: boolean }) => {
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  },
+  createUser: async (userData: any) => {
+    const response = await api.post('/admin/users', userData);
+    return response.data;
+  },
+  updateUser: async (id: string, userData: any) => {
+    const response = await api.put(`/admin/users/${id}`, userData);
+    return response.data;
+  },
+  getUser: async (id: string) => {
+    const response = await api.get(`/admin/users/${id}`);
+    return response.data;
+  },
+  deleteUser: async (id: string) => {
+    const response = await api.delete(`/admin/users/${id}`);
+    return response.data;
+  },
+  toggleUserStatus: async (id: string) => {
+    const response = await api.patch(`/admin/users/${id}/toggle-status`);
+    return response.data;
+  },
+  resetUserPassword: async (id: string) => {
+    const response = await api.post(`/admin/users/${id}/reset-password`);
+    return response.data;
+  },
+
+  // Roles management
+  getRoles: async (params?: { page?: number; limit?: number; search?: string }) => {
+    const response = await api.get('/admin/roles', { params });
+    return response.data;
+  },
+  createRole: async (roleData: any) => {
+    const response = await api.post('/admin/roles', roleData);
+    return response.data;
+  },
+  updateRole: async (id: string, roleData: any) => {
+    const response = await api.put(`/admin/roles/${id}`, roleData);
+    return response.data;
+  },
+  getRole: async (id: string) => {
+    const response = await api.get(`/admin/roles/${id}`);
+    return response.data;
+  },
+  deleteRole: async (id: string) => {
+    const response = await api.delete(`/admin/roles/${id}`);
+    return response.data;
+  },
+
+  // Permissions management
+  getPermissions: async () => {
+    const response = await api.get('/admin/permissions');
+    return response.data;
+  },
+  updateRolePermissions: async (roleId: string, permissions: string[]) => {
+    const response = await api.put(`/admin/roles/${roleId}/permissions`, { permissions });
+    return response.data;
+  },
+
+  // System statistics
+  getSystemStats: async () => {
+    const response = await api.get('/admin/system-stats');
+    return response.data;
+  },
+  getAuditLogs: async (params?: { page?: number; limit?: number; userId?: string; action?: string; startDate?: string; endDate?: string }) => {
+    const response = await api.get('/admin/audit-logs', { params });
+    return response.data;
+  }
+};
+
 export default api;

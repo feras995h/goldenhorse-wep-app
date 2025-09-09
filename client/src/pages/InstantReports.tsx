@@ -6,7 +6,6 @@ import {
   TrendingDown,
   DollarSign,
   Users,
-  ShoppingCart,
   CreditCard,
   Receipt,
   Calendar,
@@ -31,7 +30,7 @@ interface ReportData {
 interface InstantReports {
   receipts: ReportData;
   payments: ReportData;
-  sales: ReportData;
+  revenue: ReportData;
   receivables: ReportData;
   payables: ReportData;
   cashFlow: ReportData;
@@ -100,7 +99,7 @@ const InstantReports: React.FC = () => {
     switch (reportType) {
       case 'receipts': return DollarSign;
       case 'payments': return CreditCard;
-      case 'sales': return ShoppingCart;
+      case 'revenue': return TrendingUp;
       case 'receivables': return Users;
       case 'payables': return Receipt;
       case 'cashFlow': return Activity;
@@ -112,7 +111,7 @@ const InstantReports: React.FC = () => {
     switch (reportType) {
       case 'receipts': return 'green';
       case 'payments': return 'red';
-      case 'sales': return 'blue';
+      case 'revenue': return 'blue';
       case 'receivables': return 'orange';
       case 'payables': return 'purple';
       case 'cashFlow': return 'indigo';
@@ -136,10 +135,10 @@ const InstantReports: React.FC = () => {
       color: 'red'
     },
     {
-      key: 'sales',
-      title: 'المبيعات',
-      description: 'إجمالي المبيعات والإيرادات',
-      icon: ShoppingCart,
+      key: 'revenue',
+      title: 'الإيرادات',
+      description: 'إجمالي الإيرادات والمقبوضات',
+      icon: TrendingUp,
       color: 'blue'
     },
     {
@@ -188,7 +187,7 @@ const InstantReports: React.FC = () => {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">التقارير والاستفسارات الفورية</h1>
-              <p className="text-gray-600">تقارير فورية عن المقبوضات والمدفوعات والمبيعات والمديونية</p>
+              <p className="text-gray-600">تقارير فورية عن المقبوضات والمدفوعات والتدفق النقدي والمديونية</p>
             </div>
           </div>
           <div className="flex items-center space-x-2 space-x-reverse">
@@ -383,12 +382,12 @@ const InstantReports: React.FC = () => {
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-blue-600">إجمالي المبيعات</div>
+              <div className="text-sm text-blue-600">إجمالي الإيرادات</div>
               <div className="text-lg font-bold text-blue-900">
-                {reports?.sales ? formatCurrency(reports.sales.totalAmount) : '0 LYD'}
+                {reports?.revenue ? formatCurrency(reports.revenue.totalAmount) : '0 LYD'}
               </div>
             </div>
-            <ShoppingCart className="h-8 w-8 text-blue-500" />
+            <TrendingUp className="h-8 w-8 text-blue-500" />
           </div>
         </div>
         

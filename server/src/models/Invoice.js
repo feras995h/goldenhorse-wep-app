@@ -7,7 +7,7 @@ export default (sequelize) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
-    invoiceNo: {
+    invoiceNumber: {
       type: DataTypes.STRING(50),
       allowNull: false,
       unique: true,
@@ -23,7 +23,7 @@ export default (sequelize) => {
         key: 'id'
       }
     },
-    invoiceDate: {
+    date: {
       type: DataTypes.DATEONLY,
       allowNull: false,
       validate: {
@@ -37,7 +37,7 @@ export default (sequelize) => {
         isDate: true
       }
     },
-    totalAmount: {
+    subtotal: {
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0.00,
       validate: {
@@ -53,15 +53,7 @@ export default (sequelize) => {
         max: 999999999999.99
       }
     },
-    discountAmount: {
-      type: DataTypes.DECIMAL(15, 2),
-      defaultValue: 0.00,
-      validate: {
-        min: 0,
-        max: 999999999999.99
-      }
-    },
-    netAmount: {
+    total: {
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0.00,
       validate: {
@@ -78,56 +70,15 @@ export default (sequelize) => {
       }
     },
     status: {
-      type: DataTypes.ENUM('draft', 'submitted', 'paid', 'overdue', 'cancelled'),
+      type: DataTypes.ENUM('draft', 'sent', 'paid', 'overdue', 'cancelled'),
       defaultValue: 'draft'
     },
-    currency: {
-      type: DataTypes.STRING(3),
-      defaultValue: 'LYD',
-      validate: {
-        len: [3, 3]
-      }
-    },
-    exchangeRate: {
-      type: DataTypes.DECIMAL(10, 6),
-      defaultValue: 1.000000,
-      validate: {
-        min: 0.000001,
-        max: 999999.999999
-      }
-    },
-    paymentTerms: {
-      type: DataTypes.INTEGER,
-      defaultValue: 30,
-      validate: {
-        min: 0,
-        max: 365
-      }
-    },
+
     notes: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    createdBy: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id'
-      }
-    },
-    submittedAt: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    submittedBy: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'users',
-        key: 'id'
-      }
-    }
+
   }, {
     tableName: 'invoices',
     timestamps: true,
@@ -136,34 +87,40 @@ export default (sequelize) => {
     indexes: [
       {
         unique: true,
-        fields: ['invoiceNo']
+        fields: ['invoiceNumber']
       },
       {
         fields: ['customerId']
       },
       {
-        fields: ['invoiceDate']
+        fields: ['date']
       },
       {
         fields: ['dueDate']
       },
       {
         fields: ['status']
-      },
-      {
-        fields: ['createdBy']
       }
     ],
     hooks: {
       beforeCreate: (invoice) => {
-        // Calculate net amount if not provided
-        if (!invoice.netAmount) {
-          invoice.netAmount = invoice.totalAmount + invoice.taxAmount - invoice.discountAmount;
+        // Calculate total if not provided
+        if (!invoice.total) {
+          invoice.total = invoice.subtotal + invoice.taxAmount;
+        }
+        // Calculate balance if not provided
+        if (!invoice.balance) {
+          invoice.balance = invoice.total - invoice.paidAmount;
         }
       },
       beforeUpdate: (invoice) => {
-        if (invoice.changed('status') && invoice.status === 'submitted') {
-          invoice.submittedAt = new Date();
+        // Recalculate total if subtotal or taxAmount changed
+        if (invoice.changed('subtotal') || invoice.changed('taxAmount')) {
+          invoice.total = invoice.subtotal + invoice.taxAmount;
+        }
+        // Recalculate balance if total or paidAmount changed
+        if (invoice.changed('total') || invoice.changed('paidAmount')) {
+          invoice.balance = invoice.total - invoice.paidAmount;
         }
       }
     }
@@ -171,7 +128,7 @@ export default (sequelize) => {
 
   // Instance methods
   Invoice.prototype.getBalance = function() {
-    return parseFloat(this.netAmount) - parseFloat(this.paidAmount);
+    return parseFloat(this.total) - parseFloat(this.paidAmount);
   };
 
   Invoice.prototype.isOverdue = function() {
@@ -186,12 +143,12 @@ export default (sequelize) => {
   };
 
   Invoice.prototype.isFullyPaid = function() {
-    return this.getBalance() <= 0;
+    return this.balance <= 0;
   };
 
   // Class methods
-  Invoice.findByInvoiceNo = function(invoiceNo) {
-    return this.findOne({ where: { invoiceNo } });
+  Invoice.findByInvoiceNumber = function(invoiceNumber) {
+    return this.findOne({ where: { invoiceNumber } });
   };
 
   Invoice.findOverdue = function() {
@@ -210,15 +167,13 @@ export default (sequelize) => {
   Invoice.findByCustomer = function(customerId) {
     return this.findAll({
       where: { customerId },
-      order: [['invoiceDate', 'DESC']]
+      order: [['date', 'DESC']]
     });
   };
 
   // Associations
   Invoice.associate = (models) => {
     Invoice.belongsTo(models.Customer, { foreignKey: 'customerId', as: 'customer' });
-    Invoice.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-    Invoice.belongsTo(models.User, { foreignKey: 'submittedBy', as: 'submitter' });
   };
 
   return Invoice;

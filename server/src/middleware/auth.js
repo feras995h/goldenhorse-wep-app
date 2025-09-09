@@ -1,36 +1,37 @@
 import jwt from 'jsonwebtoken';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import models from '../models/index.js';
+import { checkTokenBlacklist } from './jwtBlacklist.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { User } = models;
 
-const getUsersData = () => {
-  const usersPath = path.join(__dirname, '../data/users.json');
-  const usersData = fs.readFileSync(usersPath, 'utf8');
-  return JSON.parse(usersData);
-};
+export const authenticateToken = async (req, res, next) => {
+  // First check token blacklist
+  checkTokenBlacklist(req, res, async (error) => {
+    if (error) return;
+    
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-export const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Access token required' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ message: 'Invalid or expired token' });
+    if (!token) {
+      return res.status(401).json({ message: 'Access token required' });
     }
 
-    // Get user data from JSON file
-    const users = getUsersData();
-    const user = users.find(u => u.id === decoded.userId);
+    try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: 'golden-horse-api',
+      audience: 'golden-horse-client'
+    });
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    // Check if it's an access token
+    if (decoded.type && decoded.type !== 'access') {
+      return res.status(401).json({ message: 'Invalid token type', code: 'INVALID_TOKEN_TYPE' });
+    }
+
+    // Get user data from database using Sequelize
+    const user = await User.findByPk(decoded.userId);
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({ message: 'User not found or inactive' });
     }
 
     req.user = {
@@ -40,7 +41,15 @@ export const authenticateToken = (req, res, next) => {
       role: user.role
     };
     
-    next();
+      next();
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ message: 'Token expired', code: 'TOKEN_EXPIRED' });
+      } else if (err.name === 'JsonWebTokenError') {
+        return res.status(401).json({ message: 'Invalid token', code: 'INVALID_TOKEN' });
+      }
+      return res.status(403).json({ message: 'Token verification failed' });
+    }
   });
 };
 
@@ -70,4 +79,16 @@ export const requireRole = (roles) => {
 
     next();
   };
+};
+
+export const requireAdminAccess = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+
+  next();
 };
