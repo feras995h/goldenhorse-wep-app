@@ -48,7 +48,7 @@ services:
       DB_DIALECT: postgres
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: golden_horse_db
+      DB_NAME: goldenhorse-wep-app-db
       DB_USERNAME: postgres
       DB_PASSWORD: postgres123
       

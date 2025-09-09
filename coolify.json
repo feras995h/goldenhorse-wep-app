@@ -3,8 +3,8 @@
   "description": "نظام إدارة شركة الحصان الذهبي للشحن والنقل",
   "type": "application",
   "framework": "nodejs",
-  "buildCommand": "npm ci --only=production && cd server && npm ci --only=production && cd ../client && npm ci --only=production && npm run build",
-  "startCommand": "cd server && npm start",
+  "buildCommand": "chmod +x deploy-coolify.sh",
+  "startCommand": "./deploy-coolify.sh",
   "port": 5001,
   "healthCheck": {
     "path": "/api/health",
