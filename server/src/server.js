@@ -277,11 +277,8 @@ async function startServer() {
     const dbInit = await DatabaseInitializer.initializeDatabase();
     if (!dbInit.success) {
       console.error('❌ Failed to initialize database:', dbInit.error);
-      if (process.env.NODE_ENV === 'production') {
-        process.exit(1);
-      } else {
-        console.warn('⚠️  Continuing in development mode without database');
-      }
+      console.warn('⚠️  Continuing without database - some features may be limited');
+      console.warn('⚠️  The application will retry database connection on first request');
     }
 
     // Initialize backup system

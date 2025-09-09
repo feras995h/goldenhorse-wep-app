@@ -23,4 +23,4 @@ cmds = [
 ]
 
 [start]
-cmd = "chmod +x start.sh && ./start.sh"
+cmd = "cd server && npm start"
