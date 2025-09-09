@@ -7,13 +7,12 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
-    "build": "cd client && npm install && npm run build",
+    "build": "cd client && npm run build",
     "build:server": "cd server && npm run build",
-    "start": "cd server && npm install && npm start",
+    "start": "cd server && npm start",
     "start:prod": "concurrently \"npm run start\" \"npm run serve\"",
     "serve": "cd client && npm run preview",
-    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
-    "postinstall": "cd client && npm install && cd ../server && npm install"
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install"
   },
   "keywords": [
     "shipping",
