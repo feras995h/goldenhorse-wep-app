@@ -122,7 +122,9 @@ Root Directory: /
 NODE_ENV=production
 PORT=5001
 
-# قاعدة البيانات
+# قاعدة البيانات (يدعم النظام كلا المتغيرين)
+DATABASE_URL=postgresql://golden_horse_user:your_password@localhost:5432/golden_horse_production
+# أو
 DB_URL=postgresql://golden_horse_user:your_password@localhost:5432/golden_horse_production
 
 # JWT Security
@@ -165,10 +167,13 @@ NODE_ENV==production  # ❌ خطأ - علامة = إضافية
    - تأكد من أنه يبدأ بـ postgresql://
 
 2. في Application → Environment Variables:
+   # يمكنك استخدام أي من هذين المتغيرين:
+   DATABASE_URL=postgresql://username:password@host:port/database
+   # أو
    DB_URL=postgresql://username:password@host:port/database
 
    # مثال صحيح:
-   DB_URL=postgresql://golden_horse:mypassword@localhost:5432/golden_horse_db
+   DATABASE_URL=postgresql://golden_horse:mypassword@localhost:5432/golden_horse_db
 
    # تجنب هذه الأخطاء:
    DB_URL=                          # ❌ فارغ
@@ -223,9 +228,11 @@ NODE_ENV==production  # ❌ خطأ - علامة = إضافية
 #### **متغيرات البيئة الصحيحة:**
 ```bash
 # تأكد من هذه القيم في Coolify:
-NODE_ENV=production          # بدون علامات إضافية
-DB_URL=postgresql://...      # URL كامل صحيح
-JWT_SECRET=your-secret       # مفتاح قوي
+NODE_ENV=production                    # بدون علامات إضافية
+DATABASE_URL=postgresql://...          # URL كامل صحيح (مُوصى به)
+# أو
+DB_URL=postgresql://...                # بديل مدعوم
+JWT_SECRET=your-secret                 # مفتاح قوي
 JWT_REFRESH_SECRET=your-refresh-secret
 PORT=5001
 ```

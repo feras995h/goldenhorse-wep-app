@@ -19,21 +19,23 @@ if (!dbConfig) {
 let sequelize;
 
 if (dbConfig.url) {
-  // Use DB_URL if provided (for hosted databases)
+  // Use DATABASE_URL or DB_URL if provided (for hosted databases)
   console.log('🔗 Using database URL connection');
-  console.log('🔍 DB_URL value:', dbConfig.url ? 'Set (hidden for security)' : 'Not set');
+  console.log('🔍 Database URL value:', dbConfig.url ? 'Set (hidden for security)' : 'Not set');
+  console.log('🔍 URL source:', process.env.DATABASE_URL ? 'DATABASE_URL' : process.env.DB_URL ? 'DB_URL' : 'Unknown');
 
-  // Validate DB_URL format
+  // Validate DATABASE_URL format
   if (!dbConfig.url || typeof dbConfig.url !== 'string' || dbConfig.url.trim() === '') {
-    console.error('❌ DB_URL is empty or invalid');
+    console.error('❌ Database URL is empty or invalid');
     console.error('Expected format: postgresql://username:password@host:port/database');
+    console.error('Supported variables: DATABASE_URL or DB_URL');
     process.exit(1);
   }
 
   // Check if URL has proper protocol
   if (!dbConfig.url.includes('://')) {
-    console.error('❌ DB_URL missing protocol (postgresql://, mysql://, etc.)');
-    console.error('Current DB_URL format:', dbConfig.url.substring(0, 20) + '...');
+    console.error('❌ Database URL missing protocol (postgresql://, mysql://, etc.)');
+    console.error('Current URL format:', dbConfig.url.substring(0, 20) + '...');
     process.exit(1);
   }
 

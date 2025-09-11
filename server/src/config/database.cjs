@@ -1,12 +1,17 @@
 require('dotenv').config();
 
+// Support both DB_URL and DATABASE_URL (common in different platforms)
+const DATABASE_URL = process.env.DB_URL || process.env.DATABASE_URL;
+
 // Debug database configuration
 if (process.env.NODE_ENV === 'production') {
   console.log('🔍 Database Configuration Debug:');
   console.log('  - NODE_ENV:', process.env.NODE_ENV);
   console.log('  - DB_URL present:', !!process.env.DB_URL);
-  console.log('  - DB_URL length:', process.env.DB_URL ? process.env.DB_URL.length : 0);
-  console.log('  - DB_URL starts with:', process.env.DB_URL ? process.env.DB_URL.substring(0, 15) + '...' : 'N/A');
+  console.log('  - DATABASE_URL present:', !!process.env.DATABASE_URL);
+  console.log('  - Final DATABASE_URL present:', !!DATABASE_URL);
+  console.log('  - DATABASE_URL length:', DATABASE_URL ? DATABASE_URL.length : 0);
+  console.log('  - DATABASE_URL starts with:', DATABASE_URL ? DATABASE_URL.substring(0, 15) + '...' : 'N/A');
 }
 
 module.exports = {
@@ -27,9 +32,9 @@ module.exports = {
     logging: false
   },
   production: {
-    // Use DB_URL if provided (for hosted databases like Railway, Heroku, etc.)
-    ...(process.env.DB_URL && process.env.DB_URL.trim() !== '' ? {
-      url: process.env.DB_URL.trim(),
+    // Use DATABASE_URL or DB_URL if provided (for hosted databases like Railway, Heroku, Coolify, etc.)
+    ...(DATABASE_URL && DATABASE_URL.trim() !== '' ? {
+      url: DATABASE_URL.trim(),
       dialect: 'postgres'
     } : {
       // Use individual connection parameters
@@ -48,7 +53,7 @@ module.exports = {
       idle: 10000
     },
     dialectOptions: {
-      ssl: process.env.DB_SSL === 'true' || (process.env.DB_URL && process.env.DB_URL.includes('postgresql://')) ? {
+      ssl: process.env.DB_SSL === 'true' || (DATABASE_URL && DATABASE_URL.includes('postgresql://')) ? {
         require: true,
         rejectUnauthorized: false
       } : false
