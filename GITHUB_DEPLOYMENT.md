@@ -30,10 +30,26 @@ VPS_PORT=22
 #### **متغيرات التطبيق:**
 ```
 JWT_SECRET=your-very-secure-jwt-secret-key-minimum-32-characters
-DB_PASSWORD=your-secure-database-password
-REDIS_PASSWORD=your-redis-password
+JWT_REFRESH_SECRET=your-very-secure-jwt-refresh-secret-key-minimum-32-characters
+DB_URL=postgresql://username:password@host:port/database_name
 APP_URL=https://yourdomain.com
 CORS_ORIGIN=https://yourdomain.com
+```
+
+#### **متغيرات قاعدة البيانات (اختر إحدى الطريقتين):**
+
+**الطريقة الأولى: استخدام DB_URL (مُوصى بها):**
+```
+DB_URL=postgresql://username:password@host:port/database_name
+```
+
+**الطريقة الثانية: متغيرات منفصلة:**
+```
+DB_HOST=your-database-host
+DB_PORT=5432
+DB_NAME=your-database-name
+DB_USERNAME=your-database-username
+DB_PASSWORD=your-database-password
 ```
 
 #### **متغيرات اختيارية:**

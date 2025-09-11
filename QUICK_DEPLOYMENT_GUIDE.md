@@ -51,7 +51,8 @@ VPS_USERNAME=your-username
 VPS_SSH_KEY=your-private-ssh-key
 VPS_PORT=22
 JWT_SECRET=your-secure-jwt-secret-32-chars-minimum
-DB_PASSWORD=your-database-password
+JWT_REFRESH_SECRET=your-secure-jwt-refresh-secret-32-chars-minimum
+DB_URL=postgresql://username:password@host:port/database_name
 APP_URL=https://yourdomain.com
 CORS_ORIGIN=https://yourdomain.com
 ```

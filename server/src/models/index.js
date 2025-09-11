@@ -4,9 +4,18 @@ import config from '../config/database.cjs';
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
-// Initialize Sequelize based on dialect
+// Initialize Sequelize based on configuration
 let sequelize;
-if (dbConfig.dialect === 'sqlite') {
+
+if (dbConfig.url) {
+  // Use DB_URL if provided (for hosted databases)
+  sequelize = new Sequelize(dbConfig.url, {
+    dialect: dbConfig.dialect,
+    logging: dbConfig.logging,
+    pool: dbConfig.pool,
+    dialectOptions: dbConfig.dialectOptions
+  });
+} else if (dbConfig.dialect === 'sqlite') {
   // SQLite configuration
   sequelize = new Sequelize({
     dialect: 'sqlite',
@@ -15,7 +24,7 @@ if (dbConfig.dialect === 'sqlite') {
     pool: dbConfig.pool
   });
 } else {
-  // PostgreSQL configuration
+  // PostgreSQL/MySQL configuration with individual parameters
   sequelize = new Sequelize(
     dbConfig.database,
     dbConfig.username,

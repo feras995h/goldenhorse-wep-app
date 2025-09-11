@@ -20,7 +20,8 @@ import cacheManager from './utils/cacheManager.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
+// Load environment variables from the correct path
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -33,13 +34,16 @@ const validateEnvironment = () => {
     'JWT_REFRESH_SECRET': 'JWT refresh secret key is required'
   };
 
-  // Only require database variables for PostgreSQL
-  if (process.env.DB_DIALECT === 'postgres') {
-    requiredEnv['DB_USERNAME'] = 'Database username is required';
-    requiredEnv['DB_PASSWORD'] = 'Database password is required';
-    requiredEnv['DB_NAME'] = 'Database name is required';
-    requiredEnv['DB_HOST'] = 'Database host is required';
-    requiredEnv['DB_PORT'] = 'Database port is required';
+  // Only require database variables if not using DB_URL
+  if (!process.env.DB_URL && process.env.DB_DIALECT === 'postgres') {
+    requiredEnv['DB_USERNAME'] = 'Database username is required (or use DB_URL)';
+    requiredEnv['DB_PASSWORD'] = 'Database password is required (or use DB_URL)';
+    requiredEnv['DB_NAME'] = 'Database name is required (or use DB_URL)';
+    requiredEnv['DB_HOST'] = 'Database host is required (or use DB_URL)';
+    requiredEnv['DB_PORT'] = 'Database port is required (or use DB_URL)';
+  } else if (!process.env.DB_URL && process.env.NODE_ENV === 'production') {
+    // In production, require either DB_URL or individual DB parameters
+    requiredEnv['DB_URL'] = 'Database URL is required for production (or set individual DB_* variables)';
   }
 
   const missing = [];
