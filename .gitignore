@@ -122,11 +122,8 @@ ssl/
 *.key
 *.crt
 
-# Docker
-.dockerignore
-
-# PM2
-ecosystem.config.js
+# Coolify deployment files
+# (Keep COOLIFY_DEPLOYMENT_GUIDE.md in repo)
 
 # Local development
 .local/
