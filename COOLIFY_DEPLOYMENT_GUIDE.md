@@ -141,6 +141,39 @@ COMPANY_NAME_EN=Golden Horse Shipping
 DEFAULT_CURRENCY=LYD
 ```
 
+### **⚠️ حل مشكلة "Cannot read properties of undefined":**
+إذا واجهت هذا الخطأ، فهذا يعني أن متغيرات قاعدة البيانات غير مُعيّنة بشكل صحيح:
+
+#### **الحل:**
+```bash
+# تأكد من تعيين DB_URL بشكل صحيح:
+1. اذهب إلى Database → PostgreSQL في Coolify
+2. انسخ "Database URL" الكامل
+3. في Application → Environment Variables
+4. أضف: DB_URL=postgresql://user:password@host:port/database
+
+# أو استخدم المتغيرات المنفصلة:
+DB_DIALECT=postgres
+DB_HOST=your-postgres-host
+DB_PORT=5432
+DB_NAME=your-database-name
+DB_USERNAME=your-username
+DB_PASSWORD=your-password
+DB_SSL=true
+```
+
+#### **التحقق من الإعدادات:**
+```bash
+# في Application → Logs، يجب أن ترى:
+"🔗 Using database URL connection" أو
+"🗄️ Using postgres database with individual parameters"
+
+# إذا رأيت خطأ، تحقق من:
+1. صحة DB_URL
+2. وجود جميع المتغيرات المطلوبة
+3. صحة كلمة المرور وبيانات الاتصال
+```
+
 ### **الخطوة 3: إعداد النطاق**
 
 #### **1. إضافة نطاق مخصص:**

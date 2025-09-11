@@ -4,19 +4,28 @@ import config from '../config/database.cjs';
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
+// Check if dbConfig exists
+if (!dbConfig) {
+  console.error(`❌ Database configuration not found for environment: ${env}`);
+  console.error('Available environments:', Object.keys(config));
+  process.exit(1);
+}
+
 // Initialize Sequelize based on configuration
 let sequelize;
 
 if (dbConfig.url) {
   // Use DB_URL if provided (for hosted databases)
+  console.log('🔗 Using database URL connection');
   sequelize = new Sequelize(dbConfig.url, {
-    dialect: dbConfig.dialect,
+    dialect: dbConfig.dialect || 'postgres',
     logging: dbConfig.logging,
     pool: dbConfig.pool,
     dialectOptions: dbConfig.dialectOptions
   });
 } else if (dbConfig.dialect === 'sqlite') {
   // SQLite configuration
+  console.log('💾 Using SQLite database');
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: dbConfig.storage,
@@ -25,6 +34,16 @@ if (dbConfig.url) {
   });
 } else {
   // PostgreSQL/MySQL configuration with individual parameters
+  console.log(`🗄️ Using ${dbConfig.dialect} database with individual parameters`);
+
+  // Check required parameters for non-SQLite databases
+  if (!dbConfig.database || !dbConfig.username) {
+    console.error('❌ Missing required database parameters for production');
+    console.error('Required: database, username');
+    console.error('Available config:', dbConfig);
+    process.exit(1);
+  }
+
   sequelize = new Sequelize(
     dbConfig.database,
     dbConfig.username,

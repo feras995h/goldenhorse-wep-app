@@ -17,10 +17,20 @@ module.exports = {
     storage: ':memory:',
     logging: false
   },
-  production: process.env.DB_URL ? {
+  production: {
     // Use DB_URL if provided (for hosted databases like Railway, Heroku, etc.)
-    url: process.env.DB_URL,
-    dialect: 'postgres',
+    ...(process.env.DB_URL ? {
+      url: process.env.DB_URL,
+      dialect: 'postgres'
+    } : {
+      // Use individual connection parameters
+      dialect: process.env.DB_DIALECT || 'postgres',
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT || 5432
+    }),
     logging: false,
     pool: {
       max: 10,
@@ -29,28 +39,7 @@ module.exports = {
       idle: 10000
     },
     dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
-    }
-  } : {
-    // Use individual connection parameters
-    dialect: process.env.DB_DIALECT || 'postgres',
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 5432,
-    logging: false,
-    pool: {
-      max: 10,
-      min: 2,
-      acquire: 30000,
-      idle: 10000
-    },
-    dialectOptions: {
-      ssl: process.env.DB_SSL === 'true' ? {
+      ssl: process.env.DB_SSL === 'true' || process.env.DB_URL ? {
         require: true,
         rejectUnauthorized: false
       } : false
