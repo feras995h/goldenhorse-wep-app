@@ -173,6 +173,58 @@ Start Command: cd server && npm start
 Install Command: npm install
 ```
 
+### **إصلاح مشاكل البناء:**
+إذا واجهت خطأ في البناء مثل "Command:: command not found"، اتبع هذه الخطوات:
+
+#### **1. إعداد Build Pack يدوياً:**
+```bash
+# في Application → General → Build Pack:
+اختر "Node.js" بدلاً من "Auto-detect"
+```
+
+#### **2. إعداد متغيرات البناء:**
+```bash
+# في Application → Environment Variables → Build:
+NODE_VERSION=18
+NPM_CONFIG_PRODUCTION=false
+```
+
+#### **3. إعداد Commands بشكل صحيح:**
+```bash
+# Install Command:
+npm install
+
+# Build Command:
+npm run build
+
+# Start Command:
+cd server && npm start
+```
+
+#### **4. إعداد Root Directory:**
+```bash
+# في Application → General:
+Root Directory: /
+```
+
+#### **5. استخدام الملفات المحسنة:**
+النظام يتضمن ملفات محسنة للعمل مع Coolify:
+```bash
+# ملفات التحسين المتوفرة:
+- nixpacks.toml: إعدادات Nixpacks للبناء
+- .coolify.yml: إعدادات Coolify المخصصة
+- Dockerfile: ملف Docker محسن
+- package.json: مع postinstall script
+```
+
+#### **6. إعادة النشر:**
+```bash
+# بعد تطبيق الإعدادات:
+1. اذهب إلى Application → Deployments
+2. اضغط "Deploy"
+3. راقب Build Logs للتأكد من نجاح البناء
+```
+
 ### **Health Check:**
 ```bash
 # في Application → Health Check:
@@ -197,11 +249,26 @@ Disk: 10GB
 
 ### **مشاكل شائعة وحلولها:**
 
-#### **1. خطأ في بناء التطبيق:**
+#### **1. خطأ "Command:: command not found":**
+```bash
+# السبب: Coolify يولد Dockerfile خاطئ أحياناً
+# الحل:
+1. اذهب إلى Application → General
+2. غيّر Build Pack من "Auto-detect" إلى "Node.js"
+3. أعد النشر (Deploy)
+
+# أو في Application → Build Settings:
+Install Command: npm ci --only=production
+Build Command: npm run build
+Start Command: cd server && npm start
+```
+
+#### **2. خطأ في بناء التطبيق:**
 ```bash
 # تحقق من Build Logs في Coolify
 # تأكد من وجود package.json في الجذر
 # تأكد من صحة Build Commands
+# تأكد من Node.js version (18 أو أحدث)
 ```
 
 #### **2. خطأ في الاتصال بقاعدة البيانات:**

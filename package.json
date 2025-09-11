@@ -15,7 +15,8 @@
     "serve": "cd client && npm run preview",
     "install-all": "npm install && cd client && npm install && cd ../server && npm install",
     "install-deps": "cd client && npm install && cd ../server && npm install",
-    "prepare-production": "cd server && npm run prepare-production"
+    "prepare-production": "cd server && npm run prepare-production",
+    "postinstall": "npm run install-deps"
   },
   "keywords": [
     "shipping",
