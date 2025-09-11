@@ -141,10 +141,20 @@ COMPANY_NAME_EN=Golden Horse Shipping
 DEFAULT_CURRENCY=LYD
 ```
 
-### **⚠️ حل مشكلة "Cannot read properties of undefined":**
-إذا واجهت هذا الخطأ، فهذا يعني أن متغيرات قاعدة البيانات غير مُعيّنة بشكل صحيح:
+### **⚠️ حل مشاكل البيئة والقاعدة:**
 
-#### **الحل:**
+#### **1. مشكلة "Database configuration not found for environment: =production":**
+```bash
+# السبب: NODE_ENV يحتوي على علامة = إضافية
+# الحل: تأكد من تعيين NODE_ENV بدون علامات إضافية
+
+# في Coolify → Application → Environment Variables:
+NODE_ENV=production  # ✅ صحيح
+# وليس:
+NODE_ENV==production  # ❌ خطأ - علامة = إضافية
+```
+
+#### **2. مشكلة "Cannot read properties of undefined":**
 ```bash
 # تأكد من تعيين DB_URL بشكل صحيح:
 1. اذهب إلى Database → PostgreSQL في Coolify
@@ -165,13 +175,28 @@ DB_SSL=true
 #### **التحقق من الإعدادات:**
 ```bash
 # في Application → Logs، يجب أن ترى:
-"🔗 Using database URL connection" أو
-"🗄️ Using postgres database with individual parameters"
+🔍 Environment: "production" (original: "production")  # ✅ صحيح
+🔗 Using database URL connection
+🚀 Server running on port 5001
 
-# إذا رأيت خطأ، تحقق من:
-1. صحة DB_URL
-2. وجود جميع المتغيرات المطلوبة
-3. صحة كلمة المرور وبيانات الاتصال
+# إذا رأيت:
+� Environment: "=production" (original: "=production")  # ❌ خطأ
+❌ Database configuration not found for environment: =production
+
+# الحل:
+1. تحقق من NODE_ENV في Environment Variables
+2. تأكد من عدم وجود علامات = إضافية
+3. أعد النشر بعد التصحيح
+```
+
+#### **متغيرات البيئة الصحيحة:**
+```bash
+# تأكد من هذه القيم في Coolify:
+NODE_ENV=production          # بدون علامات إضافية
+DB_URL=postgresql://...      # URL كامل صحيح
+JWT_SECRET=your-secret       # مفتاح قوي
+JWT_REFRESH_SECRET=your-refresh-secret
+PORT=5001
 ```
 
 ### **الخطوة 3: إعداد النطاق**

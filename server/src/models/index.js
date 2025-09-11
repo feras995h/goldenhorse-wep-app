@@ -1,13 +1,17 @@
 import { Sequelize } from 'sequelize';
 import config from '../config/database.cjs';
 
-const env = process.env.NODE_ENV || 'development';
+const env = (process.env.NODE_ENV || 'development').trim().replace(/^=+/, '');
 const dbConfig = config[env];
+
+// Debug environment information
+console.log(`🔍 Environment: "${env}" (original: "${process.env.NODE_ENV}")`);
 
 // Check if dbConfig exists
 if (!dbConfig) {
   console.error(`❌ Database configuration not found for environment: ${env}`);
   console.error('Available environments:', Object.keys(config));
+  console.error('Raw NODE_ENV value:', JSON.stringify(process.env.NODE_ENV));
   process.exit(1);
 }
 

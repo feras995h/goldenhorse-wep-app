@@ -23,6 +23,13 @@ const __dirname = path.dirname(__filename);
 // Load environment variables from the correct path
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
+// Clean NODE_ENV value (remove any leading = signs)
+const NODE_ENV = (process.env.NODE_ENV || 'development').trim().replace(/^=+/, '');
+console.log(`🔍 Environment: "${NODE_ENV}" (original: "${process.env.NODE_ENV}")`);
+
+// Override process.env.NODE_ENV with cleaned value
+process.env.NODE_ENV = NODE_ENV;
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
