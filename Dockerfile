@@ -10,10 +10,10 @@ COPY package*.json ./
 COPY server/package*.json ./server/
 COPY client/package*.json ./client/
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
-RUN cd server && npm ci --only=production && npm cache clean --force
-RUN cd client && npm ci --only=production && npm cache clean --force
+# Install dependencies (including dev dependencies for build)
+RUN npm install && npm cache clean --force
+RUN cd server && npm install && npm cache clean --force
+RUN cd client && npm install && npm cache clean --force
 
 # Build the application
 FROM base AS builder
@@ -21,13 +21,14 @@ WORKDIR /app
 
 # Copy source code
 COPY . .
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/server/node_modules ./server/node_modules
-COPY --from=deps /app/client/node_modules ./client/node_modules
+
+# Install all dependencies for build
+RUN npm install
+RUN cd server && npm install
+RUN cd client && npm install
 
 # Build client
-WORKDIR /app/client
-RUN npm run build
+RUN cd client && npm run build
 
 # Production image
 FROM base AS runner
@@ -39,11 +40,11 @@ RUN adduser --system --uid 1001 nodejs
 
 # Copy built application
 COPY --from=builder --chown=nodejs:nodejs /app/server ./server
-COPY --from=builder --chown=nodejs:nodejs /app/client/dist ./client/dist
+COPY --from=builder --chown=nodejs:nodejs /app/client/build ./client/build
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
-# Copy node_modules
-COPY --from=deps --chown=nodejs:nodejs /app/server/node_modules ./server/node_modules
+# Install production dependencies for server
+RUN cd server && npm ci --only=production
 
 # Create necessary directories
 RUN mkdir -p /app/server/uploads /app/server/logs /app/server/backups
