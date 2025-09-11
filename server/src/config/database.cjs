@@ -1,7 +1,10 @@
 require('dotenv').config();
 
 // Support both DB_URL and DATABASE_URL (common in different platforms)
-const DATABASE_URL = process.env.DB_URL || process.env.DATABASE_URL;
+// Clean URLs by removing leading = signs (Coolify environment variable issue)
+const cleanDBUrl = process.env.DB_URL ? process.env.DB_URL.trim().replace(/^=+/, '') : null;
+const cleanDatabaseUrl = process.env.DATABASE_URL ? process.env.DATABASE_URL.trim().replace(/^=+/, '') : null;
+const DATABASE_URL = cleanDBUrl || cleanDatabaseUrl;
 
 // Debug database configuration
 if (process.env.NODE_ENV === 'production') {
@@ -9,9 +12,10 @@ if (process.env.NODE_ENV === 'production') {
   console.log('  - NODE_ENV:', process.env.NODE_ENV);
   console.log('  - DB_URL present:', !!process.env.DB_URL);
   console.log('  - DATABASE_URL present:', !!process.env.DATABASE_URL);
-  console.log('  - Final DATABASE_URL present:', !!DATABASE_URL);
-  console.log('  - DATABASE_URL length:', DATABASE_URL ? DATABASE_URL.length : 0);
-  console.log('  - DATABASE_URL starts with:', DATABASE_URL ? DATABASE_URL.substring(0, 15) + '...' : 'N/A');
+  console.log('  - Raw DATABASE_URL starts with:', process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 15) + '...' : 'N/A');
+  console.log('  - Cleaned DATABASE_URL present:', !!DATABASE_URL);
+  console.log('  - Final DATABASE_URL length:', DATABASE_URL ? DATABASE_URL.length : 0);
+  console.log('  - Final DATABASE_URL starts with:', DATABASE_URL ? DATABASE_URL.substring(0, 15) + '...' : 'N/A');
 }
 
 module.exports = {

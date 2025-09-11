@@ -225,28 +225,31 @@ NODE_ENV==production  # ❌ خطأ - علامة = إضافية
 4. ألصقه في Application → Environment Variables → DATABASE_URL
 ```
 
-#### **4. مشكلة "Cannot read properties of null (reading 'replace')" في Sequelize:**
+#### **4. مشكلة "Failed to parse DATABASE_URL: Invalid URL":**
 ```bash
-# السبب: مشكلة في تحليل URL من قبل Sequelize
-# الأعراض: النظام يجد DATABASE_URL لكن Sequelize يفشل في تحليله
+# السبب: علامة = إضافية في بداية DATABASE_URL (مشكلة Coolify)
+# الأعراض: URL يبدأ بـ =postgres:// بدلاً من postgres://
 
-# التشخيص الجديد في Logs:
+# التشخيص في Logs:
 🔍 URL Debug Info:
-  - URL length: 67
-  - URL first 20 chars: postgres://username:
+  - URL length: 124
+  - URL first 20 chars: =postgres://postgres
   - URL contains ://: true
+  - URL starts with =: true
   - URL starts with postgresql: false
-  - URL starts with postgres: true
+  - URL starts with postgres: false
 
 # الحل التلقائي:
+🔧 Removing leading = from DATABASE_URL
+🔧 Cleaned URL first 20 chars: postgres://postgres
 🔧 Converting postgres:// to postgresql://
 🔗 Final URL protocol: postgresql://
 
 # إذا استمرت المشكلة:
-1. تحقق من صحة DATABASE_URL في Coolify
-2. تأكد من عدم وجود مسافات أو أحرف خاصة
-3. جرب نسخ URL جديد من قاعدة البيانات
-4. تأكد من أن قاعدة البيانات تعمل
+1. تحقق من DATABASE_URL في Coolify Environment Variables
+2. تأكد من عدم وجود علامات = إضافية في البداية
+3. جرب نسخ URL جديد من Database section
+4. تأكد من أن قاعدة البيانات PostgreSQL تعمل
 ```
 
 #### **متغيرات البيئة الصحيحة:**

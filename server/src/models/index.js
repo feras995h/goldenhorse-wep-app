@@ -37,6 +37,7 @@ if (dbConfig.url) {
   console.log('  - URL length:', dbConfig.url.length);
   console.log('  - URL first 20 chars:', dbConfig.url.substring(0, 20));
   console.log('  - URL contains ://:', dbConfig.url.includes('://'));
+  console.log('  - URL starts with =:', dbConfig.url.startsWith('='));
   console.log('  - URL starts with postgresql:', dbConfig.url.startsWith('postgresql://'));
   console.log('  - URL starts with postgres:', dbConfig.url.startsWith('postgres://'));
 
@@ -63,6 +64,13 @@ if (dbConfig.url) {
 
   // Fix common URL format issues
   let cleanUrl = dbConfig.url;
+
+  // Remove leading = signs (Coolify environment variable issue)
+  if (cleanUrl.startsWith('=')) {
+    console.log('🔧 Removing leading = from DATABASE_URL');
+    cleanUrl = cleanUrl.replace(/^=+/, '');
+    console.log('🔧 Cleaned URL first 20 chars:', cleanUrl.substring(0, 20));
+  }
 
   // Convert postgres:// to postgresql:// (Sequelize expects postgresql://)
   if (cleanUrl.startsWith('postgres://')) {
