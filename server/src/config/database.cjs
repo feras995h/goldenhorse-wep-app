@@ -1,5 +1,14 @@
 require('dotenv').config();
 
+// Debug database configuration
+if (process.env.NODE_ENV === 'production') {
+  console.log('🔍 Database Configuration Debug:');
+  console.log('  - NODE_ENV:', process.env.NODE_ENV);
+  console.log('  - DB_URL present:', !!process.env.DB_URL);
+  console.log('  - DB_URL length:', process.env.DB_URL ? process.env.DB_URL.length : 0);
+  console.log('  - DB_URL starts with:', process.env.DB_URL ? process.env.DB_URL.substring(0, 15) + '...' : 'N/A');
+}
+
 module.exports = {
   development: {
     dialect: process.env.DB_DIALECT || 'sqlite',
@@ -19,8 +28,8 @@ module.exports = {
   },
   production: {
     // Use DB_URL if provided (for hosted databases like Railway, Heroku, etc.)
-    ...(process.env.DB_URL ? {
-      url: process.env.DB_URL,
+    ...(process.env.DB_URL && process.env.DB_URL.trim() !== '' ? {
+      url: process.env.DB_URL.trim(),
       dialect: 'postgres'
     } : {
       // Use individual connection parameters
@@ -39,7 +48,7 @@ module.exports = {
       idle: 10000
     },
     dialectOptions: {
-      ssl: process.env.DB_SSL === 'true' || process.env.DB_URL ? {
+      ssl: process.env.DB_SSL === 'true' || (process.env.DB_URL && process.env.DB_URL.includes('postgresql://')) ? {
         require: true,
         rejectUnauthorized: false
       } : false

@@ -154,22 +154,35 @@ NODE_ENV=production  # ✅ صحيح
 NODE_ENV==production  # ❌ خطأ - علامة = إضافية
 ```
 
-#### **2. مشكلة "Cannot read properties of undefined":**
+#### **2. مشكلة "Cannot read properties of null (reading 'replace')":**
 ```bash
-# تأكد من تعيين DB_URL بشكل صحيح:
-1. اذهب إلى Database → PostgreSQL في Coolify
-2. انسخ "Database URL" الكامل
-3. في Application → Environment Variables
-4. أضف: DB_URL=postgresql://user:password@host:port/database
+# السبب: DB_URL فارغ أو بصيغة خاطئة
+# الحل:
 
-# أو استخدم المتغيرات المنفصلة:
-DB_DIALECT=postgres
-DB_HOST=your-postgres-host
-DB_PORT=5432
-DB_NAME=your-database-name
-DB_USERNAME=your-username
-DB_PASSWORD=your-password
-DB_SSL=true
+1. تحقق من DB_URL في Coolify:
+   - اذهب إلى Database → PostgreSQL
+   - انسخ "Database URL" الكامل
+   - تأكد من أنه يبدأ بـ postgresql://
+
+2. في Application → Environment Variables:
+   DB_URL=postgresql://username:password@host:port/database
+
+   # مثال صحيح:
+   DB_URL=postgresql://golden_horse:mypassword@localhost:5432/golden_horse_db
+
+   # تجنب هذه الأخطاء:
+   DB_URL=                          # ❌ فارغ
+   DB_URL=localhost:5432/database   # ❌ بدون بروتوكول
+   DB_URL=postgres://...            # ❌ يجب أن يكون postgresql://
+
+3. أو استخدم المتغيرات المنفصلة:
+   DB_DIALECT=postgres
+   DB_HOST=your-postgres-host
+   DB_PORT=5432
+   DB_NAME=your-database-name
+   DB_USERNAME=your-username
+   DB_PASSWORD=your-password
+   DB_SSL=true
 ```
 
 #### **التحقق من الإعدادات:**
@@ -187,6 +200,24 @@ DB_SSL=true
 1. تحقق من NODE_ENV في Environment Variables
 2. تأكد من عدم وجود علامات = إضافية
 3. أعد النشر بعد التصحيح
+```
+
+#### **3. مشكلة "Cannot read properties of null (reading 'replace')" في Sequelize:**
+```bash
+# السبب: DB_URL بصيغة خاطئة أو فارغ
+# الأعراض: الخطأ يحدث في sequelize.js:58
+
+# التشخيص في Logs:
+🔍 Database Configuration Debug:
+  - DB_URL present: false          # ❌ DB_URL غير موجود
+  - DB_URL length: 0               # ❌ DB_URL فارغ
+  - DB_URL starts with: N/A       # ❌ لا يوجد بروتوكول
+
+# الحل:
+1. في Coolify → Database → PostgreSQL
+2. انسخ "Database URL" الكامل
+3. تأكد من الصيغة: postgresql://username:password@host:port/database
+4. ألصقه في Application → Environment Variables → DB_URL
 ```
 
 #### **متغيرات البيئة الصحيحة:**
