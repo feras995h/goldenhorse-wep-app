@@ -176,9 +176,9 @@ NODE_ENV==production  # ❌ خطأ - علامة = إضافية
    DATABASE_URL=postgresql://golden_horse:mypassword@localhost:5432/golden_horse_db
 
    # تجنب هذه الأخطاء:
-   DB_URL=                          # ❌ فارغ
-   DB_URL=localhost:5432/database   # ❌ بدون بروتوكول
-   DB_URL=postgres://...            # ❌ يجب أن يكون postgresql://
+   DATABASE_URL=                    # ❌ فارغ
+   DATABASE_URL=localhost:5432/db   # ❌ بدون بروتوكول
+   DATABASE_URL=postgres://...      # ⚠️ يعمل لكن postgresql:// أفضل
 
 3. أو استخدم المتغيرات المنفصلة:
    DB_DIALECT=postgres
@@ -222,7 +222,31 @@ NODE_ENV==production  # ❌ خطأ - علامة = إضافية
 1. في Coolify → Database → PostgreSQL
 2. انسخ "Database URL" الكامل
 3. تأكد من الصيغة: postgresql://username:password@host:port/database
-4. ألصقه في Application → Environment Variables → DB_URL
+4. ألصقه في Application → Environment Variables → DATABASE_URL
+```
+
+#### **4. مشكلة "Cannot read properties of null (reading 'replace')" في Sequelize:**
+```bash
+# السبب: مشكلة في تحليل URL من قبل Sequelize
+# الأعراض: النظام يجد DATABASE_URL لكن Sequelize يفشل في تحليله
+
+# التشخيص الجديد في Logs:
+🔍 URL Debug Info:
+  - URL length: 67
+  - URL first 20 chars: postgres://username:
+  - URL contains ://: true
+  - URL starts with postgresql: false
+  - URL starts with postgres: true
+
+# الحل التلقائي:
+🔧 Converting postgres:// to postgresql://
+🔗 Final URL protocol: postgresql://
+
+# إذا استمرت المشكلة:
+1. تحقق من صحة DATABASE_URL في Coolify
+2. تأكد من عدم وجود مسافات أو أحرف خاصة
+3. جرب نسخ URL جديد من قاعدة البيانات
+4. تأكد من أن قاعدة البيانات تعمل
 ```
 
 #### **متغيرات البيئة الصحيحة:**

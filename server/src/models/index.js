@@ -32,6 +32,14 @@ if (dbConfig.url) {
     process.exit(1);
   }
 
+  // Debug the actual URL format (safely)
+  console.log('🔍 URL Debug Info:');
+  console.log('  - URL length:', dbConfig.url.length);
+  console.log('  - URL first 20 chars:', dbConfig.url.substring(0, 20));
+  console.log('  - URL contains ://:', dbConfig.url.includes('://'));
+  console.log('  - URL starts with postgresql:', dbConfig.url.startsWith('postgresql://'));
+  console.log('  - URL starts with postgres:', dbConfig.url.startsWith('postgres://'));
+
   // Check if URL has proper protocol
   if (!dbConfig.url.includes('://')) {
     console.error('❌ Database URL missing protocol (postgresql://, mysql://, etc.)');
@@ -39,7 +47,32 @@ if (dbConfig.url) {
     process.exit(1);
   }
 
-  sequelize = new Sequelize(dbConfig.url, {
+  // Try to parse URL to check for issues
+  try {
+    const url = new URL(dbConfig.url);
+    console.log('🔍 Parsed URL Info:');
+    console.log('  - Protocol:', url.protocol);
+    console.log('  - Host:', url.hostname);
+    console.log('  - Port:', url.port);
+    console.log('  - Database:', url.pathname);
+  } catch (error) {
+    console.error('❌ Failed to parse DATABASE_URL:', error.message);
+    console.error('URL value (first 30 chars):', dbConfig.url.substring(0, 30) + '...');
+    process.exit(1);
+  }
+
+  // Fix common URL format issues
+  let cleanUrl = dbConfig.url;
+
+  // Convert postgres:// to postgresql:// (Sequelize expects postgresql://)
+  if (cleanUrl.startsWith('postgres://')) {
+    console.log('🔧 Converting postgres:// to postgresql://');
+    cleanUrl = cleanUrl.replace('postgres://', 'postgresql://');
+  }
+
+  console.log('🔗 Final URL protocol:', cleanUrl.substring(0, cleanUrl.indexOf('://') + 3));
+
+  sequelize = new Sequelize(cleanUrl, {
     dialect: dbConfig.dialect || 'postgres',
     logging: dbConfig.logging,
     pool: dbConfig.pool,
