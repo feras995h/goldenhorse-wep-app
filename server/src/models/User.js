@@ -29,7 +29,15 @@ export default (sequelize) => {
       allowNull: true,
       unique: true,
       validate: {
-        isEmail: true
+        isEmail: function(value) {
+          // Only validate if email is provided and not empty
+          if (value && value.trim() !== '') {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+              throw new Error('يجب أن يكون البريد الإلكتروني صحيحاً');
+            }
+          }
+        }
       }
     },
     role: {

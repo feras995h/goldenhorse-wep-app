@@ -1,4 +1,5 @@
-import Redis from 'ioredis';
+// Redis is optional - will be loaded dynamically if needed
+let Redis = null;
 
 /**
  * Cache Manager using Redis
@@ -18,11 +19,23 @@ class CacheManager {
    */
   async initialize() {
     try {
-      // Skip Redis in development if not available
-      if (process.env.NODE_ENV === 'development' && !process.env.REDIS_URL) {
-        console.log('⚠️  Redis skipped in development mode');
+      // Skip Redis if not configured
+      if (!process.env.REDIS_URL && process.env.NODE_ENV === 'development') {
+        console.log('⚠️  Redis not configured, using memory-only cache');
         this.isConnected = false;
         return;
+      }
+
+      // Try to load Redis dynamically
+      if (!Redis) {
+        try {
+          const ioredis = await import('ioredis');
+          Redis = ioredis.default;
+        } catch (error) {
+          console.log('⚠️  Redis not available, using memory-only cache');
+          this.isConnected = false;
+          return;
+        }
       }
 
       // Try to connect to Redis

@@ -61,14 +61,14 @@ const navigationItems: NavigationItem[] = [
     id: 'financial',
     label: 'القسم المالي',
     icon: <DollarSign className="h-5 w-5" />,
-    roles: ['financial'],
+    roles: ['admin', 'financial'],
     children: [
       {
         id: 'financial-dashboard',
         path: '/financial',
         label: 'لوحة التحكم المالية',
         icon: <DollarSign className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
 
       {
@@ -76,70 +76,70 @@ const navigationItems: NavigationItem[] = [
         path: '/financial/chart-of-accounts',
         label: 'دليل الحسابات',
         icon: <Tree className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
       {
         id: 'financial-journal',
         path: '/financial/journal',
         label: 'قيود اليومية',
         icon: <Calculator className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
       {
         id: 'financial-account-statement',
         path: '/financial/account-statement',
         label: 'كشف الحساب',
         icon: <Calculator className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
       {
         id: 'financial-opening-balance',
         path: '/financial/opening-balance',
         label: 'القيد الافتتاحي',
         icon: <TrendingUp className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
       {
         id: 'financial-account-monitoring',
         path: '/financial/account-monitoring',
         label: 'مراقبة الحسابات',
         icon: <Eye className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
       {
         id: 'financial-customers',
         path: '/financial/customers',
         label: 'إدارة العملاء',
         icon: <Headphones className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
       {
         id: 'financial-payroll',
         path: '/financial/payroll',
         label: 'الموظفين والرواتب',
         icon: <Settings className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
       {
         id: 'financial-assets',
         path: '/financial/fixed-assets',
         label: 'الأصول الثابتة',
         icon: <Building className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
       {
         id: 'financial-reports',
         path: '/financial/reports',
         label: 'التقارير المالية',
         icon: <Settings className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
       {
         id: 'financial-invoice-reports',
         path: '/financial/invoice-reports',
         label: 'تقارير الفواتير',
         icon: <FileText className="h-4 w-4" />,
-        roles: ['financial']
+        roles: ['admin', 'financial']
       },
     ]
   },
@@ -148,7 +148,7 @@ const navigationItems: NavigationItem[] = [
     path: '/sales',
     label: 'المبيعات',
     icon: <ShoppingCart className="h-5 w-5" />,
-    roles: ['sales']
+    roles: ['admin', 'sales']
   },
 
 ];
@@ -164,9 +164,13 @@ const TailAdminSidebar: React.FC<TailAdminSidebarProps> = ({
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(['financial']);
 
-  const filteredNavItems = navigationItems.filter(item =>
-    item.roles.includes(user?.role as UserRole)
-  );
+  const filteredNavItems = navigationItems.filter(item => {
+    // For admin users, exclude the dashboard (الرئيسية) item
+    if (user?.role === 'admin' && item.id === 'dashboard') {
+      return false;
+    }
+    return item.roles.includes(user?.role as UserRole);
+  });
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev =>

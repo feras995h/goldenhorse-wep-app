@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Suspense } from 'react';
 import loadable from '@loadable/component';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LogoProvider } from './contexts/LogoContext';
 import { FinancialDataProvider } from './contexts/FinancialDataContext';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -20,6 +20,21 @@ const CustomersManagement = loadable(() => import('./pages/CustomersManagement')
 const AccountStatement = loadable(() => import('./pages/AccountStatement'));
 const InstantReports = loadable(() => import('./pages/InstantReports'));
 const EmployeeAccountStatement = loadable(() => import('./pages/EmployeeAccountStatement'));
+const EmployeePayroll = loadable(() => import('./pages/EmployeePayroll'));
+const InvoiceManagement = loadable(() => import('./pages/InvoiceManagement'));
+const InventoryManagement = loadable(() => import('./pages/InventoryManagement'));
+
+// Admin redirect component
+const AdminRedirect: React.FC = () => {
+  const { user } = useAuth();
+
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return <Dashboard />;
+};
+const SalesReports = loadable(() => import('./pages/SalesReports'));
 const FixedAssetsManagement = loadable(() => import('./pages/FixedAssetsManagement'));
 const FinancialReports = loadable(() => import('./pages/FinancialReports'));
 const OpeningBalanceEntry = loadable(() => import('./pages/OpeningBalanceEntry'));
@@ -52,6 +67,9 @@ function App() {
               </ProtectedRoute>
             }>
               <Route index element={<Navigate to="/dashboard" replace />} />
+
+              {/* Admin redirect */}
+              <Route path="dashboard" element={<AdminRedirect />} />
               <Route path="dashboard" element={<Dashboard />} />
               
               {/* Role-specific dashboards */}
@@ -85,12 +103,31 @@ function App() {
                 <Route path="opening-balance" element={<OpeningBalanceEntry />} />
                 <Route path="account-monitoring" element={<AccountMonitoring />} />
                 <Route path="invoice-reports" element={<InvoiceReports />} />
+                <Route path="employee-payroll" element={<EmployeePayroll />} />
                 <Route path="settings" element={<SystemSettings />} />
               </Route>
               
               <Route path="sales" element={
-                <ProtectedRoute allowedRoles={['sales']}>
+                <ProtectedRoute allowedRoles={['admin', 'sales']}>
                   <SalesDashboard />
+                </ProtectedRoute>
+              } />
+
+              <Route path="sales/invoices" element={
+                <ProtectedRoute allowedRoles={['admin', 'sales']}>
+                  <InvoiceManagement />
+                </ProtectedRoute>
+              } />
+
+              <Route path="sales/inventory" element={
+                <ProtectedRoute allowedRoles={['admin', 'sales']}>
+                  <InventoryManagement />
+                </ProtectedRoute>
+              } />
+
+              <Route path="sales/reports" element={
+                <ProtectedRoute allowedRoles={['admin', 'sales']}>
+                  <SalesReports />
                 </ProtectedRoute>
               } />
               

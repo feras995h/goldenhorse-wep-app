@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tree, Search, Filter, Download, Eye, Edit, Plus, ChevronDown, Shield } from 'lucide-react';
+import { Tree, Search, Filter, Download, Eye, Edit, Plus, ChevronDown, Shield, Trash2 } from 'lucide-react';
 import { financialAPI } from '../services/api';
 import AccountTree from '../components/Financial/AccountTree';
 import { SearchFilter } from '../components/UI/SearchFilter';
@@ -69,14 +69,40 @@ const ChartOfAccounts: React.FC = () => {
   const createDefaultAccounts = async () => {
     try {
       console.log('Creating default accounts...');
+      let successCount = 0;
+
       for (const defaultAccount of DEFAULT_ACCOUNTS) {
-        await financialAPI.createAccount({
-          ...defaultAccount,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
+        try {
+          console.log(`Creating account: ${defaultAccount.code} - ${defaultAccount.name}`);
+
+          // Prepare account data for API
+          const accountData = {
+            code: defaultAccount.code,
+            name: defaultAccount.name,
+            nameEn: defaultAccount.nameEn || '',
+            type: defaultAccount.type,
+            accountType: defaultAccount.accountType,
+            level: defaultAccount.level,
+            isActive: defaultAccount.isActive,
+            currency: defaultAccount.currency,
+            nature: defaultAccount.nature,
+            description: defaultAccount.description || '',
+            notes: defaultAccount.notes || '',
+            isSystemAccount: defaultAccount.isSystemAccount || false,
+            isGroup: defaultAccount.accountType === 'main',
+            parentId: null
+          };
+
+          await financialAPI.createAccount(accountData);
+          successCount++;
+          console.log(`✅ Created: ${defaultAccount.code} - ${defaultAccount.name}`);
+        } catch (error) {
+          console.error(`❌ Failed to create account ${defaultAccount.code}:`, error);
+          // Continue with other accounts even if one fails
+        }
       }
-      console.log('Default accounts created successfully');
+
+      console.log(`📊 Created ${successCount}/${DEFAULT_ACCOUNTS.length} default accounts successfully`);
     } catch (error) {
       console.error('Error creating default accounts:', error);
     }
@@ -282,17 +308,40 @@ const ChartOfAccounts: React.FC = () => {
     }
 
     try {
+      // Prepare data for API
+      const accountData = {
+        ...formData,
+        parentId: formData.parentId || null, // Convert empty string to null
+        isGroup: formData.accountType === 'main' ? true : false, // Set isGroup based on accountType
+        isActive: formData.isActive !== undefined ? formData.isActive : true,
+        currency: formData.currency || 'LYD',
+        nature: formData.nature || 'debit'
+      };
+
+      console.log('Saving account data:', accountData);
+
       if (modalMode === 'create') {
-        await financialAPI.createAccount(formData);
+        const response = await financialAPI.createAccount(accountData);
+        console.log('Account created:', response);
       } else if (modalMode === 'edit' && selectedAccount) {
-        await financialAPI.updateAccount(selectedAccount.id, formData);
+        const response = await financialAPI.updateAccount(selectedAccount.id, accountData);
+        console.log('Account updated:', response);
       }
-      
+
       setIsModalOpen(false);
-      loadAccounts();
+      await loadAccounts(); // Wait for accounts to reload
     } catch (error) {
       console.error('Error saving account:', error);
-      alert('حدث خطأ أثناء حفظ الحساب');
+
+      // More detailed error handling
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 'خطأ في الخادم';
+        alert(`حدث خطأ أثناء حفظ الحساب: ${errorMessage}`);
+      } else if (error.request) {
+        alert('لا يمكن الاتصال بالخادم. تأكد من تشغيل الخادم.');
+      } else {
+        alert(`حدث خطأ أثناء حفظ الحساب: ${error.message}`);
+      }
     }
   };
 

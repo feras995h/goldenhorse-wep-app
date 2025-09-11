@@ -13,25 +13,10 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./server/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
-      retries: 5
-
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: golden-horse-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
       retries: 5
 
   # Golden Horse Application
@@ -48,35 +33,27 @@ services:
       DB_DIALECT: postgres
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: goldenhorse-wep-app-db
+      DB_NAME: golden_horse_db
       DB_USERNAME: postgres
       DB_PASSWORD: postgres123
-      
+
       # JWT
       JWT_SECRET: GH2024_SecureJWT_Key_$7mK9pL3qR8vN2xC5bF1wE6tY4uI0oP9sA8dG7hJ6kL5mN4qR3tY2uI1oP0
       JWT_REFRESH_SECRET: GH2024_RefreshJWT_Key_$9nM7kL5jH3gF1dS8aP6qW4eR2tY0uI9oP8sA7dG6hJ5kL4mN3qR2tY1uI0
       JWT_EXPIRES_IN: 8h
       JWT_REFRESH_EXPIRES_IN: 7d
-      
-      # Redis
-      REDIS_URL: redis://redis:6379
-      
+
       # Security
       TRUST_PROXY: 1
       CORS_ORIGIN: "*"
-      
+
       # Logging
       LOG_LEVEL: info
       
     volumes:
       - uploads_data:/app/server/uploads
-      - logs_data:/app/server/logs
-      - backups_data:/app/server/backups
-      - archives_data:/app/server/archives
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "server/src/scripts/healthCheck.js"]
@@ -87,11 +64,7 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
   uploads_data:
-  logs_data:
-  backups_data:
-  archives_data:
 
 networks:
   default:

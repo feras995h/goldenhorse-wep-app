@@ -76,6 +76,19 @@ const AccountStatement: React.FC = () => {
     setSelectedAccount(account);
     setAccountSearchResults([]);
     setSearchingAccount('');
+    // Auto-load statement when account is selected
+    setTimeout(() => {
+      loadAccountStatement();
+    }, 100);
+  };
+
+  const clearSelectedAccount = () => {
+    setSelectedAccount(null);
+    setStatementEntries([]);
+    setOpeningBalance(0);
+    setClosingBalance(0);
+    setAccountSearchResults([]);
+    setSearchingAccount('');
   };
 
   const loadAccountStatement = async () => {
@@ -216,72 +229,65 @@ const AccountStatement: React.FC = () => {
                 الحساب
               </label>
               <div className="space-y-2">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={selectedAccount?.code || ''}
-                    onChange={(e) => {
-                      if (!selectedAccount) {
-                        searchAccounts(e.target.value, 'accountCode');
-                      }
-                    }}
-                    placeholder="رقم الحساب"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
-                    disabled={!!selectedAccount}
-                  />
-                  {searchingAccount === 'accountCode' && accountSearchResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {accountSearchResults.map((account) => (
-                        <div
-                          key={account.id}
-                          onClick={() => selectAccount(account)}
-                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                        >
-                          <div className="font-medium">{account.code}</div>
-                          <div className="text-gray-600">{account.name}</div>
-                        </div>
-                      ))}
+                {selectedAccount ? (
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <div className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                      <div className="font-medium">{selectedAccount.code} - {selectedAccount.name}</div>
                     </div>
-                  )}
-                </div>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={selectedAccount?.name || ''}
-                    onChange={(e) => {
-                      if (!selectedAccount) {
-                        searchAccounts(e.target.value, 'accountName');
-                      }
-                    }}
-                    placeholder="اسم الحساب"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
-                    disabled={!!selectedAccount}
-                  />
-                  {searchingAccount === 'accountName' && accountSearchResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {accountSearchResults.map((account) => (
-                        <div
-                          key={account.id}
-                          onClick={() => selectAccount(account)}
-                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                        >
-                          <div className="font-medium">{account.name}</div>
-                          <div className="text-gray-600">{account.code}</div>
+                    <button
+                      onClick={clearSelectedAccount}
+                      className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      تغيير
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        onChange={(e) => searchAccounts(e.target.value, 'accountCode')}
+                        placeholder="رقم الحساب"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
+                      />
+                      {searchingAccount === 'accountCode' && accountSearchResults.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                          {accountSearchResults.map((account) => (
+                            <div
+                              key={account.id}
+                              onClick={() => selectAccount(account)}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                            >
+                              <div className="font-medium">{account.code}</div>
+                              <div className="text-gray-600">{account.name}</div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
-                {selectedAccount && (
-                  <button
-                    onClick={() => {
-                      setSelectedAccount(null);
-                      setStatementEntries([]);
-                    }}
-                    className="text-sm text-red-600 hover:text-red-800"
-                  >
-                    مسح الحساب المحدد
-                  </button>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        onChange={(e) => searchAccounts(e.target.value, 'accountName')}
+                        placeholder="اسم الحساب"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
+                      />
+                      {searchingAccount === 'accountName' && accountSearchResults.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                          {accountSearchResults.map((account) => (
+                            <div
+                              key={account.id}
+                              onClick={() => selectAccount(account)}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                            >
+                              <div className="font-medium">{account.name}</div>
+                              <div className="text-gray-600">{account.code}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

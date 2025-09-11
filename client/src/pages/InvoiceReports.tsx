@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, Filter, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
-import { financialAPI } from '../services/api';
+import { salesAPI } from '../services/api';
 import { SearchFilter } from '../components/UI/SearchFilter';
 import { Invoice } from '../types/financial';
 
@@ -54,7 +54,7 @@ const InvoiceReports: React.FC = () => {
   const loadInvoices = async () => {
     try {
       setLoading(true);
-      const response = await financialAPI.getInvoices({ limit: 1000 });
+      const response = await salesAPI.getInvoices({ limit: 1000 });
       setInvoices(response.data || []);
     } catch (error) {
       console.error('Error loading invoices:', error);

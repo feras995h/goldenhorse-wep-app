@@ -30,15 +30,17 @@ const validateEnvironment = () => {
   const requiredEnv = {
     // Security
     'JWT_SECRET': 'JWT secret key is required',
-    'JWT_REFRESH_SECRET': 'JWT refresh secret key is required',
-
-    // Database
-    'DB_USERNAME': 'Database username is required',
-    'DB_PASSWORD': 'Database password is required',
-    'DB_NAME': 'Database name is required',
-    'DB_HOST': 'Database host is required',
-    'DB_PORT': 'Database port is required'
+    'JWT_REFRESH_SECRET': 'JWT refresh secret key is required'
   };
+
+  // Only require database variables for PostgreSQL
+  if (process.env.DB_DIALECT === 'postgres') {
+    requiredEnv['DB_USERNAME'] = 'Database username is required';
+    requiredEnv['DB_PASSWORD'] = 'Database password is required';
+    requiredEnv['DB_NAME'] = 'Database name is required';
+    requiredEnv['DB_HOST'] = 'Database host is required';
+    requiredEnv['DB_PORT'] = 'Database port is required';
+  }
 
   const missing = [];
   const warnings = [];
@@ -160,7 +162,21 @@ const salesLimiter = rateLimit({
 // Middleware
 app.use(requestId); // Add request ID for tracking
 app.use(monitoringManager.requestMonitoringMiddleware()); // Add request monitoring
-app.use(cors());
+
+// Configure CORS to allow requests from frontend
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Type', 'Content-Length', 'Content-Disposition']
+}));
+
 app.use(express.json());
 
 // Apply rate limiting

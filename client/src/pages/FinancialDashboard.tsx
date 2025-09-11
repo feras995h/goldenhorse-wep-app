@@ -9,17 +9,25 @@ import {
   Receipt,
   UserCheck,
   BarChart3,
-  ArrowUpRight
+  ArrowUpRight,
+  Building,
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
 
 const FinancialDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { 
-    financialData, 
-    financialLoading, 
-    financialError, 
-    refreshFinancialData 
+  const {
+    financialData,
+    financialLoading,
+    financialError,
+    refreshFinancialData
   } = useFinancialData();
+
+  // Rename variables to match usage in the component
+  const loading = financialLoading;
+  const error = financialError;
+  const handleRefresh = refreshFinancialData;
 
   const quickActions = [
     {

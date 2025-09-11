@@ -1,0 +1,191 @@
+name: Deploy Golden Horse Shipping System
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install server dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Install client dependencies
+      run: |
+        cd client
+        npm ci
+
+    - name: Run server tests
+      run: |
+        cd server
+        npm test
+      env:
+        NODE_ENV: test
+        DB_TYPE: postgres
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: test_db
+        DB_USER: postgres
+        DB_PASSWORD: postgres
+        JWT_SECRET: test_jwt_secret_key_for_testing_only
+
+    - name: Run client tests
+      run: |
+        cd client
+        npm test -- --coverage --watchAll=false
+
+    - name: Build client
+      run: |
+        cd client
+        npm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        cd server && npm ci --only=production
+        cd ../client && npm ci --only=production
+
+    - name: Build client for production
+      run: |
+        cd client
+        npm run build
+
+    - name: Prepare production database
+      run: |
+        cd server
+        npm run prepare-production
+      env:
+        NODE_ENV: production
+        DB_TYPE: sqlite
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+    - name: Create deployment package
+      run: |
+        mkdir -p deploy
+        cp -r server deploy/
+        cp -r client/build deploy/client
+        cp package.json deploy/
+        cp README.md deploy/
+        cp PRODUCTION_DEPLOYMENT.md deploy/
+        cp docker-compose.production.yml deploy/
+        cp Dockerfile deploy/
+
+    - name: Deploy to VPS via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT }}
+        script: |
+          # Navigate to application directory
+          cd /var/www/golden-horse-shipping
+          
+          # Stop the application
+          pm2 stop golden-horse-api || true
+          
+          # Backup current version
+          cp -r . ../golden-horse-backup-$(date +%Y%m%d_%H%M%S) || true
+          
+          # Pull latest changes
+          git pull origin main
+          
+          # Install dependencies
+          cd server && npm ci --only=production
+          cd ../client && npm ci --only=production
+          
+          # Build client
+          cd ../client && npm run build
+          
+          # Setup production database (if needed)
+          cd ../server
+          npm run setup-production
+          
+          # Restart the application
+          pm2 start ecosystem.config.js --env production
+          pm2 save
+
+    - name: Deploy via Docker (Alternative)
+      if: ${{ secrets.USE_DOCKER == 'true' }}
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT }}
+        script: |
+          cd /var/www/golden-horse-shipping
+          
+          # Pull latest changes
+          git pull origin main
+          
+          # Build and deploy with Docker
+          docker-compose -f docker-compose.production.yml down
+          docker-compose -f docker-compose.production.yml build
+          docker-compose -f docker-compose.production.yml up -d
+          
+          # Clean up old images
+          docker image prune -f
+
+    - name: Health Check
+      run: |
+        sleep 30
+        curl -f ${{ secrets.APP_URL }}/api/health || exit 1
+
+    - name: Notify deployment success
+      if: success()
+      run: |
+        echo "✅ Deployment successful!"
+        echo "🚀 Application is running at: ${{ secrets.APP_URL }}"
+
+    - name: Notify deployment failure
+      if: failure()
+      run: |
+        echo "❌ Deployment failed!"
+        echo "Please check the logs and try again."

@@ -17,8 +17,13 @@ class DatabaseInitializer {
       await sequelize.authenticate();
       console.log('✅ Database connection successful');
       
-      // Test query execution
-      const result = await sequelize.query('SELECT NOW() as current_time');
+      // Test query execution (database-agnostic)
+      let result;
+      if (sequelize.getDialect() === 'sqlite') {
+        result = await sequelize.query("SELECT datetime('now') as current_time");
+      } else {
+        result = await sequelize.query('SELECT NOW() as current_time');
+      }
       console.log(`✅ Database query test successful - Current time: ${result[0][0].current_time}`);
       
       return { success: true, message: 'Database connection healthy' };
@@ -64,7 +69,8 @@ class DatabaseInitializer {
       
       // Sync models (create tables)
       console.log('📋 Creating/updating database tables...');
-      await sequelize.sync({ alter: true });
+      // Use force: false and alter: false to avoid UNIQUE column issues in SQLite
+      await sequelize.sync({ force: false, alter: false });
       console.log('✅ Database tables synchronized');
       
       // Check if we need to seed basic data

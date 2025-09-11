@@ -13,8 +13,10 @@ const { User, Role } = models;
 router.get('/users', authenticateToken, requireAdminAccess, async (req, res) => {
   try {
     const { page = 1, limit = 10, search, role, isActive } = req.query;
+
+    // Build query filters
     let whereClause = {};
-    
+
     // Add search filter
     if (search) {
       whereClause = {
@@ -24,17 +26,17 @@ router.get('/users', authenticateToken, requireAdminAccess, async (req, res) => 
         ]
       };
     }
-    
+
     // Add role filter
     if (role) {
       whereClause.role = role;
     }
-    
+
     // Add active status filter
     if (isActive !== undefined) {
       whereClause.isActive = isActive === 'true';
     }
-    
+
     const options = {
       where: whereClause,
       order: [['createdAt', 'DESC']],
@@ -42,12 +44,12 @@ router.get('/users', authenticateToken, requireAdminAccess, async (req, res) => 
       offset: (parseInt(page) - 1) * parseInt(limit),
       attributes: { exclude: ['password'] }
     };
-    
+
     const [users, total] = await Promise.all([
       User.findAll(options),
       User.count({ where: whereClause })
     ]);
-    
+
     const response = {
       data: users,
       total,
@@ -55,7 +57,7 @@ router.get('/users', authenticateToken, requireAdminAccess, async (req, res) => 
       limit: parseInt(limit),
       totalPages: Math.ceil(total / parseInt(limit))
     };
-    
+
     res.json(response);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -67,27 +69,36 @@ router.get('/users', authenticateToken, requireAdminAccess, async (req, res) => 
 router.post('/users', authenticateToken, requireAdminAccess, async (req, res) => {
   try {
     const { username, password, name, role, email } = req.body;
-    
+
+    // Validate required fields
+    if (!username || !password || !name || !role) {
+      return res.status(400).json({ message: 'جميع الحقول المطلوبة يجب ملؤها' });
+    }
+
     // Check if username already exists
     const existingUser = await User.findOne({ where: { username } });
     if (existingUser) {
       return res.status(400).json({ message: 'اسم المستخدم موجود بالفعل' });
     }
-    
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-    
-    // Create user
-    const user = await User.create({
-      id: uuidv4(),
+
+    // Prepare user data - handle empty email
+    // Note: Don't hash password here, let the User model hooks handle it
+    const userData = {
       username,
-      password: hashedPassword,
+      password, // Raw password - will be hashed by User model hooks
       name,
       role,
-      email,
       isActive: true
-    });
-    
+    };
+
+    // Only add email if it's provided and not empty
+    if (email && email.trim() !== '') {
+      userData.email = email.trim();
+    }
+
+    // Create user - the User model hooks will hash the password
+    const user = await User.create(userData);
+
     // Return user without password
     const { password: _, ...userWithoutPassword } = user.toJSON();
     res.status(201).json(userWithoutPassword);
@@ -511,6 +522,208 @@ router.get('/audit-logs', authenticateToken, requireAdminAccess, async (req, res
   } catch (error) {
     console.error('Error fetching audit logs:', error);
     res.status(500).json({ message: 'خطأ في جلب سجلات التدقيق' });
+  }
+});
+
+// ==================== ADMIN OVERVIEW DATA ====================
+
+// GET /api/admin/overview - Get comprehensive overview data for admin dashboard
+router.get('/overview', authenticateToken, requireAdminAccess, async (req, res) => {
+  try {
+    // System statistics
+    const [totalUsers, activeUsers, totalRoles] = await Promise.all([
+      User.count(),
+      User.count({ where: { isActive: true } }),
+      Role.count()
+    ]);
+
+    // Mock financial data - replace with actual financial API calls when available
+    const financialData = {
+      totalRevenue: 125000,
+      totalExpenses: 85000,
+      netProfit: 40000,
+      accountsReceivable: 25000,
+      accountsPayable: 15000,
+      cashBalance: 35000,
+      totalAccounts: 45,
+      pendingTransactions: 8,
+      monthlyGrowth: 12.5
+    };
+
+    // Mock sales data - replace with actual sales API calls when available
+    const salesData = {
+      totalSales: 95000,
+      totalOrders: 156,
+      activeCustomers: 89,
+      averageOrderValue: 608.97,
+      totalInvoices: 134,
+      paidInvoices: 98,
+      pendingInvoices: 36,
+      totalProducts: 245,
+      lowStockItems: 12,
+      monthlyGrowth: 8.3
+    };
+
+    // System health metrics
+    const systemHealth = {
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      version: process.version,
+      status: 'healthy'
+    };
+
+    // Recent activities (mock data)
+    const recentActivities = [
+      {
+        id: '1',
+        type: 'user_login',
+        description: 'تسجيل دخول مستخدم جديد',
+        user: 'أحمد محمد',
+        timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString()
+      },
+      {
+        id: '2',
+        type: 'financial_transaction',
+        description: 'إضافة قيد محاسبي جديد',
+        user: 'فاطمة علي',
+        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString()
+      },
+      {
+        id: '3',
+        type: 'sales_order',
+        description: 'طلب شحن جديد',
+        user: 'محمد أحمد',
+        timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString()
+      }
+    ];
+
+    // Alerts and notifications
+    const alerts = [
+      {
+        id: '1',
+        type: 'warning',
+        title: 'مخزون منخفض',
+        message: 'يوجد 12 منتج بمخزون منخفض',
+        priority: 'medium'
+      },
+      {
+        id: '2',
+        type: 'info',
+        title: 'فواتير معلقة',
+        message: 'يوجد 36 فاتورة في انتظار الدفع',
+        priority: 'low'
+      }
+    ];
+
+    const overview = {
+      system: {
+        users: {
+          total: totalUsers,
+          active: activeUsers,
+          inactive: totalUsers - activeUsers
+        },
+        roles: {
+          total: totalRoles
+        },
+        health: systemHealth
+      },
+      financial: financialData,
+      sales: salesData,
+      activities: recentActivities,
+      alerts: alerts
+    };
+
+    res.json(overview);
+  } catch (error) {
+    console.error('Error fetching admin overview:', error);
+    res.status(500).json({ message: 'خطأ في جلب بيانات النظرة العامة' });
+  }
+});
+
+// GET /api/admin/financial-summary - Get financial summary for admin
+router.get('/financial-summary', authenticateToken, requireAdminAccess, async (req, res) => {
+  try {
+    // Mock financial summary - replace with actual financial API calls
+    const summary = {
+      totalRevenue: 125000,
+      totalExpenses: 85000,
+      netProfit: 40000,
+      profitMargin: 32.0,
+      accountsReceivable: 25000,
+      accountsPayable: 15000,
+      cashBalance: 35000,
+      totalAccounts: 45,
+      activeAccounts: 38,
+      pendingTransactions: 8,
+      monthlyRevenue: [
+        { month: 'يناير', amount: 18000 },
+        { month: 'فبراير', amount: 22000 },
+        { month: 'مارس', amount: 19500 },
+        { month: 'أبريل', amount: 25000 },
+        { month: 'مايو', amount: 21000 },
+        { month: 'يونيو', amount: 19500 }
+      ],
+      topExpenseCategories: [
+        { category: 'الرواتب', amount: 35000, percentage: 41.2 },
+        { category: 'الإيجار', amount: 15000, percentage: 17.6 },
+        { category: 'المرافق', amount: 8500, percentage: 10.0 },
+        { category: 'التسويق', amount: 12000, percentage: 14.1 },
+        { category: 'أخرى', amount: 14500, percentage: 17.1 }
+      ]
+    };
+
+    res.json(summary);
+  } catch (error) {
+    console.error('Error fetching financial summary:', error);
+    res.status(500).json({ message: 'خطأ في جلب الملخص المالي' });
+  }
+});
+
+// GET /api/admin/sales-summary - Get sales summary for admin
+router.get('/sales-summary', authenticateToken, requireAdminAccess, async (req, res) => {
+  try {
+    // Mock sales summary - replace with actual sales API calls
+    const summary = {
+      totalSales: 95000,
+      totalOrders: 156,
+      activeCustomers: 89,
+      newCustomers: 12,
+      averageOrderValue: 608.97,
+      totalInvoices: 134,
+      paidInvoices: 98,
+      pendingInvoices: 36,
+      overdueInvoices: 8,
+      totalProducts: 245,
+      lowStockItems: 12,
+      outOfStockItems: 3,
+      monthlySales: [
+        { month: 'يناير', amount: 14000, orders: 22 },
+        { month: 'فبراير', amount: 18500, orders: 28 },
+        { month: 'مارس', amount: 16200, orders: 25 },
+        { month: 'أبريل', amount: 21000, orders: 32 },
+        { month: 'مايو', amount: 17800, orders: 27 },
+        { month: 'يونيو', amount: 15500, orders: 22 }
+      ],
+      topCustomers: [
+        { id: '1', name: 'شركة الأمل التجارية', totalPurchases: 25000, orders: 12 },
+        { id: '2', name: 'محمد أحمد علي', totalPurchases: 18500, orders: 8 },
+        { id: '3', name: 'مؤسسة النور', totalPurchases: 15200, orders: 6 },
+        { id: '4', name: 'فاطمة محمود', totalPurchases: 12800, orders: 9 },
+        { id: '5', name: 'شركة التقدم', totalPurchases: 11000, orders: 5 }
+      ],
+      salesByCategory: [
+        { category: 'إلكترونيات', amount: 35000, percentage: 36.8 },
+        { category: 'ملابس', amount: 22000, percentage: 23.2 },
+        { category: 'أدوات منزلية', amount: 18000, percentage: 18.9 },
+        { category: 'كتب ومكتبة', amount: 12000, percentage: 12.6 },
+        { category: 'أخرى', amount: 8000, percentage: 8.4 }
+      ]
+    };
+
+    res.json(summary);
+  } catch (error) {
+    console.error('Error fetching sales summary:', error);
+    res.status(500).json({ message: 'خطأ في جلب ملخص المبيعات' });
   }
 });
 

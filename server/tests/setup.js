@@ -6,9 +6,10 @@ beforeAll(async () => {
   process.env.NODE_ENV = 'test';
   process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only';
   process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing-only';
-  
-  // Use in-memory database for tests
-  process.env.DB_NAME = ':memory:';
+
+  // Use SQLite in-memory database for tests
+  process.env.DB_DIALECT = 'sqlite';
+  process.env.DB_STORAGE = ':memory:';
   
   try {
     // Test database connection

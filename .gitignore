@@ -95,3 +95,55 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+database/
+server/database/
+
+# Uploads and user files
+uploads/
+server/uploads/
+
+# Logs
+logs/
+*.log
+server/logs/
+
+# Backups
+backups/
+server/backups/
+
+# SSL certificates
+ssl/
+*.pem
+*.key
+*.crt
+
+# Docker
+.dockerignore
+
+# PM2
+ecosystem.config.js
+
+# Local development
+.local/
+
+# Test files
+test-results/
+
+# Seed files with dummy data (keep basic seed only)
+server/src/scripts/seedDummy*
+server/src/data/
+
+# Local scripts
+scripts/local/
+
+# Cache
+.parcel-cache/
+
+# Build tools
+.webpack/
+.rollup.cache/

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { LoginCredentials, AuthResponse, User } from '../types/auth';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -195,6 +195,32 @@ export const financialAPI = {
 
   approveJournalEntry: async (id: string) => {
     const response = await api.post(`/financial/journal-entries/${id}/submit`);
+    return response.data;
+  },
+
+  // Opening Balances
+  getOpeningBalances: async (params?: { page?: number; limit?: number; search?: string }) => {
+    const response = await api.get('/financial/opening-balances', { params });
+    return response.data;
+  },
+
+  createOpeningBalance: async (balanceData: any) => {
+    const response = await api.post('/financial/opening-balances', balanceData);
+    return response.data;
+  },
+
+  updateOpeningBalance: async (id: string, balanceData: any) => {
+    const response = await api.put(`/financial/opening-balances/${id}`, balanceData);
+    return response.data;
+  },
+
+  deleteOpeningBalance: async (id: string) => {
+    const response = await api.delete(`/financial/opening-balances/${id}`);
+    return response.data;
+  },
+
+  createOpeningBalanceEntry: async (entryData: any) => {
+    const response = await api.post('/financial/opening-balance-entry', entryData);
     return response.data;
   },
 
@@ -555,16 +581,72 @@ export const salesAPI = {
     }
   },
 
-  // Inventory (placeholder for future implementation)
-  getInventory: async () => {
-    // This would be implemented when inventory management is added
-    return {
-      data: [],
-      total: 0,
-      page: 1,
-      limit: 10,
-      totalPages: 0
-    };
+  // Inventory Management
+  getInventory: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    category?: string;
+    status?: 'in_stock' | 'low_stock' | 'out_of_stock';
+  }) => {
+    const response = await api.get('/sales/inventory', { params });
+    return response.data;
+  },
+
+  createInventoryItem: async (itemData: {
+    code: string;
+    name: string;
+    nameEn?: string;
+    category: string;
+    unit: string;
+    currentStock?: number;
+    minStock?: number;
+    maxStock?: number;
+    unitCost?: number;
+    sellingPrice?: number;
+    location?: string;
+    supplier?: string;
+    barcode?: string;
+    description?: string;
+  }) => {
+    const response = await api.post('/sales/inventory', itemData);
+    return response.data;
+  },
+
+  updateInventoryItem: async (id: string, itemData: any) => {
+    const response = await api.put(`/sales/inventory/${id}`, itemData);
+    return response.data;
+  },
+
+  recordStockMovement: async (itemId: string, movementData: {
+    type: 'in' | 'out' | 'adjustment';
+    quantity: number;
+    reason: string;
+    reference?: string;
+    notes?: string;
+  }) => {
+    const response = await api.post(`/sales/inventory/${itemId}/movement`, movementData);
+    return response.data;
+  },
+
+  getStockMovements: async (itemId: string, params?: {
+    page?: number;
+    limit?: number;
+  }) => {
+    const response = await api.get(`/sales/inventory/${itemId}/movements`, { params });
+    return response.data;
+  },
+
+  // Sales Reports
+  getSalesReports: async (params?: {
+    dateFrom?: string;
+    dateTo?: string;
+    customerId?: string;
+    productCategory?: string;
+    reportType?: 'summary' | 'detailed' | 'customer' | 'product';
+  }) => {
+    const response = await api.get('/sales/reports', { params });
+    return response.data;
   }
 };
 
@@ -639,6 +721,22 @@ export const adminAPI = {
   },
   getAuditLogs: async (params?: { page?: number; limit?: number; userId?: string; action?: string; startDate?: string; endDate?: string }) => {
     const response = await api.get('/admin/audit-logs', { params });
+    return response.data;
+  },
+
+  // Admin overview and summary data
+  getOverview: async () => {
+    const response = await api.get('/admin/overview');
+    return response.data;
+  },
+
+  getFinancialSummary: async () => {
+    const response = await api.get('/admin/financial-summary');
+    return response.data;
+  },
+
+  getSalesSummary: async () => {
+    const response = await api.get('/admin/sales-summary');
     return response.data;
   }
 };

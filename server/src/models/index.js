@@ -4,19 +4,32 @@ import config from '../config/database.cjs';
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
-const sequelize = new Sequelize(
-  dbConfig.database,
-  dbConfig.username,
-  dbConfig.password,
-  {
-    host: dbConfig.host,
-    port: dbConfig.port,
-    dialect: dbConfig.dialect,
+// Initialize Sequelize based on dialect
+let sequelize;
+if (dbConfig.dialect === 'sqlite') {
+  // SQLite configuration
+  sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: dbConfig.storage,
     logging: dbConfig.logging,
-    pool: dbConfig.pool,
-    dialectOptions: dbConfig.dialectOptions
-  }
-);
+    pool: dbConfig.pool
+  });
+} else {
+  // PostgreSQL configuration
+  sequelize = new Sequelize(
+    dbConfig.database,
+    dbConfig.username,
+    dbConfig.password,
+    {
+      host: dbConfig.host,
+      port: dbConfig.port,
+      dialect: dbConfig.dialect,
+      logging: dbConfig.logging,
+      pool: dbConfig.pool,
+      dialectOptions: dbConfig.dialectOptions
+    }
+  );
+}
 
 // Import and initialize models
 import UserModel from './User.js';

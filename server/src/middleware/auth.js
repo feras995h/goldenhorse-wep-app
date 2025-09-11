@@ -27,7 +27,7 @@ export const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid token type', code: 'INVALID_TOKEN_TYPE' });
     }
 
-    // Get user data from database using Sequelize
+    // Find user by ID
     const user = await User.findByPk(decoded.userId);
 
     if (!user || !user.isActive) {

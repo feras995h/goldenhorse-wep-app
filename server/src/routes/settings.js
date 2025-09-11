@@ -187,6 +187,12 @@ router.get('/logo', async (req, res) => {
       return res.status(404).json({ message: 'Logo file not found' });
     }
 
+    // Set CORS headers explicitly for image files
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Type, Content-Length, Content-Disposition');
+
     // Set appropriate content type
     res.setHeader('Content-Type', settings.logo.mimetype || 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
@@ -201,6 +207,15 @@ router.get('/logo', async (req, res) => {
     console.error('Error serving logo:', error);
     res.status(500).json({ message: 'Failed to serve logo' });
   }
+});
+
+// OPTIONS /api/settings/logo - Handle preflight requests
+router.options('/logo', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS, POST, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+  res.status(200).end();
 });
 
 // DELETE /api/settings/logo - Delete current logo
@@ -255,6 +270,11 @@ router.head('/logo', async (req, res) => {
     } catch (error) {
       return res.status(404).end();
     }
+
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
 
     // Set appropriate headers
     res.setHeader('Content-Type', settings.logo.mimetype || 'image/png');

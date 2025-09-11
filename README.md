@@ -40,9 +40,22 @@
 
 ### التقنيات المستخدمة
 - **Frontend**: React.js + TypeScript + Tailwind CSS
-- **Backend**: Node.js + Express.js
+- **Backend**: Node.js + Express.js + Sequelize
 - **Authentication**: JWT
-- **Database**: JSON files (للتطوير الأولي)
+- **Database**: SQLite (تطوير) / PostgreSQL (إنتاج)
+
+## قاعدة البيانات الموحدة
+
+النظام يستخدم قاعدة بيانات موحدة تتبديل تلقائياً حسب البيئة:
+- **التطوير**: SQLite (بسيط، لا يحتاج إعداد)
+- **الإنتاج**: PostgreSQL (قوي، مناسب للإنتاج)
+
+## النشر عبر GitHub
+
+النظام مُحسَّن للنشر عبر GitHub Actions:
+- **Push إلى GitHub**: النظام يدعم النشر التلقائي
+- **متغيرات البيئة**: يتم تعيينها في إعدادات GitHub أو VPS
+- **قاعدة البيانات**: تتبديل تلقائياً للـ PostgreSQL في الإنتاج
 
 ### التثبيت والتشغيل
 

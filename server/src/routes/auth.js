@@ -17,17 +17,17 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'اسم المستخدم وكلمة المرور مطلوبان' });
     }
 
-    // Get user from database using Sequelize
-    const user = await User.findOne({ 
-      where: { username: username, isActive: true } 
+    // Find user and validate password
+    const user = await User.findOne({
+      where: { username: username, isActive: true }
     });
 
     if (!user) {
       return res.status(401).json({ message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }
 
-    // Check password
     const isValidPassword = await bcrypt.compare(password, user.password);
+
     if (!isValidPassword) {
       return res.status(401).json({ message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }

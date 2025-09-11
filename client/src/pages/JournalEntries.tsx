@@ -135,28 +135,30 @@ const JournalEntries: React.FC = () => {
   const openModal = (mode: 'create' | 'edit' | 'view', entry?: JournalEntry) => {
     setModalMode(mode);
     setSelectedEntry(entry || null);
-    
+
     if (mode === 'create') {
       clearForm();
     } else if (entry) {
+      console.log('Opening entry:', entry);
+      console.log('Entry details:', (entry as any).details);
       setFormData({
         date: entry.date,
         description: entry.description,
         reference: entry.reference || '',
         type: 'manual',
         currency: 'LYD',
-                 lines: (entry as any).details ? (entry as any).details.map((detail: any) => ({
+                 lines: (entry as any).details && (entry as any).details.length > 0 ? (entry as any).details.map((detail: any) => ({
           id: detail.id || '',
           accountId: detail.accountId,
-          accountCode: detail.accountCode || '',
-          accountName: detail.accountName || '',
+          accountCode: detail.account?.code || detail.accountCode || '',
+          accountName: detail.account?.name || detail.accountName || '',
           description: detail.description || '',
-          debit: detail.debit || 0,
-          credit: detail.credit || 0,
-          exchangeRate: detail.exchangeRate || 1,
+          debit: parseFloat(detail.debit) || 0,
+          credit: parseFloat(detail.credit) || 0,
+          exchangeRate: parseFloat(detail.exchangeRate) || 1,
           balance: detail.balance || 0,
-          totalDebit: detail.totalDebit || 0,
-          totalCredit: detail.totalCredit || 0
+          totalDebit: parseFloat(detail.debit) * (parseFloat(detail.exchangeRate) || 1) || 0,
+          totalCredit: parseFloat(detail.credit) * (parseFloat(detail.exchangeRate) || 1) || 0
         })) : [
           {
             id: '',
@@ -246,41 +248,37 @@ const JournalEntries: React.FC = () => {
         };
       }
       
-      // Check if second line (index 1) is filled and last line is empty, then add new line
-      if (updatedLines.length >= 2) {
-        const secondLine = updatedLines[1];
-        const lastLine = updatedLines[updatedLines.length - 1];
-        
-        // Function to check if a line is filled
-        const isLineFilled = (line: any) => {
-          return line.accountId && 
-                 (line.description || (line.debit && line.debit > 0) || (line.credit && line.credit > 0));
-        };
-        
-        // Function to check if a line is empty
-        const isLineEmpty = (line: any) => {
-          return !line.accountId && 
-                 !line.description && 
-                 (!line.debit || line.debit === 0) && 
-                 (!line.credit || line.credit === 0);
-        };
-        
-        // If second line is filled and last line is empty, add a new line
-        if (isLineFilled(secondLine) && isLineEmpty(lastLine)) {
-          updatedLines.push({
-            id: '',
-            accountId: '',
-            accountCode: '',
-            accountName: '',
-            description: '',
-            debit: 0,
-            credit: 0,
-            exchangeRate: 1,
-            balance: 0,
-            totalDebit: 0,
-            totalCredit: 0
-          });
-        }
+      // Auto-add new line when current line is filled
+      const lastLine = updatedLines[updatedLines.length - 1];
+
+      // Function to check if a line is filled
+      const isLineFilled = (line: any) => {
+        return line.accountId &&
+               ((line.debit && parseFloat(line.debit) > 0) || (line.credit && parseFloat(line.credit) > 0));
+      };
+
+      // Function to check if a line is empty
+      const isLineEmpty = (line: any) => {
+        return !line.accountId &&
+               (!line.debit || parseFloat(line.debit) === 0) &&
+               (!line.credit || parseFloat(line.credit) === 0);
+      };
+
+      // If the last line is filled, add a new empty line
+      if (isLineFilled(lastLine)) {
+        updatedLines.push({
+          id: '',
+          accountId: '',
+          accountCode: '',
+          accountName: '',
+          description: '',
+          debit: 0,
+          credit: 0,
+          exchangeRate: 1,
+          balance: 0,
+          totalDebit: 0,
+          totalCredit: 0
+        });
       }
       
       return { ...prev, lines: updatedLines };
@@ -763,13 +761,19 @@ const JournalEntries: React.FC = () => {
                         type="text"
                         value={line.accountCode || ''}
                         onChange={(e) => {
-                          const account = accounts.find(acc => acc.code === e.target.value);
+                          const accountCode = e.target.value;
+                          updateLine(index, 'accountCode', accountCode);
+
+                          // Find account by code
+                          const account = accounts.find(acc => acc.code === accountCode);
                           if (account) {
                             updateLine(index, 'accountId', account.id);
-                            updateLine(index, 'accountCode', account.code);
                             updateLine(index, 'accountName', account.name);
+                          } else if (accountCode === '') {
+                            // Clear account info if code is empty
+                            updateLine(index, 'accountId', '');
+                            updateLine(index, 'accountName', '');
                           }
-                          updateLine(index, 'accountCode', e.target.value);
                         }}
                         placeholder="رقم الحساب"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm"
@@ -783,13 +787,22 @@ const JournalEntries: React.FC = () => {
                         type="text"
                         value={line.accountName || ''}
                         onChange={(e) => {
-                          const account = accounts.find(acc => acc.name.includes(e.target.value));
+                          const accountName = e.target.value;
+                          updateLine(index, 'accountName', accountName);
+
+                          // Find account by name (partial match)
+                          const account = accounts.find(acc =>
+                            acc.name.toLowerCase().includes(accountName.toLowerCase()) && accountName.length > 2
+                          );
                           if (account) {
                             updateLine(index, 'accountId', account.id);
                             updateLine(index, 'accountCode', account.code);
                             updateLine(index, 'accountName', account.name);
+                          } else if (accountName === '') {
+                            // Clear account info if name is empty
+                            updateLine(index, 'accountId', '');
+                            updateLine(index, 'accountCode', '');
                           }
-                          updateLine(index, 'accountName', e.target.value);
                         }}
                         placeholder="اسم الحساب"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm"
