@@ -97,6 +97,27 @@ router.get('/accounts', authenticateToken, requireFinancialAccess, async (req, r
 // POST /api/financial/accounts - Create new account
 router.post('/accounts', authenticateToken, requireFinancialAccess, async (req, res) => {
   try {
+    console.log('Creating account with data:', JSON.stringify(req.body, null, 2));
+
+    // Validate required fields
+    const { code, name, type, accountType, nature } = req.body;
+
+    if (!code || !name || !type || !accountType || !nature) {
+      console.log('Missing required fields:', { code, name, type, accountType, nature });
+      return res.status(400).json({
+        success: false,
+        message: 'البيانات المطلوبة مفقودة',
+        code: 'MISSING_REQUIRED_FIELDS',
+        details: {
+          code: !code ? 'رمز الحساب مطلوب' : null,
+          name: !name ? 'اسم الحساب مطلوب' : null,
+          type: !type ? 'نوع الحساب مطلوب' : null,
+          accountType: !accountType ? 'تصنيف الحساب مطلوب' : null,
+          nature: !nature ? 'طبيعة الحساب مطلوبة' : null
+        }
+      });
+    }
+
     // Derive rootType and reportType from type field
     const typeMapping = {
       'asset': { rootType: 'Asset', reportType: 'Balance Sheet' },
@@ -106,7 +127,7 @@ router.post('/accounts', authenticateToken, requireFinancialAccess, async (req, 
       'expense': { rootType: 'Expense', reportType: 'Profit and Loss' }
     };
 
-    const mapping = typeMapping[req.body.type];
+    const mapping = typeMapping[type];
     if (!mapping) {
       return res.status(400).json({
         success: false,
@@ -247,12 +268,10 @@ router.delete('/accounts/:id', authenticateToken, requireFinancialAccess, asyncH
       });
     }
 
-    // Check if account has transactions (check both accountId and account fields)
-    const transactionCount1 = await GLEntry.count({ where: { accountId: req.params.id } });
-    const transactionCount2 = await GLEntry.count({ where: { account: req.params.id } });
-    const totalTransactions = transactionCount1 + transactionCount2;
+    // Check if account has transactions
+    const transactionCount = await GLEntry.count({ where: { accountId: req.params.id } });
 
-    if (totalTransactions > 0) {
+    if (transactionCount > 0) {
       return res.status(400).json({
         success: false,
         message: 'لا يمكن حذف حساب له معاملات'
@@ -305,7 +324,6 @@ router.delete('/accounts/:id/force-delete', authenticateToken, requireFinancialA
 
     // Delete any GL entries that reference this account
     await GLEntry.destroy({ where: { accountId: req.params.id } });
-    await GLEntry.destroy({ where: { account: req.params.id } });
 
     // Delete any journal entry details that reference this account
     await JournalEntryDetail.destroy({ where: { accountId: req.params.id } });
