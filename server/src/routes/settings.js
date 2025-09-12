@@ -15,10 +15,15 @@ const __dirname = dirname(__filename);
 
 const router = express.Router();
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../../uploads');
+// Create uploads directory in a persistent location
+// Use /app/data for persistent storage in Docker
+const uploadsDir = process.env.NODE_ENV === 'production'
+  ? path.join('/app', 'data', 'uploads')
+  : path.join(__dirname, '../../uploads');
+
 if (!fsSync.existsSync(uploadsDir)) {
   fsSync.mkdirSync(uploadsDir, { recursive: true });
+  console.log('📁 Created uploads directory:', uploadsDir);
 }
 
 // Configure multer for file uploads
@@ -164,11 +169,11 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       mimetype: req.file.mimetype
     });
 
-    // Convert file to base64 for database storage
-    console.log('🔄 Converting file to base64...');
-    const fileBuffer = await fs.readFile(req.file.path);
-    const base64Data = fileBuffer.toString('base64');
-    console.log('✅ Base64 conversion completed, size:', base64Data.length);
+    // Move file to persistent uploads directory
+    console.log('📁 Moving file to persistent directory...');
+    const finalPath = path.join(uploadsDir, req.file.filename);
+    await fs.rename(req.file.path, finalPath);
+    console.log('✅ File moved to:', finalPath);
 
     // Get old logo data to clean up
     console.log('🔍 Getting old logo data...');
@@ -185,38 +190,32 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       console.log('📄 No old logo data found');
     }
 
-    // Store logo data in database
-    console.log('💾 Preparing logo data for database...');
+    // Store logo metadata in database (not the file data)
+    console.log('💾 Preparing logo metadata for database...');
     const logoData = {
       filename: req.file.filename,
       originalName: req.file.originalname,
       uploadDate: new Date().toISOString(),
       size: req.file.size,
       mimetype: req.file.mimetype,
-      data: base64Data
+      path: finalPath
     };
 
-    console.log('💾 Saving logo to database...');
+    console.log('💾 Saving logo metadata to database...');
     await Setting.set('logo', JSON.stringify(logoData), {
       type: 'json',
-      description: 'Company logo data'
+      description: 'Company logo metadata'
     });
-    console.log('✅ Logo saved to database successfully');
-
-    // Clean up uploaded file (we don't need it anymore)
-    try {
-      await fs.unlink(req.file.path);
-    } catch (error) {
-      console.warn('Could not delete temporary file:', error.message);
-    }
+    console.log('✅ Logo metadata saved to database successfully');
 
     // Clean up old logo file if it exists
     if (oldLogoData && oldLogoData.filename) {
-      const oldLogoPath = path.join(uploadsDir, oldLogoData.filename);
+      const oldLogoPath = oldLogoData.path || path.join(uploadsDir, oldLogoData.filename);
       try {
         await fs.unlink(oldLogoPath);
+        console.log('🗑️ Deleted old logo file:', oldLogoPath);
       } catch (error) {
-        console.warn('Could not delete old logo file:', error.message);
+        console.warn('⚠️ Could not delete old logo file:', error.message);
       }
     }
 
@@ -276,12 +275,20 @@ router.get('/logo', async (req, res) => {
       }
     }
 
-    if (!logoData || !logoData.data) {
+    if (!logoData || !logoData.filename) {
       return res.status(404).json({ message: 'No logo uploaded' });
     }
 
-    // Convert base64 back to buffer
-    const imageBuffer = Buffer.from(logoData.data, 'base64');
+    // Get logo file path
+    const logoPath = logoData.path || path.join(uploadsDir, logoData.filename);
+
+    // Check if file exists
+    try {
+      await fs.access(logoPath);
+    } catch (error) {
+      console.error('Logo file not found:', logoPath);
+      return res.status(404).json({ message: 'Logo file not found' });
+    }
 
     // Set CORS headers explicitly for image files
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -292,13 +299,12 @@ router.get('/logo', async (req, res) => {
     // Set appropriate content type
     res.setHeader('Content-Type', logoData.mimetype || 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
-    res.setHeader('Content-Length', imageBuffer.length);
 
     // For HEAD requests, just send headers without body
     if (req.method === 'HEAD') {
       res.end();
     } else {
-      res.send(imageBuffer);
+      res.sendFile(logoPath);
     }
   } catch (error) {
     console.error('Error serving logo:', error);
@@ -367,7 +373,15 @@ router.head('/logo', async (req, res) => {
       }
     }
 
-    if (!logoData || !logoData.data) {
+    if (!logoData || !logoData.filename) {
+      return res.status(404).end();
+    }
+
+    // Check if file exists
+    const logoPath = logoData.path || path.join(uploadsDir, logoData.filename);
+    try {
+      await fs.access(logoPath);
+    } catch (error) {
       return res.status(404).end();
     }
 
