@@ -154,29 +154,7 @@ const Header: React.FC = () => {
     navigate(result.path);
   };
 
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
-  };
-
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-  };
-
-  const handleDeleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  };
-
-  const handleDeleteAllNotifications = () => {
-    setNotifications([]);
-  };
+  // Duplicate functions removed - using real API functions above
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
