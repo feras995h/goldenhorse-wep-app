@@ -191,15 +191,15 @@ const ChartOfAccounts: React.FC = () => {
   // Function to create main account without parent
   const handleCreateMainAccount = () => {
     const mainAccounts = accounts.filter(acc => !acc.parentId);
-    let newCode = '1000';
-    
+    let newCode = '1';
+
     if (mainAccounts.length > 0) {
       const existingCodes = mainAccounts.map(acc => {
         const codeNum = parseInt(acc.code) || 0;
         return codeNum;
       });
       const maxCode = Math.max(...existingCodes);
-      newCode = (maxCode + 1000).toString();
+      newCode = (maxCode + 1).toString();
     }
     
     setFormData(prev => ({ 
@@ -257,15 +257,15 @@ const ChartOfAccounts: React.FC = () => {
     
     // Generate initial code for main account
     const mainAccounts = accounts.filter(acc => !acc.parentId);
-    let initialCode = '1000';
-    
+    let initialCode = '1';
+
     if (mainAccounts.length > 0) {
       const existingCodes = mainAccounts.map(acc => {
         const codeNum = parseInt(acc.code) || 0;
         return codeNum;
       });
       const maxCode = Math.max(...existingCodes);
-      initialCode = (maxCode + 1000).toString();
+      initialCode = (maxCode + 1).toString();
     }
     
     setFormData({

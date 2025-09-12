@@ -34,7 +34,7 @@ export interface Account {
 // الحسابات الأساسية الافتراضية
 export const DEFAULT_ACCOUNTS = [
   {
-    code: '1000',
+    code: '1',
     name: 'الأصول',
     nameEn: 'Assets',
     type: 'asset' as const,
@@ -49,7 +49,7 @@ export const DEFAULT_ACCOUNTS = [
     isSystemAccount: true
   },
   {
-    code: '2000',
+    code: '2',
     name: 'المصروفات',
     nameEn: 'Expenses',
     type: 'expense' as const,
@@ -64,7 +64,7 @@ export const DEFAULT_ACCOUNTS = [
     isSystemAccount: true
   },
   {
-    code: '3000',
+    code: '3',
     name: 'الالتزامات',
     nameEn: 'Liabilities',
     type: 'liability' as const,
@@ -79,7 +79,7 @@ export const DEFAULT_ACCOUNTS = [
     isSystemAccount: true
   },
   {
-    code: '4000',
+    code: '4',
     name: 'حقوق الملكية',
     nameEn: 'Equity',
     type: 'equity' as const,
@@ -94,7 +94,7 @@ export const DEFAULT_ACCOUNTS = [
     isSystemAccount: true
   },
   {
-    code: '5000',
+    code: '5',
     name: 'الإيرادات',
     nameEn: 'Revenue',
     type: 'revenue' as const,
