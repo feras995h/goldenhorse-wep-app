@@ -286,7 +286,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
