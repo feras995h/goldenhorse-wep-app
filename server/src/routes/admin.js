@@ -3,6 +3,7 @@ import { authenticateToken, requireAdminAccess } from '../middleware/auth.js';
 import models from '../models/index.js';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
+import NotificationService from '../services/NotificationService.js';
 
 const router = express.Router();
 const { User, Role } = models;
@@ -98,6 +99,14 @@ router.post('/users', authenticateToken, requireAdminAccess, async (req, res) =>
 
     // Create user - the User model hooks will hash the password
     const user = await User.create(userData);
+
+    // Create notification for user creation
+    try {
+      await NotificationService.notifyUserCreated(user, req.user);
+    } catch (notificationError) {
+      console.error('Error creating user notification:', notificationError);
+      // Don't fail the user creation if notification fails
+    }
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = user.toJSON();

@@ -4,12 +4,13 @@ import jwt from 'jsonwebtoken';
 import { authenticateToken } from '../middleware/auth.js';
 import { blacklistToken } from '../middleware/jwtBlacklist.js';
 import models from '../models/index.js';
+import { trackFailedLogin } from '../middleware/securityNotifications.js';
 
 const router = express.Router();
 const { User } = models;
 
 // Login endpoint
-router.post('/login', async (req, res) => {
+router.post('/login', trackFailedLogin, async (req, res) => {
   try {
     const { username, password } = req.body;
 

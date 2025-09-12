@@ -46,33 +46,8 @@ const TailAdminHeader: React.FC<TailAdminHeaderProps> = ({
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  // Mock notifications data
-  const [notifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: 'قيد جديد',
-      message: 'تم إنشاء قيد يومية جديد بقيمة 15,000 د.ل',
-      time: 'منذ 5 دقائق',
-      type: 'info',
-      read: false
-    },
-    {
-      id: '2',
-      title: 'عميل جديد',
-      message: 'انضم عميل جديد: شركة التجارة الدولية',
-      time: 'منذ ساعة',
-      type: 'success',
-      read: false
-    },
-    {
-      id: '3',
-      title: 'تحذير مالي',
-      message: 'انتباه: رصيد الحساب منخفض',
-      time: 'منذ ساعتين',
-      type: 'warning',
-      read: true
-    }
-  ]);
+  // Use empty notifications - this component should be replaced with the main Header
+  const [notifications] = useState<Notification[]>([]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

@@ -10,6 +10,7 @@ import settingsRoutes from './routes/settings.js';
 import financialRoutes from './routes/financial.js';
 import salesRoutes from './routes/sales.js';
 import adminRoutes from './routes/admin.js';
+import notificationsRoutes from './routes/notifications.js';
 import { errorHandler, notFound, asyncHandler } from './middleware/errorHandler.js';
 import { enhancedErrorHandler, requestId } from './middleware/enhancedErrorHandler.js';
 import DatabaseInitializer from './utils/databaseInit.js';
@@ -254,6 +255,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/financial', financialRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Health check with database status
 app.get('/api/health', async (req, res) => {

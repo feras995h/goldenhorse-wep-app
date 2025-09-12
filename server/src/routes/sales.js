@@ -10,6 +10,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import models from '../models/index.js';
 import { Op } from 'sequelize';
+import NotificationService from '../services/NotificationService.js';
 
 const router = express.Router();
 const { 
@@ -194,7 +195,15 @@ router.post('/customers',
       isActive: true,
       balance: 0.00
     });
-    
+
+    // Create notification for customer creation
+    try {
+      await NotificationService.notifyCustomerCreated(newCustomer, req.user);
+    } catch (notificationError) {
+      console.error('Error creating customer notification:', notificationError);
+      // Don't fail the customer creation if notification fails
+    }
+
     res.status(201).json({
       message: 'تم إنشاء العميل بنجاح',
       customer: newCustomer

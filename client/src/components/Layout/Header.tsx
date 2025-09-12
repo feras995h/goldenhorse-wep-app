@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  LogOut, 
-  User, 
-  Bell, 
-  Search, 
-  Settings, 
-  ChevronDown, 
+import {
+  LogOut,
+  User,
+  Bell,
+  Search,
+  Settings,
+  ChevronDown,
   Sun,
   Moon,
   HelpCircle,
@@ -16,19 +16,9 @@ import { useNavigate } from 'react-router-dom';
 import Logo from '../UI/Logo';
 import AdvancedSearch from '../UI/AdvancedSearch';
 import NotificationCenter from '../UI/NotificationCenter';
+import { notificationAPI, formatNotificationTime, type Notification } from '../../services/notificationAPI';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  read: boolean;
-  priority: 'low' | 'medium' | 'high';
-  category: 'system' | 'financial' | 'user' | 'security';
-  actionUrl?: string;
-  actionLabel?: string;
-}
+// Remove the local interface since we're importing it from notificationAPI
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
@@ -41,61 +31,81 @@ const Header: React.FC = () => {
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  // Mock notifications data
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: 'قيد جديد',
-      message: 'تم إنشاء قيد يومية جديد بقيمة 15,000 د.ل',
-      time: 'منذ 5 دقائق',
-      type: 'info',
-      read: false,
-      priority: 'medium',
-      category: 'financial'
-    },
-    {
-      id: '2',
-      title: 'عميل جديد',
-      message: 'انضم عميل جديد: شركة التجارة الدولية',
-      time: 'منذ ساعة',
-      type: 'success',
-      read: false,
-      priority: 'low',
-      category: 'user'
-    },
-    {
-      id: '3',
-      title: 'تحذير مالي',
-      message: 'انتباه: رصيد الحساب منخفض',
-      time: 'منذ ساعتين',
-      type: 'warning',
-      read: true,
-      priority: 'high',
-      category: 'financial'
-    },
-    {
-      id: '4',
-      title: 'تحديث النظام',
-      message: 'تم تحديث النظام إلى الإصدار الجديد',
-      time: 'منذ 3 ساعات',
-      type: 'info',
-      read: false,
-      priority: 'medium',
-      category: 'system'
-    },
-    {
-      id: '5',
-      title: 'محاولة تسجيل دخول فاشلة',
-      message: 'تم رصد محاولة تسجيل دخول من IP غير معروف',
-      time: 'منذ 4 ساعات',
-      type: 'error',
-      read: false,
-      priority: 'high',
-      category: 'security'
-    }
-  ]);
+  // Real notifications data
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Load notifications
+  const loadNotifications = async () => {
+    if (isLoadingNotifications) return;
+
+    setIsLoadingNotifications(true);
+    try {
+      const response = await notificationAPI.getNotifications({
+        limit: 20,
+        unreadOnly: false
+      });
+
+      if (response.success) {
+        // Format time for display
+        const formattedNotifications = response.data.map(notification => ({
+          ...notification,
+          time: formatNotificationTime(notification.time)
+        }));
+        setNotifications(formattedNotifications);
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  // Load notifications on component mount and when user changes
+  useEffect(() => {
+    if (user) {
+      loadNotifications();
+
+      // Refresh notifications every 30 seconds
+      const interval = setInterval(loadNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // Handle notification actions
+  const handleMarkAsRead = async (id: string) => {
+    const success = await notificationAPI.markAsRead(id);
+    if (success) {
+      setNotifications(prev =>
+        prev.map(n => n.id === id ? { ...n, read: true } : n)
+      );
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    const success = await notificationAPI.markAllAsRead();
+    if (success) {
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, read: true }))
+      );
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    const success = await notificationAPI.deleteNotification(id);
+    if (success) {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }
+  };
+
+  const handleDeleteAllNotifications = async () => {
+    const success = await notificationAPI.deleteAllNotifications();
+    if (success) {
+      setNotifications([]);
+    }
+  };
 
   const getRoleDisplayName = (role: string) => {
     const roleNames = {

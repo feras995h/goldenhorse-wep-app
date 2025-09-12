@@ -6,6 +6,7 @@ import FinancialReportsController from '../controllers/financialReportsControlle
 import TransactionManager from '../utils/transactionManager.js';
 import backupManager from '../utils/backupManager.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import NotificationService from '../services/NotificationService.js';
 import { Op, Transaction } from 'sequelize';
 
 const router = express.Router();
@@ -158,6 +159,14 @@ router.post('/accounts', authenticateToken, requireFinancialAccess, async (req, 
 
     // Create the account
     const newAccount = await Account.create(accountData);
+
+    // Create notification for account creation
+    try {
+      await NotificationService.notifyAccountCreated(newAccount, req.user);
+    } catch (notificationError) {
+      console.error('Error creating account notification:', notificationError);
+      // Don't fail the account creation if notification fails
+    }
 
     res.status(201).json({
       success: true,
@@ -504,6 +513,14 @@ router.post('/journal-entries', authenticateToken, requireFinancialAccess, async
         }
       ]
     });
+
+    // Create notification for journal entry creation
+    try {
+      await NotificationService.notifyJournalEntryCreated(completeEntry, req.user);
+    } catch (notificationError) {
+      console.error('Error creating journal entry notification:', notificationError);
+      // Don't fail the journal entry creation if notification fails
+    }
 
     res.status(201).json(completeEntry);
   } catch (error) {

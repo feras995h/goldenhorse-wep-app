@@ -139,6 +139,7 @@ import PaymentModel from './Payment.js';
 import ReceiptModel from './Receipt.js';
 import FixedAssetModel from './FixedAsset.js';
 import SettingModel from './Setting.js';
+import NotificationModel from './Notification.js';
 
 // Initialize models with sequelize
 const User = UserModel(sequelize);
@@ -157,6 +158,7 @@ const Payment = PaymentModel(sequelize);
 const Receipt = ReceiptModel(sequelize);
 const FixedAsset = FixedAssetModel(sequelize);
 const Setting = SettingModel(sequelize);
+const Notification = NotificationModel(sequelize);
 
 // Define associations
 const models = {
@@ -175,7 +177,8 @@ const models = {
   Payment,
   Receipt,
   FixedAsset,
-  Setting
+  Setting,
+  Notification
 };
 
 // Set up associations
