@@ -877,6 +877,58 @@ body {
     transition: all 0.5s ease-in-out;
   }
 
+  /* Header Responsive Improvements */
+  .header-responsive {
+    @apply sticky top-0 z-50 bg-gradient-to-r from-golden-600 via-golden-700 to-golden-600;
+    @apply border-b-2 border-golden-500 shadow-lg;
+  }
+
+  .header-container {
+    @apply container mx-auto px-3 sm:px-4 lg:px-6;
+  }
+
+  .header-content {
+    @apply flex justify-between items-center h-16 sm:h-18 lg:h-20;
+  }
+
+  .header-logo {
+    @apply flex items-center fade-in flex-shrink-0;
+  }
+
+  .header-actions {
+    @apply flex items-center space-x-2 sm:space-x-3 lg:space-x-4 space-x-reverse slide-in;
+  }
+
+  .header-button {
+    @apply p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors duration-200;
+  }
+
+  .header-profile {
+    @apply flex items-center space-x-2 sm:space-x-3 space-x-reverse bg-white/10 backdrop-blur-sm;
+    @apply border border-white/20 rounded-xl px-2 sm:px-4 py-2 sm:py-3 hover:bg-white/20 transition-colors duration-200;
+  }
+
+  /* Notification Center Improvements */
+  .notification-panel {
+    @apply fixed top-16 right-0 md:absolute md:top-full md:right-0 md:mt-2 bg-white;
+    @apply rounded-l-xl md:rounded-xl shadow-2xl w-full max-w-sm md:max-w-md;
+    @apply h-[calc(100vh-4rem)] md:h-auto md:max-h-[32rem] overflow-hidden z-50;
+    @apply animate-slide-in-right md:animate-fade-in border border-gray-200;
+  }
+
+  .notification-header {
+    @apply p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-golden-50 to-golden-100;
+  }
+
+  .notification-item {
+    @apply p-3 sm:p-4 hover:bg-gray-50 transition-colors duration-200;
+  }
+
+  .notification-badge {
+    @apply absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full;
+    @apply h-4 w-4 flex items-center justify-center font-medium min-w-[1rem];
+  }
+
   /* Hover Effects */
   .hover-lift {
     @apply transition-all duration-300;

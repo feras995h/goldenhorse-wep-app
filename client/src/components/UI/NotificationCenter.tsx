@@ -100,28 +100,37 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-end pt-20">
-      <div className="bg-white rounded-l-xl shadow-2xl w-full max-w-md h-full max-h-[calc(100vh-5rem)] overflow-hidden">
+    <>
+      {/* Mobile Overlay */}
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+        onClick={onClose}
+      />
+
+      {/* Notification Panel */}
+      <div className="fixed top-16 right-0 md:absolute md:top-full md:right-0 md:mt-2 bg-white rounded-l-xl md:rounded-xl shadow-2xl w-full max-w-sm md:max-w-md h-[calc(100vh-4rem)] md:h-auto md:max-h-[32rem] overflow-hidden z-50 animate-slide-in-right md:animate-fade-in border border-gray-200">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-gray-50">
+        <div className="p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-golden-50 to-golden-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 space-x-reverse">
-              <Bell className="h-6 w-6 text-golden-600" />
+              <div className="p-2 bg-golden-200 rounded-lg">
+                <Bell className="h-5 w-5 text-golden-700" />
+              </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-800">مركز الإشعارات</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-800">مركز الإشعارات</h2>
+                <p className="text-xs sm:text-sm text-gray-600">
                   {unreadCount} إشعار جديد
                   {highPriorityCount > 0 && (
-                    <span className="text-red-600 mr-2">({highPriorityCount} مهم)</span>
+                    <span className="text-red-600 mr-2 font-medium">({highPriorityCount} مهم)</span>
                   )}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="p-2 hover:bg-golden-200 rounded-lg transition-colors duration-200"
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5 text-gray-600" />
             </button>
           </div>
         </div>
@@ -187,30 +196,32 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         {/* Notifications List */}
         <div className="flex-1 overflow-y-auto">
           {filteredNotifications.length > 0 ? (
-            <div className="p-2">
+            <div className="divide-y divide-gray-100">
               {filteredNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200 ${
-                    !notification.read ? 'bg-blue-50' : ''
+                  className={`p-3 sm:p-4 hover:bg-gray-50 transition-colors duration-200 ${
+                    !notification.read ? 'bg-blue-50/50' : ''
                   }`}
                 >
                   <div className="flex items-start space-x-3 space-x-reverse">
-                    <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${getTypeColor(notification.type).split(' ')[0]}`}></div>
-                    
+                    <div className={`flex-shrink-0 w-3 h-3 rounded-full mt-1 ${getTypeColor(notification.type).split(' ')[0]} shadow-sm`}></div>
+
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <div className="flex items-center space-x-2 space-x-reverse mb-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
                             <h3 className={`text-sm font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
                               {notification.title}
                             </h3>
-                            <span className={`text-xs px-2 py-1 rounded-full ${getTypeColor(notification.type)}`}>
-                              {getCategoryLabel(notification.category)}
-                            </span>
-                            <span className={`text-xs ${getPriorityColor(notification.priority)}`}>
-                              {notification.priority === 'high' ? 'مهم' : notification.priority === 'medium' ? 'متوسط' : 'منخفض'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs px-2 py-1 rounded-full ${getTypeColor(notification.type)} font-medium`}>
+                                {getCategoryLabel(notification.category)}
+                              </span>
+                              <span className={`text-xs font-medium ${getPriorityColor(notification.priority)}`}>
+                                {notification.priority === 'high' ? 'مهم' : notification.priority === 'medium' ? 'متوسط' : 'منخفض'}
+                              </span>
+                            </div>
                           </div>
                           
                           <p className="text-sm text-gray-600 mb-2">
