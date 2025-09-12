@@ -185,6 +185,8 @@ const OpeningBalanceEntry: React.FC = () => {
 
   const saveOpeningBalance = async () => {
     try {
+      setLoading(true);
+
       if (modalMode === 'single' && selectedAccount) {
         // Save single account opening balance
         const balanceData = {
@@ -197,7 +199,8 @@ const OpeningBalanceEntry: React.FC = () => {
         };
 
         await financialAPI.createOpeningBalance(balanceData);
-      } else if (modalMode === 'multiple') {
+        alert('تم حفظ الرصيد الافتتاحي بنجاح');
+      } else if (modalMode === 'comprehensive') {
         // Save comprehensive opening entry as journal entry
         const filteredLines = formData.lines.filter(line =>
           line.accountId && (line.debit > 0 || line.credit > 0)
@@ -215,13 +218,20 @@ const OpeningBalanceEntry: React.FC = () => {
         };
 
         await financialAPI.createJournalEntry(entryData);
+        alert('تم حفظ القيد الافتتاحي بنجاح');
       }
 
+      // إغلاق النافذة وإعادة تعيين النموذج
       setIsModalOpen(false);
-      loadOpeningBalances();
+      clearForm();
+      setSelectedAccount(null);
+      await loadOpeningBalances();
+
     } catch (error) {
       console.error('Error saving opening balance:', error);
       alert('حدث خطأ أثناء حفظ البيانات');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -526,7 +536,7 @@ const OpeningBalanceEntry: React.FC = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           title={modalMode === 'single' ? 'إضافة رصيد افتتاحي لحساب واحد' : 'إنشاء قيد افتتاحي شامل'}
-          size={modalMode === 'single' ? 'lg' : '4xl'}
+          size={modalMode === 'single' ? 'lg' : 'full'}
         >
           <div className="space-y-6">
             {modalMode === 'single' ? (
@@ -679,7 +689,8 @@ const OpeningBalanceEntry: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* عرض الجدول للشاشات الكبيرة */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
@@ -798,6 +809,114 @@ const OpeningBalanceEntry: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* عرض البطاقات للهاتف النقال */}
+                  <div className="md:hidden space-y-4">
+                    {formData.lines.map((line, index) => (
+                      <div key={line.id} className="bg-gray-50 rounded-lg p-4 border">
+                        <div className="space-y-3">
+                          {/* رقم الحساب */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">رقم الحساب</label>
+                            <input
+                              type="text"
+                              value={line.accountCode}
+                              onChange={(e) => {
+                                updateLine(line.id, 'accountCode', e.target.value);
+                                const account = accounts.find(acc => acc.code === e.target.value);
+                                if (account) {
+                                  updateLine(line.id, 'accountId', account.id);
+                                  updateLine(line.id, 'accountName', account.name);
+                                }
+                              }}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500"
+                              placeholder="رقم الحساب"
+                            />
+                          </div>
+
+                          {/* اسم الحساب */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">اسم الحساب</label>
+                            <select
+                              value={line.accountId}
+                              onChange={(e) => {
+                                const account = accounts.find(acc => acc.id === e.target.value);
+                                if (account) {
+                                  selectAccountForLine(line.id, account);
+                                }
+                              }}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500"
+                            >
+                              <option value="">اختر الحساب</option>
+                              {accounts.map(account => (
+                                <option key={account.id} value={account.id}>
+                                  {account.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* المبالغ */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">مدين</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={line.debit || ''}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value) || 0;
+                                  updateLine(line.id, 'debit', value);
+                                  if (value > 0) {
+                                    updateLine(line.id, 'credit', 0);
+                                  }
+                                }}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500 text-right"
+                                placeholder="0.00"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">دائن</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={line.credit || ''}
+                                onChange={(e) => {
+                                  const value = parseFloat(e.target.value) || 0;
+                                  updateLine(line.id, 'credit', value);
+                                  if (value > 0) {
+                                    updateLine(line.id, 'debit', 0);
+                                  }
+                                }}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500 text-right"
+                                placeholder="0.00"
+                              />
+                            </div>
+                          </div>
+
+                          {/* ملاحظات وإجراءات */}
+                          <div className="flex items-center space-x-2 space-x-reverse">
+                            <input
+                              type="text"
+                              value={line.notes || ''}
+                              onChange={(e) => updateLine(line.id, 'notes', e.target.value)}
+                              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500"
+                              placeholder="ملاحظات..."
+                            />
+                            <button
+                              onClick={() => removeLine(line.id)}
+                              disabled={formData.lines.length === 1}
+                              className="p-2 text-red-600 hover:text-red-800 disabled:text-gray-400 disabled:cursor-not-allowed"
+                            >
+                              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

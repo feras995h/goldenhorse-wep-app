@@ -143,7 +143,7 @@ const ChartOfAccounts: React.FC = () => {
     
     if (childAccounts.length === 0) {
       // If no children, create first child code
-      const newCode = `${parentAccount.code}.001`;
+      const newCode = `${parentAccount.code}.1`;
       setFormData(prev => ({ 
         ...prev, 
         code: newCode,
@@ -161,7 +161,7 @@ const ChartOfAccounts: React.FC = () => {
       
       const maxCode = Math.max(...existingCodes);
       const nextCode = maxCode + 1;
-      const newCode = `${parentAccount.code}.${nextCode.toString().padStart(3, '0')}`;
+      const newCode = `${parentAccount.code}.${nextCode}`;
       setFormData(prev => ({ 
         ...prev, 
         code: newCode,
@@ -722,7 +722,7 @@ const ChartOfAccounts: React.FC = () => {
                   >
                     <option value="">-- اختر الحساب الأب --</option>
                     {accounts
-                      .filter(account => !account.parentId) // فقط الحسابات الرئيسية
+                      .filter(account => account.id !== selectedAccount?.id) // منع اختيار الحساب نفسه كأب
                       .map(account => (
                         <option key={account.id} value={account.id}>
                           {account.code} - {account.name} ({getAccountTypeLabel(account.type)})
