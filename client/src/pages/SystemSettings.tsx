@@ -186,7 +186,7 @@ const SystemSettings: React.FC = () => {
   return (
     <div className="space-y-8 fade-in">
       {/* Header */}
-      <div className="bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-2xl p-8 text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="w-full h-full" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.5'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -229,7 +229,7 @@ const SystemSettings: React.FC = () => {
             إدارة شعار الموقع
           </h2>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Current Logo Display */}
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">الشعار الحالي</h3>

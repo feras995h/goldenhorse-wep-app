@@ -303,7 +303,7 @@ const FinancialReports: React.FC = () => {
     const { assets, liabilities, equity, totalAssets, totalLiabilitiesAndEquity } = reportData;
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Assets */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">الأصول</h3>
@@ -435,18 +435,18 @@ const FinancialReports: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
-          <BarChart3 className="h-8 w-8 text-blue-600 ml-3" />
+          <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 ml-3" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">التقارير المالية</h1>
-            <p className="text-gray-600">الميزانية وقائمة الدخل والتقارير المالية</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">التقارير المالية</h1>
+            <p className="text-sm sm:text-base text-gray-600">الميزانية وقائمة الدخل والتقارير المالية</p>
           </div>
         </div>
-        <div className="flex space-x-2 space-x-reverse">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 sm:space-x-reverse w-full sm:w-auto">
           <button
             onClick={() => exportReport('pdf')}
-            className="btn-secondary flex items-center"
+            className="btn-secondary flex items-center justify-center w-full sm:w-auto"
             disabled={loading || !reportData}
           >
             <FileText className="h-4 w-4 ml-2" />
@@ -454,7 +454,7 @@ const FinancialReports: React.FC = () => {
           </button>
           <button
             onClick={() => exportReport('excel')}
-            className="btn-secondary flex items-center"
+            className="btn-secondary flex items-center justify-center w-full sm:w-auto"
             disabled={loading || !reportData}
           >
             <FileText className="h-4 w-4 ml-2" />
@@ -464,7 +464,7 @@ const FinancialReports: React.FC = () => {
       </div>
 
       {/* Report Type Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {reportTypes.map((report) => (
           <div
             key={report.id}
@@ -496,7 +496,7 @@ const FinancialReports: React.FC = () => {
           <Filter className="h-5 w-5 text-gray-600 ml-2" />
           <h3 className="text-lg font-semibold text-gray-900">فلاتر التقرير</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <FormField
             label="من تاريخ"
             name="dateFrom"

@@ -231,7 +231,7 @@ const InstantReports: React.FC = () => {
       </div>
 
       {/* Reports Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {reportConfigs.map((config) => {
           const reportData = reports?.[config.key as keyof InstantReports];
           const IconComponent = config.icon;
@@ -366,7 +366,7 @@ const InstantReports: React.FC = () => {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-green-50 p-4 rounded-lg border border-green-200">
           <div className="flex items-center justify-between">
             <div>

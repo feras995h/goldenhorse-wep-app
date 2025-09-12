@@ -350,17 +350,17 @@ const EmployeePayroll: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
-          <Users className="h-8 w-8 text-purple-600 ml-3" />
+          <Users className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 ml-3" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">إدارة الموظفين والرواتب</h1>
-            <p className="text-gray-600">إدارة رواتب الموظفين والسلف والمستحقات</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">إدارة الموظفين والرواتب</h1>
+            <p className="text-sm sm:text-base text-gray-600">إدارة رواتب الموظفين والسلف والمستحقات</p>
           </div>
         </div>
         <button
           onClick={() => openModal('create')}
-          className="btn-primary flex items-center"
+          className="btn-primary flex items-center justify-center w-full sm:w-auto"
         >
           <Plus className="h-5 w-5 ml-2" />
           راتب جديد
@@ -369,7 +369,7 @@ const EmployeePayroll: React.FC = () => {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <SearchFilter
             value={searchValue}
             onChange={setSearchValue}
@@ -463,7 +463,7 @@ const EmployeePayroll: React.FC = () => {
           </FormField>
 
           {/* Month and Year */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="الشهر"
               error={formErrors.month}
@@ -501,7 +501,7 @@ const EmployeePayroll: React.FC = () => {
           </div>
 
           {/* Salary Details */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="الراتب الأساسي"
               error={formErrors.basicSalary}
@@ -534,7 +534,7 @@ const EmployeePayroll: React.FC = () => {
             </FormField>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="الخصومات"
               error={formErrors.deductions}
@@ -566,7 +566,7 @@ const EmployeePayroll: React.FC = () => {
             </FormField>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="المكافآت"
               error={formErrors.bonuses}

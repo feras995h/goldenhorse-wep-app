@@ -426,17 +426,17 @@ const FixedAssetsManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
-          <Building className="h-8 w-8 text-green-600 ml-3" />
+          <Building className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 ml-3" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">إدارة الأصول الثابتة</h1>
-            <p className="text-gray-600">تسجيل الأصول وحساب الاستهلاك</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">إدارة الأصول الثابتة</h1>
+            <p className="text-sm sm:text-base text-gray-600">تسجيل الأصول وحساب الاستهلاك</p>
           </div>
         </div>
         <button
           onClick={() => openModal('create')}
-          className="btn-primary flex items-center"
+          className="btn-primary flex items-center justify-center w-full sm:w-auto"
         >
           <Plus className="h-5 w-5 ml-2" />
           أصل جديد
@@ -517,7 +517,7 @@ const FixedAssetsManagement: React.FC = () => {
       >
         <div className="space-y-4">
           {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="رقم الأصل"
               name="assetNumber"
@@ -559,7 +559,7 @@ const FixedAssetsManagement: React.FC = () => {
             disabled={modalMode === 'view'}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="الفرع"
               name="branch"
@@ -584,7 +584,7 @@ const FixedAssetsManagement: React.FC = () => {
           {/* Purchase Information */}
           <div className="border-t pt-4">
             <h4 className="text-lg font-medium text-gray-900 mb-4">معلومات الشراء</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <FormField
                 label="تاريخ الشراء"
                 name="purchaseDate"
@@ -632,7 +632,7 @@ const FixedAssetsManagement: React.FC = () => {
           {/* Depreciation Information */}
           <div className="border-t pt-4">
             <h4 className="text-lg font-medium text-gray-900 mb-4">معلومات الاستهلاك</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <FormField
                 label="طريقة الاستهلاك"
                 name="depreciationMethod"
@@ -672,7 +672,7 @@ const FixedAssetsManagement: React.FC = () => {
           {/* Additional Information */}
           <div className="border-t pt-4">
             <h4 className="text-lg font-medium text-gray-900 mb-4">معلومات إضافية</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 label="الرقم التسلسلي"
                 name="serialNumber"
