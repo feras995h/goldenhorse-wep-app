@@ -92,12 +92,12 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
     
     return (
       <div key={node.account.id} className="mb-1">
-        <div 
-          className={`flex items-center py-2 px-3 rounded-md hover:bg-golden-50 cursor-pointer transition-professional ${
+        <div
+          className={`flex items-center py-2 px-2 sm:px-3 rounded-md hover:bg-golden-50 cursor-pointer transition-professional overflow-hidden ${
             onAccountSelect ? 'hover:bg-golden-100' : ''
           }`}
           onClick={() => onAccountSelect?.(node.account)}
-          style={{ marginRight: `${(node.level - 1) * 20}px` }}
+          style={{ marginRight: `${(node.level - 1) * 10}px` }}
         >
           {hasChildren ? (
             <button 
@@ -128,36 +128,36 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
             </div>
             
             {/* Account Code and Name */}
-            <div className="flex-1">
-              <div className="flex items-center">
-                <span className="font-medium text-gray-900 ml-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center flex-wrap gap-1">
+                <span className="font-medium text-gray-900 text-sm sm:text-base whitespace-nowrap">
                   {node.account.code}
                 </span>
-                <span className="text-gray-700">
+                <span className="text-gray-700 text-sm sm:text-base truncate">
                   {node.account.name}
                 </span>
                 {node.account.isSystemAccount && (
-                  <Shield className="h-3 w-3 text-blue-600 mr-1" title="حساب نظام أساسي" />
+                  <Shield className="h-3 w-3 text-blue-600 flex-shrink-0" title="حساب نظام أساسي" />
                 )}
                 {node.account.nameEn && (
-                  <span className="text-gray-500 text-sm mr-2">
+                  <span className="text-gray-500 text-xs sm:text-sm truncate">
                     ({node.account.nameEn})
                   </span>
                 )}
               </div>
               
               {/* Account Type and Parent Info */}
-              <div className="flex items-center mt-1">
-                <span className={`text-xs px-2 py-1 rounded-full ${getAccountTypeColor(node.account.type)} bg-opacity-10`}>
+              <div className="flex items-center flex-wrap gap-1 mt-1">
+                <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${getAccountTypeColor(node.account.type)} bg-opacity-10`}>
                   {getAccountTypeLabel(node.account.type)}
                 </span>
                 {node.account.parentId && (
-                  <span className="text-xs text-gray-500 mr-2">
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
                     حساب فرعي
                   </span>
                 )}
                 {hasChildren && (
-                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full mr-2">
+                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full whitespace-nowrap">
                     {node.children.length} حساب فرعي
                   </span>
                 )}
@@ -166,11 +166,11 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
           </div>
           
           {/* Balance */}
-          <div className="text-gray-500 text-sm text-left">
-            <div className="font-medium">
+          <div className="text-gray-500 text-sm text-left flex-shrink-0 min-w-0">
+            <div className="font-medium text-xs sm:text-sm truncate">
               {node.account.balance?.toLocaleString()} {node.account.currency}
             </div>
-            <div className="text-xs text-gray-400">
+            <div className="text-xs text-gray-400 whitespace-nowrap">
               {node.account.balance && node.account.balance >= 0 ? 'مدين' : 'دائن'}
             </div>
           </div>

@@ -566,7 +566,7 @@ const OpeningBalanceEntry: React.FC = () => {
                 {/* معلومات أساسية للقيد */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">معلومات أساسية للقيد</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         رقم القيد الافتتاحي
@@ -575,7 +575,7 @@ const OpeningBalanceEntry: React.FC = () => {
                         type="text"
                         value={formData.reference}
                         onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm sm:text-base"
                         placeholder="OB-2024-0001"
                       />
                     </div>
@@ -587,7 +587,7 @@ const OpeningBalanceEntry: React.FC = () => {
                         type="date"
                         value={formData.date}
                         onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm sm:text-base"
                       />
                     </div>
                     <div>
@@ -597,7 +597,7 @@ const OpeningBalanceEntry: React.FC = () => {
                       <select
                         value={formData.currency}
                         onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm sm:text-base"
                       >
                         <option value="LYD">دينار ليبي (LYD)</option>
                         <option value="USD">دولار أمريكي (USD)</option>
@@ -613,7 +613,7 @@ const OpeningBalanceEntry: React.FC = () => {
                       type="text"
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-sm sm:text-base"
                       placeholder="قيد الأرصدة الافتتاحية للسنة المالية الجديدة"
                     />
                   </div>
@@ -631,7 +631,7 @@ const OpeningBalanceEntry: React.FC = () => {
                             value={searchTerm}
                             onChange={(e) => handleAccountSearch(e.target.value)}
                             placeholder="البحث في الحسابات..."
-                            className="w-64 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
+                            className="w-full sm:w-64 px-3 py-3 text-sm sm:text-base border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
                           />
                           {filteredAccounts.length > 0 && (
                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
@@ -719,7 +719,7 @@ const OpeningBalanceEntry: React.FC = () => {
                                     updateLine(line.id, 'accountName', account.name);
                                   }
                                 }}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500"
+                                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500"
                                 placeholder="رقم الحساب"
                               />
                             </td>
@@ -732,7 +732,7 @@ const OpeningBalanceEntry: React.FC = () => {
                                     selectAccountForLine(line.id, account);
                                   }
                                 }}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500"
+                                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500"
                               >
                                 <option value="">اختر الحساب</option>
                                 {accounts.map(account => (
@@ -754,7 +754,7 @@ const OpeningBalanceEntry: React.FC = () => {
                                     updateLine(line.id, 'credit', 0);
                                   }
                                 }}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500 text-right"
+                                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500 text-right"
                                 placeholder="0.00"
                               />
                             </td>
@@ -770,7 +770,7 @@ const OpeningBalanceEntry: React.FC = () => {
                                     updateLine(line.id, 'debit', 0);
                                   }
                                 }}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500 text-right"
+                                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500 text-right"
                                 placeholder="0.00"
                               />
                             </td>
@@ -779,7 +779,7 @@ const OpeningBalanceEntry: React.FC = () => {
                                 type="text"
                                 value={line.notes || ''}
                                 onChange={(e) => updateLine(line.id, 'notes', e.target.value)}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500"
+                                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded focus:ring-golden-500 focus:border-golden-500"
                                 placeholder="ملاحظات..."
                               />
                             </td>
@@ -804,7 +804,7 @@ const OpeningBalanceEntry: React.FC = () => {
                 {/* مؤشرات التوازن */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">مؤشرات التوازن</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="bg-white p-4 rounded-lg border">
                       <div className="text-sm font-medium text-gray-500">إجمالي المدين</div>
                       <div className="text-2xl font-bold text-green-600">

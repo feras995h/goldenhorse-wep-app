@@ -191,9 +191,9 @@ const InstantReports: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center space-x-2 space-x-reverse">
-            <div className="text-right">
-              <p className="text-sm text-gray-500">آخر تحديث</p>
-              <p className="text-sm font-semibold text-gray-900">
+            <div className="text-right min-w-0">
+              <p className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">آخر تحديث</p>
+              <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">
                 {new Date().toLocaleDateString('ar-EG')}
               </p>
             </div>
@@ -333,22 +333,22 @@ const InstantReports: React.FC = () => {
             <table className="w-full table-auto">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-4 py-3 text-right font-medium text-gray-700">التفاصيل</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-700">المبلغ</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-700">التاريخ</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-700">الحالة</th>
+                  <th className="px-2 sm:px-4 py-3 text-right font-medium text-gray-700 text-xs sm:text-sm">التفاصيل</th>
+                  <th className="px-2 sm:px-4 py-3 text-right font-medium text-gray-700 text-xs sm:text-sm">المبلغ</th>
+                  <th className="px-2 sm:px-4 py-3 text-right font-medium text-gray-700 text-xs sm:text-sm whitespace-nowrap">التاريخ</th>
+                  <th className="px-2 sm:px-4 py-3 text-right font-medium text-gray-700 text-xs sm:text-sm">الحالة</th>
                 </tr>
               </thead>
               <tbody>
                 {reportDetails.map((detail, index) => (
                   <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900 truncate max-w-32 sm:max-w-none">
                       {detail.customer || detail.supplier || detail.product || detail.type}
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                    <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900 whitespace-nowrap">
                       {formatCurrency(detail.amount)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
+                    <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap">
                       {new Date(detail.date || detail.dueDate).toLocaleDateString('ar-LY')}
                     </td>
                     <td className="px-4 py-3 text-sm">
