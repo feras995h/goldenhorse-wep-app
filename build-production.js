@@ -31,11 +31,15 @@ try {
   });
   console.log('✅ Client dependencies installed\n');
 
-  // Step 3: Build client
+  // Step 3: Build client with environment variables
   console.log('🔨 Building client application...');
-  execSync('npm run build', { 
+  execSync('npm run build', {
     cwd: path.join(__dirname, 'client'),
-    stdio: 'inherit'
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      VITE_API_URL: '/api' // Use relative path for production
+    }
   });
   console.log('✅ Client build completed\n');
 
