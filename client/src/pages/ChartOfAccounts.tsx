@@ -311,8 +311,22 @@ const ChartOfAccounts: React.FC = () => {
       if (shouldConvert) {
         try {
           await financialAPI.updateAccount(selectedParentAccount.id, { isGroup: true });
+
           // Update the selectedParentAccount object
           selectedParentAccount.isGroup = true;
+
+          // Update the accounts list to reflect the change
+          setAccounts(prevAccounts =>
+            prevAccounts.map(acc =>
+              acc.id === selectedParentAccount.id
+                ? { ...acc, isGroup: true }
+                : acc
+            )
+          );
+
+          // Reload accounts to ensure consistency
+          await loadAccounts();
+
         } catch (error) {
           console.error('Error updating parent account:', error);
           alert('حدث خطأ أثناء تحديث الحساب الأب');
@@ -361,7 +375,26 @@ const ChartOfAccounts: React.FC = () => {
       }
 
       setIsModalOpen(false);
-      await loadAccounts(); // Wait for accounts to reload
+
+      // Clear form data and selected parent
+      setSelectedParentAccount(null);
+      setFormData({
+        code: '',
+        name: '',
+        nameEn: '',
+        type: '',
+        accountType: 'main',
+        level: 1,
+        parentId: '',
+        isActive: true,
+        currency: 'LYD',
+        nature: 'debit',
+        description: '',
+        notes: ''
+      });
+
+      // Wait for accounts to reload to ensure consistency
+      await loadAccounts();
     } catch (error) {
       console.error('Error saving account:', error);
 
