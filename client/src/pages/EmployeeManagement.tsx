@@ -310,17 +310,17 @@ const EmployeeManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
-          <Users className="h-8 w-8 text-blue-600 ml-3" />
+          <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 ml-3" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">إدارة الموظفين</h1>
-            <p className="text-gray-600">إدارة شاملة للموظفين والحسابات والرواتب</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">إدارة الموظفين</h1>
+            <p className="text-sm sm:text-base text-gray-600">إدارة شاملة للموظفين والحسابات والرواتب</p>
           </div>
         </div>
         <button
           onClick={() => openModal('create')}
-          className="btn-primary flex items-center"
+          className="btn-primary flex items-center justify-center w-full sm:w-auto"
         >
           <Plus className="h-5 w-5 ml-2" />
           موظف جديد
@@ -328,7 +328,7 @@ const EmployeeManagement: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center">
             <Users className="h-8 w-8 text-blue-600" />
@@ -462,7 +462,7 @@ const EmployeeManagement: React.FC = () => {
             {/* Employee Basic Info */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-4">البيانات الأساسية</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">كود الموظف</label>
                   <p className="text-gray-900 font-mono">{selectedEmployee.employee.code}</p>
@@ -505,7 +505,7 @@ const EmployeeManagement: React.FC = () => {
             {/* Employee Accounts */}
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-4">الحسابات المرتبطة</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Salary Account */}
                 <div className="bg-white p-4 rounded-lg border">
                   <div className="flex items-center mb-2">
@@ -610,7 +610,7 @@ const EmployeeManagement: React.FC = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 label="المبلغ"
                 type="number"
@@ -675,7 +675,7 @@ const EmployeeManagement: React.FC = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 label="مبلغ السلفة"
                 type="number"
@@ -714,7 +714,7 @@ const EmployeeManagement: React.FC = () => {
           </form>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 label="كود الموظف"
                 type="text"

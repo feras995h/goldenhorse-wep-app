@@ -304,17 +304,17 @@ const CustomersManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
-          <Users className="h-8 w-8 text-blue-600 ml-3" />
+          <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 ml-3" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">إدارة العملاء</h1>
-            <p className="text-gray-600">بيانات العملاء والأرصدة</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">إدارة العملاء</h1>
+            <p className="text-sm sm:text-base text-gray-600">بيانات العملاء والأرصدة</p>
           </div>
         </div>
         <button
           onClick={() => openModal('create')}
-          className="btn-primary flex items-center"
+          className="btn-primary flex items-center justify-center w-full sm:w-auto"
         >
           <Plus className="h-5 w-5 ml-2" />
           عميل جديد
@@ -386,7 +386,7 @@ const CustomersManagement: React.FC = () => {
           )
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             label="رمز العميل"
             name="code"
@@ -417,7 +417,7 @@ const CustomersManagement: React.FC = () => {
             required
             error={formErrors.name}
             disabled={modalMode === 'view'}
-            className="md:col-span-2"
+            className="sm:col-span-2"
           />
           
           <FormField
@@ -426,7 +426,7 @@ const CustomersManagement: React.FC = () => {
             value={formData.nameEn}
             onChange={(value) => setFormData(prev => ({ ...prev, nameEn: value as string }))}
             disabled={modalMode === 'view'}
-            className="md:col-span-2"
+            className="sm:col-span-2"
           />
           
           <FormField
@@ -455,7 +455,7 @@ const CustomersManagement: React.FC = () => {
             value={formData.address}
             onChange={(value) => setFormData(prev => ({ ...prev, address: value as string }))}
             disabled={modalMode === 'view'}
-            className="md:col-span-2"
+            className="sm:col-span-2"
             rows={2}
           />
           

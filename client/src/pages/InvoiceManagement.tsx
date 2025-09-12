@@ -435,17 +435,17 @@ const InvoiceManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
-          <FileText className="h-8 w-8 text-blue-600 ml-3" />
+          <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 ml-3" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">إدارة الفواتير</h1>
-            <p className="text-gray-600">إنشاء وإدارة فواتير المبيعات</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">إدارة الفواتير</h1>
+            <p className="text-sm sm:text-base text-gray-600">إنشاء وإدارة فواتير المبيعات</p>
           </div>
         </div>
         <button
           onClick={() => openModal('create')}
-          className="btn-primary flex items-center"
+          className="btn-primary flex items-center justify-center w-full sm:w-auto"
         >
           <Plus className="h-5 w-5 ml-2" />
           فاتورة جديدة
@@ -454,7 +454,7 @@ const InvoiceManagement: React.FC = () => {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <SearchFilter
             value={searchValue}
             onChange={setSearchValue}
@@ -526,7 +526,7 @@ const InvoiceManagement: React.FC = () => {
       >
         <div className="space-y-6">
           {/* Customer and Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <FormField
               label="العميل"
               error={formErrors.customerId}
@@ -608,8 +608,8 @@ const InvoiceManagement: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                    <div className="md:col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div className="lg:col-span-2">
                       <FormField
                         label="الوصف"
                         error={formErrors[`item_${index}_description`]}
