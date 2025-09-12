@@ -429,23 +429,23 @@ const ChartOfAccounts: React.FC = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">دليل الحسابات</h1>
-              <p className="text-gray-600 mt-1">عرض وإدارة شجرة الحسابات المحاسبية</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">دليل الحسابات</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">عرض وإدارة شجرة الحسابات المحاسبية</p>
             </div>
-            <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse w-full sm:w-auto">
               <button
                 onClick={exportAccounts}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
               >
                 <Download className="h-4 w-4 ml-2" />
                 تصدير
               </button>
               <button
                 onClick={handleCreateAccount}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
               >
                 <Plus className="h-4 w-4 ml-2" />
                 إضافة حساب جديد
@@ -499,7 +499,7 @@ const ChartOfAccounts: React.FC = () => {
               {/* Basic Information */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">المعلومات الأساسية</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">رقم الحساب</label>
                     <p className="mt-1 text-sm text-gray-900 font-mono">{selectedAccount.code}</p>
@@ -532,7 +532,7 @@ const ChartOfAccounts: React.FC = () => {
               {/* Account Properties */}
               <div className="bg-blue-50 rounded-lg p-4">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">خصائص الحساب</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">الحساب الأب</label>
                     <p className="mt-1 text-sm text-gray-900">
@@ -600,19 +600,19 @@ const ChartOfAccounts: React.FC = () => {
                   </div>
                 </div>
               )}
-              <div className="flex justify-end space-x-3 space-x-reverse">
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse">
                 {!selectedAccount.isSystemAccount && (
                   <>
                     <button
                       onClick={() => handleEditAccount(selectedAccount)}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                     >
                       <Edit className="h-4 w-4 ml-2" />
                       تعديل
                     </button>
                     <button
                       onClick={() => handleDeleteAccount(selectedAccount)}
-                      className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50"
+                      className="inline-flex items-center justify-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4 ml-2" />
                       حذف
@@ -621,7 +621,7 @@ const ChartOfAccounts: React.FC = () => {
                 )}
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700"
+                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700"
                 >
                   إغلاق
                 </button>
@@ -783,17 +783,17 @@ const ChartOfAccounts: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 space-x-reverse pt-4 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse pt-4 border-t border-gray-200">
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="inline-flex items-center px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  className="inline-flex items-center justify-center px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
                 >
                   إلغاء
                 </button>
                 <button
                   onClick={handleSaveAccount}
                   disabled={!formData.code || !formData.name || !formData.type}
-                  className="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center justify-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {modalMode === 'create' ? 'إنشاء الحساب' : 'حفظ التغييرات'}
                 </button>

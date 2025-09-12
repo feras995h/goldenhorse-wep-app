@@ -407,15 +407,15 @@ const AdminDashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">لوحة مدير النظام</h1>
-              <p className="text-gray-600">إدارة شاملة للنظام والمستخدمين والبيانات</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">لوحة مدير النظام</h1>
+              <p className="text-sm sm:text-base text-gray-600">إدارة شاملة للنظام والمستخدمين والبيانات</p>
             </div>
-            <div className="flex items-center space-x-4 space-x-reverse">
+            <div className="flex items-center space-x-4 space-x-reverse w-full sm:w-auto">
               <button
                 onClick={refreshAllData}
-                className="btn btn-outline flex items-center"
+                className="btn btn-outline flex items-center justify-center w-full sm:w-auto"
                 disabled={loading || overviewLoading}
               >
                 <RefreshCw className={`h-4 w-4 ml-2 ${(loading || overviewLoading) ? 'animate-spin' : ''}`} />
@@ -428,7 +428,7 @@ const AdminDashboard: React.FC = () => {
         {/* Navigation Tabs */}
         <div className="mb-8">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 space-x-reverse">
+            <nav className="-mb-px flex overflow-x-auto space-x-8 space-x-reverse scrollbar-hide">
               <button
                 onClick={() => setViewMode('overview')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -547,7 +547,7 @@ const AdminDashboard: React.FC = () => {
             )}
 
             {/* System Metrics and Notifications */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
               {overviewData && (
                 <>
                   <div className="xl:col-span-2">
@@ -611,7 +611,7 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Financial and Sales Overview */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               {overviewData && (
                 <>
                   <AdminFinancialOverview
@@ -656,7 +656,7 @@ const AdminDashboard: React.FC = () => {
 
               {/* Search and Filters */}
               <div className="p-6 border-b border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">البحث</label>
                     <div className="relative">
@@ -839,7 +839,7 @@ const AdminDashboard: React.FC = () => {
 
               {/* Roles Grid */}
               <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {roles.map((role) => (
                     <div key={role.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200 hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-4">
@@ -895,8 +895,8 @@ const AdminDashboard: React.FC = () => {
 
         {/* User Form Modal */}
         {showUserForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">
                 {editingUser ? 'تعديل المستخدم' : 'إضافة مستخدم جديد'}
               </h3>
@@ -978,7 +978,7 @@ const AdminDashboard: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex justify-end space-x-3 space-x-reverse mt-6">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse mt-6">
                   <button
                     type="button"
                     onClick={() => {
@@ -986,14 +986,14 @@ const AdminDashboard: React.FC = () => {
                       setEditingUser(null);
                       resetUserForm();
                     }}
-                    className="btn btn-outline"
+                    className="btn btn-outline w-full sm:w-auto"
                   >
                     إلغاء
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="btn btn-primary"
+                    className="btn btn-primary w-full sm:w-auto"
                   >
                     {loading ? 'جاري الحفظ...' : (editingUser ? 'تحديث' : 'إنشاء')}
                   </button>
@@ -1005,8 +1005,8 @@ const AdminDashboard: React.FC = () => {
 
         {/* Role Form Modal */}
         {showRoleForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">
                 {editingRole ? 'تعديل الدور' : 'إضافة دور جديد'}
               </h3>
@@ -1042,7 +1042,7 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-3 space-x-reverse mt-6">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse mt-6">
                   <button
                     type="button"
                     onClick={() => {

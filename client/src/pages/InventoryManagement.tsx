@@ -607,25 +607,25 @@ const InventoryManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
-          <Package className="h-8 w-8 text-blue-600 ml-3" />
+          <Package className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 ml-3" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">إدارة الشحنات</h1>
-            <p className="text-gray-600">تتبع الشحنات من الصين إلى ليبيا</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">إدارة الشحنات</h1>
+            <p className="text-sm sm:text-base text-gray-600">تتبع الشحنات من الصين إلى ليبيا</p>
           </div>
         </div>
-        <div className="flex space-x-3 space-x-reverse">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse w-full sm:w-auto">
           <button
             onClick={() => openMovementModal()}
-            className="btn-secondary flex items-center"
+            className="btn-secondary flex items-center justify-center"
           >
             <TrendingUp className="h-5 w-5 ml-2" />
             تحديث الحالة
           </button>
           <button
             onClick={() => openModal('create')}
-            className="btn-primary flex items-center"
+            className="btn-primary flex items-center justify-center"
           >
             <Plus className="h-5 w-5 ml-2" />
             شحنة جديدة
@@ -634,7 +634,7 @@ const InventoryManagement: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border-r-4 border-blue-500">
           <div className="flex items-center justify-between">
             <div>
@@ -713,7 +713,7 @@ const InventoryManagement: React.FC = () => {
           {activeTab === 'shipments' && (
             <>
               {/* Filters */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <SearchFilter
                   value={searchValue}
                   onChange={setSearchValue}
@@ -784,7 +784,7 @@ const InventoryManagement: React.FC = () => {
       >
         <div className="space-y-6">
           {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="رقم التتبع"
               error={formErrors.trackingNumber}
@@ -892,7 +892,7 @@ const InventoryManagement: React.FC = () => {
           {/* Shipment Details */}
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">تفاصيل الشحنة</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <FormField
                 label="الوزن (كغ)"
                 error={formErrors.weight}
@@ -966,7 +966,7 @@ const InventoryManagement: React.FC = () => {
           {/* Cost Information */}
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">معلومات التكلفة</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 label="القيمة المصرحة ($)"
                 error={formErrors.declaredValue}
@@ -1004,7 +1004,7 @@ const InventoryManagement: React.FC = () => {
           {/* Location Information */}
           <div className="border-t pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">معلومات المواقع</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 label="مكان الاستلام"
                 error={formErrors.originLocation}
@@ -1057,7 +1057,7 @@ const InventoryManagement: React.FC = () => {
               </FormField>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -1101,17 +1101,17 @@ const InventoryManagement: React.FC = () => {
 
           {/* Modal Actions */}
           {modalMode !== 'view' && (
-            <div className="flex justify-end space-x-3 space-x-reverse pt-4 border-t">
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse pt-4 border-t">
               <button
                 onClick={closeModal}
-                className="btn-secondary"
+                className="btn-secondary w-full sm:w-auto"
                 disabled={submitting}
               >
                 إلغاء
               </button>
               <button
                 onClick={handleSubmit}
-                className="btn-primary"
+                className="btn-primary w-full sm:w-auto"
                 disabled={submitting}
               >
                 {submitting ? 'جاري الحفظ...' : 'حفظ الشحنة'}
@@ -1187,17 +1187,17 @@ const InventoryManagement: React.FC = () => {
             />
           </FormField>
 
-          <div className="flex justify-end space-x-3 space-x-reverse pt-4 border-t">
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse pt-4 border-t">
             <button
               onClick={closeModal}
-              className="btn-secondary"
+              className="btn-secondary w-full sm:w-auto"
               disabled={submitting}
             >
               إلغاء
             </button>
             <button
               onClick={handleMovementSubmit}
-              className="btn-primary"
+              className="btn-primary w-full sm:w-auto"
               disabled={submitting}
             >
               {submitting ? 'جاري التحديث...' : 'تحديث الحالة'}
