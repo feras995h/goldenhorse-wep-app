@@ -150,26 +150,43 @@ router.get('/', authenticateToken, async (req, res) => {
 // POST /api/settings/logo - Upload new logo
 router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('logo'), async (req, res) => {
   try {
+    console.log('📤 Logo upload started');
+
     if (!req.file) {
+      console.log('❌ No file uploaded');
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
+    console.log('📁 File info:', {
+      filename: req.file.filename,
+      originalname: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
+
     // Convert file to base64 for database storage
+    console.log('🔄 Converting file to base64...');
     const fileBuffer = await fs.readFile(req.file.path);
     const base64Data = fileBuffer.toString('base64');
+    console.log('✅ Base64 conversion completed, size:', base64Data.length);
 
     // Get old logo data to clean up
+    console.log('🔍 Getting old logo data...');
     const oldLogoDataStr = await Setting.get('logo', null);
     let oldLogoData = null;
     if (oldLogoDataStr) {
       try {
         oldLogoData = typeof oldLogoDataStr === 'string' ? JSON.parse(oldLogoDataStr) : oldLogoDataStr;
+        console.log('📄 Old logo data found');
       } catch (e) {
-        console.error('Error parsing old logo data:', e);
+        console.error('❌ Error parsing old logo data:', e);
       }
+    } else {
+      console.log('📄 No old logo data found');
     }
 
     // Store logo data in database
+    console.log('💾 Preparing logo data for database...');
     const logoData = {
       filename: req.file.filename,
       originalName: req.file.originalname,
@@ -179,10 +196,12 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       data: base64Data
     };
 
+    console.log('💾 Saving logo to database...');
     await Setting.set('logo', JSON.stringify(logoData), {
       type: 'json',
       description: 'Company logo data'
     });
+    console.log('✅ Logo saved to database successfully');
 
     // Clean up uploaded file (we don't need it anymore)
     try {
@@ -212,21 +231,32 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       }
     });
   } catch (error) {
-    console.error('Error uploading logo:', error);
+    console.error('❌ Error uploading logo:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code
+    });
 
     // Clean up uploaded file if there was an error
     if (req.file) {
       try {
         await fs.unlink(req.file.path);
+        console.log('🗑️ Cleaned up uploaded file after error');
       } catch (cleanupError) {
-        console.warn('Could not clean up uploaded file:', cleanupError.message);
+        console.warn('⚠️ Could not clean up uploaded file:', cleanupError.message);
       }
     }
 
     if (error.message.includes('Invalid file type')) {
       res.status(400).json({ message: error.message });
     } else {
-      res.status(500).json({ message: 'Failed to upload logo' });
+      res.status(500).json({
+        message: 'Failed to upload logo',
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   }
 });
