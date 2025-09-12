@@ -560,14 +560,14 @@ const JournalEntries: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">قيود اليومية</h1>
-          <p className="text-gray-600">إدارة القيود المحاسبية واليومية</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">قيود اليومية</h1>
+          <p className="text-sm sm:text-base text-gray-600">إدارة القيود المحاسبية واليومية</p>
         </div>
         <button
           onClick={() => openModal('create')}
-          className="btn-primary"
+          className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
         >
           <Plus className="h-4 w-4 ml-2" />
           إضافة قيد جديد
@@ -628,37 +628,39 @@ const JournalEntries: React.FC = () => {
         size="xl"
         footer={
           modalMode !== 'view' ? (
-            <div className="flex justify-between items-center">
-                          <div className="flex space-x-3 space-x-reverse">
-              <button
-                onClick={clearForm}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
-                disabled={submitting}
-              >
-                <Trash2 className="h-4 w-4 ml-2" />
-                مسح الحقول
-              </button>
-              <button
-                onClick={() => {
-                  const cleanedLines = removeEmptyLines(formData.lines || []);
-                  setFormData(prev => ({ ...prev, lines: cleanedLines }));
-                }}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
-                disabled={submitting}
-              >
-                <Minus className="h-4 w-4 ml-2" />
-                تنظيف الأسطر الفارغة
-              </button>
-              <button
-                onClick={addLine}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
-                disabled={submitting}
-              >
-                <Plus className="h-4 w-4 ml-2" />
-                إضافة سطر جديد
-              </button>
-            </div>
-            <div className="flex space-x-3 space-x-reverse">
+            <div>
+              {/* Desktop Button Layout */}
+              <div className="hidden md:flex justify-between items-center">
+              <div className="flex space-x-3 space-x-reverse">
+                <button
+                  onClick={clearForm}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <Trash2 className="h-4 w-4 ml-2" />
+                  مسح الحقول
+                </button>
+                <button
+                  onClick={() => {
+                    const cleanedLines = removeEmptyLines(formData.lines || []);
+                    setFormData(prev => ({ ...prev, lines: cleanedLines }));
+                  }}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <Minus className="h-4 w-4 ml-2" />
+                  تنظيف الأسطر الفارغة
+                </button>
+                <button
+                  onClick={addLine}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة سطر جديد
+                </button>
+              </div>
+              <div className="flex space-x-3 space-x-reverse">
                 <button
                   onClick={closeModal}
                   className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
@@ -676,6 +678,58 @@ const JournalEntries: React.FC = () => {
                   {submitting ? 'جاري الحفظ...' : 'حفظ القيد'}
                 </button>
               </div>
+            </div>
+
+            {/* Mobile Button Layout */}
+            <div className="block md:hidden space-y-4">
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={clearForm}
+                  className="inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <Trash2 className="h-5 w-5 ml-2" />
+                  مسح الحقول
+                </button>
+                <button
+                  onClick={() => {
+                    const cleanedLines = removeEmptyLines(formData.lines || []);
+                    setFormData(prev => ({ ...prev, lines: cleanedLines }));
+                  }}
+                  className="inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <Minus className="h-5 w-5 ml-2" />
+                  تنظيف الأسطر الفارغة
+                </button>
+                <button
+                  onClick={addLine}
+                  className="inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <Plus className="h-5 w-5 ml-2" />
+                  إضافة سطر جديد
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={closeModal}
+                  className="inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                  disabled={submitting}
+                >
+                  <X className="h-5 w-5 ml-2" />
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  className="inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500 disabled:opacity-50"
+                  disabled={submitting || !isBalanced}
+                >
+                  <Save className="h-5 w-5 ml-2" />
+                  {submitting ? 'جاري الحفظ...' : 'حفظ القيد'}
+                </button>
+              </div>
+            </div>
             </div>
           ) : (
             <button onClick={closeModal} className="btn-secondary">
@@ -723,20 +777,20 @@ const JournalEntries: React.FC = () => {
 
           {/* Journal Lines Table */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <div>
-                <h3 className="text-lg font-medium text-gray-900">تفاصيل القيد</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">تفاصيل القيد</h3>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">
                   سيتم إضافة سطر جديد تلقائياً عند تعبئة السطر الثاني، والأسطر الفارغة ستظهر باللون الأصفر
                 </p>
               </div>
               {formErrors.lines && (
-                <span className="text-sm text-red-600">{formErrors.lines}</span>
+                <span className="text-xs sm:text-sm text-red-600">{formErrors.lines}</span>
               )}
             </div>
             
-            {/* Table Header */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            {/* Table Header - Desktop */}
+            <div className="hidden md:block bg-gray-50 rounded-lg p-4">
               <div className="grid grid-cols-12 gap-3 text-sm font-medium text-gray-700">
                 <div className="col-span-2">رقم الحساب</div>
                 <div className="col-span-2">الحساب</div>
@@ -750,11 +804,17 @@ const JournalEntries: React.FC = () => {
               </div>
             </div>
 
+            {/* Mobile Header */}
+            <div className="block md:hidden bg-gray-50 rounded-lg p-4">
+              <h4 className="text-base font-medium text-gray-700 text-center">تفاصيل الحسابات</h4>
+            </div>
+
             {/* Table Rows */}
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {(formData.lines || []).map((line, index) => (
                 <div key={line.id || index} className={`border border-gray-200 rounded-lg p-4 ${isLineEmpty(line) ? 'bg-yellow-50' : 'bg-white'}`}>
-                  <div className="grid grid-cols-12 gap-3 items-center">
+                  {/* Desktop Layout */}
+                  <div className="hidden md:grid grid-cols-12 gap-3 items-center">
                     {/* Account Code */}
                     <div className="col-span-2">
                       <input
@@ -899,13 +959,170 @@ const JournalEntries: React.FC = () => {
                       </span>
                     </div>
                   </div>
+
+                  {/* Mobile Layout */}
+                  <div className="block md:hidden space-y-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      {/* Account Info */}
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">رقم الحساب</label>
+                          <input
+                            type="text"
+                            value={line.accountCode || ''}
+                            onChange={(e) => {
+                              const accountCode = e.target.value;
+                              updateLine(index, 'accountCode', accountCode);
+
+                              // Find account by code
+                              const account = accounts.find(acc => acc.code === accountCode);
+                              if (account) {
+                                updateLine(index, 'accountId', account.id);
+                                updateLine(index, 'accountName', account.name);
+                              } else if (accountCode === '') {
+                                // Clear account info if code is empty
+                                updateLine(index, 'accountId', '');
+                                updateLine(index, 'accountName', '');
+                              }
+                            }}
+                            placeholder="رقم الحساب"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-base"
+                            disabled={modalMode === 'view'}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">اسم الحساب</label>
+                          <input
+                            type="text"
+                            value={line.accountName || ''}
+                            onChange={(e) => {
+                              const accountName = e.target.value;
+                              updateLine(index, 'accountName', accountName);
+
+                              // Find account by name (partial match)
+                              const account = accounts.find(acc =>
+                                acc.name.toLowerCase().includes(accountName.toLowerCase()) && accountName.length > 2
+                              );
+                              if (account) {
+                                updateLine(index, 'accountId', account.id);
+                                updateLine(index, 'accountCode', account.code);
+                                updateLine(index, 'accountName', account.name);
+                              }
+                            }}
+                            placeholder="اسم الحساب"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-base"
+                            disabled={modalMode === 'view'}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">البيان</label>
+                          <input
+                            type="text"
+                            value={line.description || ''}
+                            onChange={(e) => updateLine(index, 'description', e.target.value)}
+                            placeholder="وصف العملية"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-base"
+                            disabled={modalMode === 'view'}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Amount Info */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">مدين</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={line.debit || ''}
+                            onChange={(e) => {
+                              const debitValue = parseFloat(e.target.value) || 0;
+                              updateLine(index, 'debit', debitValue);
+                              // Clear credit if debit is entered
+                              if (debitValue > 0) {
+                                updateLine(index, 'credit', 0);
+                              }
+                            }}
+                            placeholder="0.00"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-base text-left"
+                            disabled={modalMode === 'view'}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">دائن</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={line.credit || ''}
+                            onChange={(e) => {
+                              const creditValue = parseFloat(e.target.value) || 0;
+                              updateLine(index, 'credit', creditValue);
+                              // Clear debit if credit is entered
+                              if (creditValue > 0) {
+                                updateLine(index, 'debit', 0);
+                              }
+                            }}
+                            placeholder="0.00"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-base text-left"
+                            disabled={modalMode === 'view'}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Additional Info */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">معدل الصرف</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={line.exchangeRate || 1}
+                            onChange={(e) => updateLine(index, 'exchangeRate', e.target.value)}
+                            placeholder="1.00"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500 text-base text-left"
+                            disabled={modalMode === 'view'}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">الرصيد</label>
+                          <div className="w-full px-4 py-3 border border-gray-200 rounded-md bg-gray-50 text-base text-gray-600">
+                            {line.balance?.toLocaleString() || '0'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Totals */}
+                      <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-200">
+                        <div>
+                          <span className="text-sm text-gray-600">إجمالي مدين: </span>
+                          <span className="text-base font-medium text-green-600">
+                            {line.totalDebit?.toLocaleString() || '0'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-600">إجمالي دائن: </span>
+                          <span className="text-base font-medium text-blue-600">
+                            {line.totalCredit?.toLocaleString() || '0'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Totals */}
             <div className="bg-gray-50 rounded-lg p-4">
-              <div className="grid grid-cols-3 gap-4 text-center">
+              {/* Desktop Layout */}
+              <div className="hidden md:grid grid-cols-3 gap-4 text-center">
                 <div>
                   <span className="text-gray-600">إجمالي المدين: </span>
                   <span className="font-semibold text-green-600">
@@ -925,9 +1142,42 @@ const JournalEntries: React.FC = () => {
                   </span>
                 </div>
               </div>
+
+              {/* Mobile Layout */}
+              <div className="block md:hidden space-y-4">
+                <div className="text-center">
+                  <h4 className="text-lg font-medium text-gray-900 mb-3">ملخص القيد</h4>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-white rounded-md">
+                    <span className="text-base text-gray-700">إجمالي المدين:</span>
+                    <span className="text-lg font-semibold text-green-600">
+                      {new Intl.NumberFormat('ar-LY').format(getTotalDebit())} د.ل
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-white rounded-md">
+                    <span className="text-base text-gray-700">إجمالي الدائن:</span>
+                    <span className="text-lg font-semibold text-blue-600">
+                      {new Intl.NumberFormat('ar-LY').format(getTotalCredit())} د.ل
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-white rounded-md border-2 border-gray-200">
+                    <span className="text-base font-medium text-gray-700">الفرق:</span>
+                    <span className={`text-lg font-bold ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
+                      {new Intl.NumberFormat('ar-LY').format(Math.abs(getTotalDebit() - getTotalCredit()))} د.ل
+                    </span>
+                  </div>
+                  {isBalanced && (
+                    <div className="text-center p-2 bg-green-100 rounded-md">
+                      <span className="text-sm text-green-800 font-medium">✓ القيد متوازن</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {formErrors.balance && (
-                <div className="mt-2 text-center">
-                  <span className="text-sm text-red-600">{formErrors.balance}</span>
+                <div className="mt-4 text-center">
+                  <span className="text-base text-red-600 font-medium">{formErrors.balance}</span>
                 </div>
               )}
             </div>
