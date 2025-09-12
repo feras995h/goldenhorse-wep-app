@@ -2,7 +2,7 @@
 # This file tells Coolify how to build and deploy the application
 
 # Build configuration
-BUILD_COMMAND="npm ci --only=production && cd server && npm ci --only=production && cd ../client && npm ci --only=production && npm run build"
+BUILD_COMMAND="npm ci && cd client && npm ci && npm run build && cd ../server && npm ci --only=production"
 
 # Start command
 START_COMMAND="cd server && npm start"

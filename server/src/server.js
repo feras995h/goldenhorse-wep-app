@@ -41,16 +41,15 @@ const validateEnvironment = () => {
     'JWT_REFRESH_SECRET': 'JWT refresh secret key is required'
   };
 
-  // Only require database variables if not using DB_URL
-  if (!process.env.DB_URL && process.env.DB_DIALECT === 'postgres') {
-    requiredEnv['DB_USERNAME'] = 'Database username is required (or use DB_URL)';
-    requiredEnv['DB_PASSWORD'] = 'Database password is required (or use DB_URL)';
-    requiredEnv['DB_NAME'] = 'Database name is required (or use DB_URL)';
-    requiredEnv['DB_HOST'] = 'Database host is required (or use DB_URL)';
-    requiredEnv['DB_PORT'] = 'Database port is required (or use DB_URL)';
-  } else if (!process.env.DB_URL && process.env.NODE_ENV === 'production') {
-    // In production, require either DB_URL or individual DB parameters
-    requiredEnv['DB_URL'] = 'Database URL is required for production (or set individual DB_* variables)';
+  // Only require database variables if not using DB_URL or DATABASE_URL
+  const hasDbUrl = process.env.DB_URL || process.env.DATABASE_URL;
+
+  if (!hasDbUrl && process.env.DB_DIALECT === 'postgres') {
+    requiredEnv['DB_USERNAME'] = 'Database username is required (or use DB_URL/DATABASE_URL)';
+    requiredEnv['DB_PASSWORD'] = 'Database password is required (or use DB_URL/DATABASE_URL)';
+    requiredEnv['DB_NAME'] = 'Database name is required (or use DB_URL/DATABASE_URL)';
+    requiredEnv['DB_HOST'] = 'Database host is required (or use DB_URL/DATABASE_URL)';
+    requiredEnv['DB_PORT'] = 'Database port is required (or use DB_URL/DATABASE_URL)';
   }
 
   const missing = [];
@@ -62,6 +61,14 @@ const validateEnvironment = () => {
       missing.push({ key, description });
     }
   });
+
+  // Special check for database URL in production
+  if (!hasDbUrl && process.env.NODE_ENV === 'production') {
+    missing.push({
+      key: 'DATABASE_URL or DB_URL',
+      description: 'Database URL is required for production (DATABASE_URL or DB_URL, or set individual DB_* variables)'
+    });
+  }
 
   // Check for weak secrets in production
   if (process.env.NODE_ENV === 'production') {
@@ -199,6 +206,15 @@ app.use('/api/sales/', salesLimiter);
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Serve static files from client build (for production)
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, '../../client/dist');
+  console.log('📁 Serving static files from:', clientBuildPath);
+
+  // Serve static files
+  app.use(express.static(clientBuildPath));
+}
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/settings', settingsRoutes);
@@ -290,6 +306,19 @@ app.get('/api/health/backup', async (req, res) => {
     });
   }
 });
+
+// Handle React Router (return index.html for all non-API routes) - MUST be before error handlers
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
+    }
+
+    const clientBuildPath = path.join(__dirname, '../../client/dist');
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
 
 // Error handling middleware
 app.use(notFound);
