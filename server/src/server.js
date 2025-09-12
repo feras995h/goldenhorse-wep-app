@@ -182,13 +182,23 @@ app.use(requestId); // Add request ID for tracking
 app.use(monitoringManager.requestMonitoringMiddleware()); // Add request monitoring
 
 // Configure CORS to allow requests from frontend
+const corsOrigins = process.env.NODE_ENV === 'production'
+  ? [
+      process.env.CORS_ORIGIN,
+      // Allow the current domain for SPA routing
+      `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 5001}`,
+      // Allow sslip.io domains
+      /\.sslip\.io$/
+    ].filter(Boolean)
+  : [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173'
+    ];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173'
-  ],
+  origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
