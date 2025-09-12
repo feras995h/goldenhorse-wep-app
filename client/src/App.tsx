@@ -20,6 +20,8 @@ const CustomersManagement = loadable(() => import('./pages/CustomersManagement')
 const AccountStatement = loadable(() => import('./pages/AccountStatement'));
 const InstantReports = loadable(() => import('./pages/InstantReports'));
 const EmployeeAccountStatement = loadable(() => import('./pages/EmployeeAccountStatement'));
+const EmployeeManagement = loadable(() => import('./pages/EmployeeManagement'));
+const EmployeeAccountStatementNew = loadable(() => import('./pages/EmployeeAccountStatementNew'));
 const EmployeePayroll = loadable(() => import('./pages/EmployeePayroll'));
 const InvoiceManagement = loadable(() => import('./pages/InvoiceManagement'));
 const InventoryManagement = loadable(() => import('./pages/InventoryManagement'));
@@ -97,7 +99,8 @@ function App() {
                 <Route path="instant-reports" element={<InstantReports />} />
                 <Route path="journal" element={<JournalEntries />} />
                 <Route path="customers" element={<CustomersManagement />} />
-                <Route path="employee-accounts" element={<EmployeeAccountStatement />} />
+                <Route path="employee-accounts" element={<EmployeeAccountStatementNew />} />
+                <Route path="employees" element={<EmployeeManagement />} />
                 <Route path="fixed-assets" element={<FixedAssetsManagement />} />
                 <Route path="reports" element={<FinancialReports />} />
                 <Route path="opening-balance" element={<OpeningBalanceEntry />} />

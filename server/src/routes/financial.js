@@ -7,6 +7,7 @@ import TransactionManager from '../utils/transactionManager.js';
 import backupManager from '../utils/backupManager.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import NotificationService from '../services/NotificationService.js';
+import EmployeeAccountService from '../services/EmployeeAccountService.js';
 import { Op, Transaction } from 'sequelize';
 
 const router = express.Router();
@@ -1015,21 +1016,83 @@ router.get('/employees', authenticateToken, requireFinancialAccess, async (req, 
   }
 });
 
-// POST /api/financial/employees - Create new employee
+// POST /api/financial/employees - Create new employee with accounts
 router.post('/employees', authenticateToken, requireFinancialAccess, async (req, res) => {
   try {
-    const employeeData = {
-      id: uuidv4(),
-      ...req.body,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    const newEmployee = await Employee.create(employeeData);
-    res.status(201).json(newEmployee);
+    const result = await EmployeeAccountService.createEmployeeWithAccounts(req.body, req.user);
+
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: 'تم إنشاء الموظف والحسابات المرتبطة بنجاح'
+    });
   } catch (error) {
     console.error('Error creating employee:', error);
-    res.status(500).json({ message: 'خطأ في إنشاء الموظف' });
+    res.status(500).json({
+      success: false,
+      message: error.message || 'خطأ في إنشاء الموظف'
+    });
+  }
+});
+
+// GET /api/financial/employees/:id - Get employee with accounts
+router.get('/employees/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const result = await EmployeeAccountService.getEmployeeWithAccounts(req.params.id);
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Error fetching employee:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'خطأ في جلب بيانات الموظف'
+    });
+  }
+});
+
+// GET /api/financial/employees/:id/summary - Get employee summary
+router.get('/employees/:id/summary', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const result = await EmployeeAccountService.getEmployeeSummary(req.params.id);
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Error fetching employee summary:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'خطأ في جلب ملخص الموظف'
+    });
+  }
+});
+
+// GET /api/financial/employees/:id/statement - Get employee account statement
+router.get('/employees/:id/statement', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { accountType, startDate, endDate } = req.query;
+
+    const result = await EmployeeAccountService.getEmployeeAccountStatement(
+      req.params.id,
+      accountType,
+      startDate,
+      endDate
+    );
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Error fetching employee statement:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'خطأ في جلب كشف حساب الموظف'
+    });
   }
 });
 
@@ -1037,12 +1100,12 @@ router.post('/employees', authenticateToken, requireFinancialAccess, async (req,
 router.get('/employees/:id/salaries', authenticateToken, requireFinancialAccess, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const salaries = await PayrollEntry.findAll({
       where: { employeeId: id },
       order: [['month', 'DESC'], ['year', 'DESC']]
     });
-    
+
     res.json(salaries);
   } catch (error) {
     console.error('Error fetching employee salaries:', error);
@@ -1078,6 +1141,52 @@ router.get('/employees/:id/bonds', authenticateToken, requireFinancialAccess, as
   } catch (error) {
     console.error('Error fetching employee bonds:', error);
     res.status(500).json({ message: 'خطأ في جلب عهود الموظف' });
+  }
+});
+
+// POST /api/financial/employees/:id/salary-payment - Process salary payment
+router.post('/employees/:id/salary-payment', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const result = await EmployeeAccountService.processSalaryPayment(
+      req.params.id,
+      req.body,
+      req.user
+    );
+
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: 'تم صرف الراتب بنجاح'
+    });
+  } catch (error) {
+    console.error('Error processing salary payment:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'خطأ في صرف الراتب'
+    });
+  }
+});
+
+// POST /api/financial/employees/:id/advance - Process employee advance
+router.post('/employees/:id/advance', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const result = await EmployeeAccountService.processEmployeeAdvance(
+      req.params.id,
+      req.body,
+      req.user
+    );
+
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: 'تم صرف السلفة بنجاح'
+    });
+  } catch (error) {
+    console.error('Error processing employee advance:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'خطأ في صرف السلفة'
+    });
   }
 });
 

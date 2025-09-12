@@ -201,6 +201,9 @@ export default (sequelize) => {
   // Associations
   Employee.associate = (models) => {
     Employee.belongsTo(models.Account, { foreignKey: 'accountId', as: 'account' });
+    Employee.belongsTo(models.Account, { foreignKey: 'salaryAccountId', as: 'salaryAccount' });
+    Employee.belongsTo(models.Account, { foreignKey: 'advanceAccountId', as: 'advanceAccount' });
+    Employee.belongsTo(models.Account, { foreignKey: 'custodyAccountId', as: 'custodyAccount' });
     Employee.hasMany(models.PayrollEntry, { foreignKey: 'employeeId', as: 'payrollEntries' });
     Employee.hasMany(models.EmployeeAdvance, { foreignKey: 'employeeId', as: 'advances' });
   };

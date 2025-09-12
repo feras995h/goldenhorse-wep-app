@@ -94,6 +94,13 @@ const FinancialDashboard: React.FC = () => {
       href: '/financial/customers'
     },
     {
+      title: 'إدارة الموظفين',
+      description: 'إدارة شاملة للموظفين والحسابات والرواتب',
+      icon: Users,
+      color: 'purple' as const,
+      href: '/financial/employees'
+    },
+    {
       title: 'كشف حساب الموظفين',
       description: 'عرض بيانات الموظفين ورواتبهم وسلفهم وعهودهم',
       icon: UserCheck,
