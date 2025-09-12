@@ -144,10 +144,11 @@ const ChartOfAccounts: React.FC = () => {
     if (childAccounts.length === 0) {
       // If no children, create first child code
       const newCode = `${parentAccount.code}.1`;
-      setFormData(prev => ({ 
-        ...prev, 
+      setFormData(prev => ({
+        ...prev,
         code: newCode,
         accountType: 'sub',
+        type: parentAccount.type, // Inherit type from parent
         level: parentAccount.level + 1,
         parentId: parentAccount.id,
         nature: getDefaultNature(parentAccount.type)
@@ -162,10 +163,11 @@ const ChartOfAccounts: React.FC = () => {
       const maxCode = Math.max(...existingCodes);
       const nextCode = maxCode + 1;
       const newCode = `${parentAccount.code}.${nextCode}`;
-      setFormData(prev => ({ 
-        ...prev, 
+      setFormData(prev => ({
+        ...prev,
         code: newCode,
         accountType: 'sub',
+        type: parentAccount.type, // Inherit type from parent
         level: parentAccount.level + 1,
         parentId: parentAccount.id,
         nature: getDefaultNature(parentAccount.type)
@@ -332,7 +334,12 @@ const ChartOfAccounts: React.FC = () => {
       // Prepare data for API
       const accountData = {
         ...formData,
-        parentId: formData.parentId || null, // Convert empty string to null
+        // Ensure parentId is properly set for sub accounts
+        parentId: selectedParentAccount ? selectedParentAccount.id : (formData.parentId || null),
+        // Inherit type from parent for sub accounts if not set
+        type: selectedParentAccount && !formData.type ? selectedParentAccount.type : formData.type,
+        // Set proper level for sub accounts
+        level: selectedParentAccount ? selectedParentAccount.level + 1 : (formData.level || 1),
         // For sub accounts, isGroup can be true or false based on user choice
         // For main accounts, default to true to allow sub accounts
         isGroup: formData.accountType === 'main' ? true : (formData.isGroup !== undefined ? formData.isGroup : false),
@@ -342,6 +349,8 @@ const ChartOfAccounts: React.FC = () => {
       };
 
       console.log('Saving account data:', accountData);
+      console.log('Selected parent account:', selectedParentAccount);
+      console.log('Form data parentId:', formData.parentId);
 
       if (modalMode === 'create') {
         const response = await financialAPI.createAccount(accountData);
