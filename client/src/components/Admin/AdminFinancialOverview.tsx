@@ -86,8 +86,8 @@ const AdminFinancialOverview: React.FC<AdminFinancialOverviewProps> = ({
             color="success"
             currency="د.ل"
             trend={{
-              direction: 'up',
-              percentage: 12.5,
+              direction: data.totalRevenue > 0 ? 'up' : 'stable',
+              percentage: 0,
               period: 'من الشهر الماضي'
             }}
           />
@@ -112,8 +112,8 @@ const AdminFinancialOverview: React.FC<AdminFinancialOverviewProps> = ({
             color="info"
             currency="د.ل"
             trend={{
-              direction: 'up',
-              percentage: 5.7,
+              direction: data.cashBalance > 0 ? 'up' : 'stable',
+              percentage: 0,
               period: 'من الأسبوع الماضي'
             }}
           />

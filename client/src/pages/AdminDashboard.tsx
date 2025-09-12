@@ -496,11 +496,11 @@ const AdminDashboard: React.FC = () => {
                   {
                     title: 'إجمالي الإيرادات',
                     value: overviewData.financial.totalRevenue,
-                    previousValue: overviewData.financial.totalRevenue * 0.85,
-                    target: 150000,
+                    previousValue: 0,
+                    target: 0,
                     format: 'currency',
-                    trend: 'up',
-                    trendPercentage: 12.5,
+                    trend: overviewData.financial.totalRevenue > 0 ? 'up' : 'stable',
+                    trendPercentage: 0,
                     status: 'good',
                     icon: DollarSign,
                     color: 'green'
@@ -508,11 +508,11 @@ const AdminDashboard: React.FC = () => {
                   {
                     title: 'المستخدمين النشطين',
                     value: overviewData.system.users.active,
-                    previousValue: overviewData.system.users.active - 5,
+                    previousValue: Math.max(0, overviewData.system.users.active - 1),
                     target: overviewData.system.users.total,
                     format: 'number',
-                    trend: 'up',
-                    trendPercentage: 8.3,
+                    trend: overviewData.system.users.active > 0 ? 'up' : 'stable',
+                    trendPercentage: overviewData.system.users.active > 0 ? 100 : 0,
                     status: 'good',
                     icon: Users,
                     color: 'blue'
@@ -520,24 +520,24 @@ const AdminDashboard: React.FC = () => {
                   {
                     title: 'إجمالي المبيعات',
                     value: overviewData.sales.totalSales,
-                    previousValue: overviewData.sales.totalSales * 0.92,
-                    target: 120000,
+                    previousValue: 0,
+                    target: 0,
                     format: 'currency',
-                    trend: 'up',
-                    trendPercentage: 6.8,
+                    trend: overviewData.sales.totalSales > 0 ? 'up' : 'stable',
+                    trendPercentage: 0,
                     status: 'good',
                     icon: ShoppingCart,
                     color: 'purple'
                   },
                   {
                     title: 'معدل الاستجابة',
-                    value: 98.5,
-                    previousValue: 97.2,
-                    target: 99,
+                    value: overviewData.system.health.status === 'healthy' ? 100 : 0,
+                    previousValue: overviewData.system.health.status === 'healthy' ? 99 : 0,
+                    target: 100,
                     format: 'percentage',
-                    trend: 'up',
-                    trendPercentage: 1.3,
-                    status: 'good',
+                    trend: overviewData.system.health.status === 'healthy' ? 'up' : 'down',
+                    trendPercentage: overviewData.system.health.status === 'healthy' ? 1.0 : 0,
+                    status: overviewData.system.health.status === 'healthy' ? 'good' : 'danger',
                     icon: BarChart3,
                     color: 'indigo'
                   }
@@ -560,54 +560,44 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   <div>
                     <AdminNotificationCenter
-                      notifications={[
-                        {
+                      notifications={overviewData.sales.lowStockItems > 0 || overviewData.sales.pendingInvoices > 0 ? [
+                        ...(overviewData.sales.lowStockItems > 0 ? [{
                           id: '1',
-                          type: 'warning',
+                          type: 'warning' as const,
                           title: 'مخزون منخفض',
                           message: `يوجد ${overviewData.sales.lowStockItems} منتج بمخزون منخفض يحتاج إعادة تموين`,
                           timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
                           read: false,
-                          priority: 'medium',
+                          priority: 'medium' as const,
                           category: 'sales',
                           actionText: 'عرض المنتجات',
                           actionUrl: '/sales/inventory'
-                        },
-                        {
+                        }] : []),
+                        ...(overviewData.sales.pendingInvoices > 0 ? [{
                           id: '2',
-                          type: 'info',
+                          type: 'info' as const,
                           title: 'فواتير معلقة',
                           message: `يوجد ${overviewData.sales.pendingInvoices} فاتورة في انتظار الدفع`,
                           timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
                           read: false,
-                          priority: 'low',
+                          priority: 'low' as const,
                           category: 'financial',
                           actionText: 'عرض الفواتير',
                           actionUrl: '/sales/invoices'
-                        },
-                        {
-                          id: '3',
-                          type: 'success',
-                          title: 'نسخ احتياطي مكتمل',
-                          message: 'تم إنشاء النسخة الاحتياطية اليومية بنجاح',
-                          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-                          read: true,
-                          priority: 'low',
-                          category: 'system'
-                        },
-                        {
+                        }] : []),
+                        ...(overviewData.sales.overdueInvoices > 0 ? [{
                           id: '4',
-                          type: 'error',
+                          type: 'error' as const,
                           title: 'فواتير متأخرة',
                           message: `يوجد ${overviewData.sales.overdueInvoices} فاتورة متأخرة الدفع`,
                           timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
                           read: false,
-                          priority: 'high',
+                          priority: 'high' as const,
                           category: 'financial',
                           actionText: 'متابعة الفواتير',
                           actionUrl: '/financial/customers'
-                        }
-                      ]}
+                        }] : [])
+                      ] : []}
                       loading={overviewLoading}
                       onAction={(notification) => {
                         if (notification.actionUrl) {

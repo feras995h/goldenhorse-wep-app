@@ -95,8 +95,8 @@ const AdminSalesOverview: React.FC<AdminSalesOverviewProps> = ({
             color="primary"
             currency="د.ل"
             trend={{
-              direction: 'up',
-              percentage: 8.3,
+              direction: data.totalSales > 0 ? 'up' : 'stable',
+              percentage: 0,
               period: 'من الشهر الماضي'
             }}
           />
@@ -107,8 +107,8 @@ const AdminSalesOverview: React.FC<AdminSalesOverviewProps> = ({
             icon={Receipt}
             color="success"
             trend={{
-              direction: 'up',
-              percentage: 15.2,
+              direction: data.totalOrders > 0 ? 'up' : 'stable',
+              percentage: 0,
               period: 'من الشهر الماضي'
             }}
           />
@@ -119,9 +119,9 @@ const AdminSalesOverview: React.FC<AdminSalesOverviewProps> = ({
             icon={Users}
             color="info"
             trend={{
-              direction: 'up',
-              percentage: 6.8,
-              period: `+${data.newCustomers} عميل جديد`
+              direction: data.activeCustomers > 0 ? 'up' : 'stable',
+              percentage: 0,
+              period: `+${data.newCustomers || 0} عميل جديد`
             }}
           />
         </div>
