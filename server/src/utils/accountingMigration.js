@@ -236,8 +236,10 @@ class AccountingMigration {
         if (!parent) {
           throw new Error(`Parent account not found for ${account.code} - ${account.name}`);
         }
+        // Auto-convert parent to group if it's not already
         if (!parent.isGroup) {
-          throw new Error(`Parent account ${parent.code} must be a group account`);
+          parent.isGroup = true;
+          console.log(`✅ Parent account '${parent.code}' converted to group automatically during migration`);
         }
       }
     }
