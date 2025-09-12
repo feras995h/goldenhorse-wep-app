@@ -160,12 +160,10 @@ router.post('/accounts', authenticateToken, requireFinancialAccess, async (req, 
         });
       }
 
+      // Auto-convert parent to group if it's not already
       if (!parentAccount.isGroup) {
-        return res.status(400).json({
-          success: false,
-          message: 'الحساب الأب يجب أن يكون مجموعة',
-          code: 'PARENT_NOT_GROUP'
-        });
+        await parentAccount.update({ isGroup: true });
+        console.log(`✅ Parent account '${parentAccount.code}' converted to group automatically`);
       }
     }
 

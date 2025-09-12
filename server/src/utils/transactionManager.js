@@ -167,10 +167,11 @@ class TransactionManager {
         if (!parentAccount) {
           throw new Error(`Parent account with ID '${accountData.parentId}' not found`);
         }
-        
-        // Ensure parent is a group account
+
+        // Auto-convert parent to group if it's not already
         if (!parentAccount.isGroup) {
-          throw new Error('Parent account must be a group account');
+          await parentAccount.update({ isGroup: true }, { transaction });
+          console.log(`✅ Parent account '${parentAccount.code}' converted to group automatically`);
         }
       }
       

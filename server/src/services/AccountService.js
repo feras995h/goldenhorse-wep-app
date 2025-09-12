@@ -163,9 +163,11 @@ class AccountService {
         if (!parentAccount) {
           throw new ValidationAppError('الحساب الأب غير موجود', null, 'parentId');
         }
-        
+
+        // Auto-convert parent to group if it's not already
         if (!parentAccount.isGroup) {
-          throw new ValidationAppError('الحساب الأب يجب أن يكون مجموعة', null, 'parentId');
+          await parentAccount.update({ isGroup: true });
+          console.log(`✅ Parent account '${parentAccount.code}' converted to group automatically`);
         }
 
         // Set level based on parent
@@ -225,9 +227,11 @@ class AccountService {
         if (!parentAccount) {
           throw new ValidationAppError('الحساب الأب غير موجود', null, 'parentId');
         }
-        
+
+        // Auto-convert parent to group if it's not already
         if (!parentAccount.isGroup) {
-          throw new ValidationAppError('الحساب الأب يجب أن يكون مجموعة', null, 'parentId');
+          await parentAccount.update({ isGroup: true });
+          console.log(`✅ Parent account '${parentAccount.code}' converted to group automatically`);
         }
 
         // Prevent circular reference
