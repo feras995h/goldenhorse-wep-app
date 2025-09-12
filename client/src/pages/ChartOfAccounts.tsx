@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tree, Search, Filter, Download, Eye, Edit, Plus, ChevronDown, Shield, Trash2 } from 'lucide-react';
+import { Tree, Search, Filter, Download, Eye, Edit, Plus, ChevronDown, Shield, Trash2, Settings } from 'lucide-react';
 import { financialAPI } from '../services/api';
 import AccountTree from '../components/Financial/AccountTree';
 import { SearchFilter } from '../components/UI/SearchFilter';
@@ -450,6 +450,13 @@ const ChartOfAccounts: React.FC = () => {
                 <Plus className="h-4 w-4 ml-2" />
                 إضافة حساب جديد
               </button>
+              <a
+                href="/financial/accounts-management"
+                className="inline-flex items-center justify-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                <Settings className="h-4 w-4 ml-2" />
+                إدارة متقدمة
+              </a>
             </div>
           </div>
         </div>

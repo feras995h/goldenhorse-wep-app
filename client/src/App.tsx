@@ -15,6 +15,7 @@ const AdminDashboard = loadable(() => import('./pages/AdminDashboard'));
 const SystemSettings = loadable(() => import('./pages/SystemSettings'));
 const FinancialDashboard = loadable(() => import('./pages/FinancialDashboard'));
 const ChartOfAccounts = loadable(() => import('./pages/ChartOfAccounts'));
+const AccountsManagement = loadable(() => import('./pages/AccountsManagement'));
 const JournalEntries = loadable(() => import('./pages/JournalEntries'));
 const CustomersManagement = loadable(() => import('./pages/CustomersManagement'));
 const AccountStatement = loadable(() => import('./pages/AccountStatement'));
@@ -95,6 +96,7 @@ function App() {
                 <Route index element={<FinancialDashboard />} />
                 <Route path="accounts" element={<ChartOfAccounts />} />
                 <Route path="chart-of-accounts" element={<ChartOfAccounts />} />
+                <Route path="accounts-management" element={<AccountsManagement />} />
                 <Route path="account-statement" element={<AccountStatement />} />
                 <Route path="instant-reports" element={<InstantReports />} />
                 <Route path="journal" element={<JournalEntries />} />
