@@ -80,11 +80,11 @@ const AccountsManagement: React.FC<AccountsManagementProps> = () => {
   const resetAccountToEditable = async (account: Account) => {
     try {
       const updates: any = {};
-      
+
       if (account.isSystemAccount) {
         updates.isSystemAccount = false;
       }
-      
+
       if (parseFloat(account.balance?.toString() || '0') !== 0) {
         updates.balance = 0;
       }
@@ -99,6 +99,70 @@ const AccountsManagement: React.FC<AccountsManagementProps> = () => {
     } catch (error: any) {
       console.error('Error resetting account:', error);
       alert('حدث خطأ أثناء إعداد الحساب');
+    }
+  };
+
+  const resetAllAccounts = async () => {
+    if (!window.confirm('هل أنت متأكد من إعادة تعيين جميع الحسابات؟ سيتم حذف جميع الحسابات الموجودة وإنشاء حسابات جديدة بالترقيم البسيط (1,2,3,4,5)')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Step 1: Get all accounts and remove system protection
+      const allAccounts = accounts;
+      for (const account of allAccounts) {
+        if (account.isSystemAccount || parseFloat(account.balance?.toString() || '0') !== 0) {
+          await financialAPI.updateAccount(account.id, {
+            isSystemAccount: false,
+            balance: 0
+          });
+        }
+      }
+
+      // Step 2: Delete all accounts (starting with children first)
+      const sortedAccounts = [...allAccounts].sort((a, b) => (b.level || 1) - (a.level || 1));
+      for (const account of sortedAccounts) {
+        try {
+          await financialAPI.deleteAccount(account.id);
+        } catch (error) {
+          console.warn(`Could not delete account ${account.code}:`, error);
+        }
+      }
+
+      // Step 3: Create new simple accounts
+      const newAccounts = [
+        { code: '1', name: 'الأصول', type: 'asset', nature: 'debit' },
+        { code: '2', name: 'المصروفات', type: 'expense', nature: 'debit' },
+        { code: '3', name: 'الالتزامات', type: 'liability', nature: 'credit' },
+        { code: '4', name: 'حقوق الملكية', type: 'equity', nature: 'credit' },
+        { code: '5', name: 'الإيرادات', type: 'revenue', nature: 'credit' }
+      ];
+
+      for (const account of newAccounts) {
+        await financialAPI.createAccount({
+          ...account,
+          nameEn: account.name,
+          accountType: 'main',
+          level: 1,
+          isActive: true,
+          currency: 'LYD',
+          description: `حساب ${account.name} الأساسي`,
+          notes: 'حساب أساسي',
+          isSystemAccount: false,
+          isGroup: true,
+          parentId: null
+        });
+      }
+
+      await loadAccounts();
+      alert('تم إعادة تعيين جميع الحسابات بنجاح! الآن لديك 5 حسابات أساسية بالترقيم البسيط (1,2,3,4,5)');
+    } catch (error: any) {
+      console.error('Error resetting all accounts:', error);
+      alert('حدث خطأ أثناء إعادة تعيين الحسابات');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -188,14 +252,39 @@ const AccountsManagement: React.FC<AccountsManagementProps> = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">إدارة الحسابات المتقدمة</h1>
-        <button
-          onClick={loadAccounts}
-          disabled={loading}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
-          تحديث
-        </button>
+        <div className="flex space-x-3 space-x-reverse">
+          <button
+            onClick={loadAccounts}
+            disabled={loading}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
+            تحديث
+          </button>
+          <button
+            onClick={resetAllAccounts}
+            disabled={loading}
+            className="flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+          >
+            <Database className="h-4 w-4 ml-2" />
+            إعادة تعيين الكل
+          </button>
+        </div>
+      </div>
+
+      {/* تحذير مهم */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start">
+          <AlertTriangle className="h-5 w-5 text-yellow-400 mt-0.5 ml-2" />
+          <div>
+            <h3 className="text-sm font-medium text-yellow-800">تحذير مهم</h3>
+            <div className="mt-2 text-sm text-yellow-700">
+              <p>• استخدم هذه الأدوات بحذر - يمكن أن تؤثر على بيانات النظام</p>
+              <p>• زر "إعادة تعيين الكل" سيحذف جميع الحسابات الموجودة وينشئ حسابات جديدة بالترقيم البسيط</p>
+              <p>• تأكد من عمل نسخة احتياطية قبل استخدام "إعادة تعيين الكل"</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
