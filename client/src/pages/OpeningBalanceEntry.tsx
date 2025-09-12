@@ -266,28 +266,38 @@ const OpeningBalanceEntry: React.FC = () => {
   };
 
   const exportOpeningBalances = () => {
-    const csvContent = [
-      ['رقم الحساب', 'اسم الحساب', 'الرصيد', 'النوع', 'العملة', 'سعر الصرف', 'الوصف'],
+    // إنشاء محتوى CSV مع ترميز UTF-8 صحيح
+    const headers = ['رقم الحساب', 'اسم الحساب', 'الرصيد', 'النوع', 'العملة', 'سعر الصرف', 'الوصف'];
+    const csvRows = [
+      headers.join(','),
       ...openingBalances.map(balance => [
-        balance.accountCode,
-        balance.accountName,
-        balance.balance.toLocaleString(),
-        balance.type === 'debit' ? 'مدين' : 'دائن',
-        balance.currency,
-        balance.exchangeRate.toString(),
-        balance.description
-      ])
-    ].map(row => row.join(',')).join('\n');
+        `"${balance.accountCode}"`,
+        `"${balance.accountName}"`,
+        `"${balance.balance.toLocaleString('ar-LY')}"`,
+        `"${balance.type === 'debit' ? 'مدين' : 'دائن'}"`,
+        `"${balance.currency}"`,
+        `"${balance.exchangeRate.toString()}"`,
+        `"${balance.description || ''}"`
+      ].join(','))
+    ];
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = csvRows.join('\n');
+
+    // إضافة BOM للترميز العربي الصحيح
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], {
+      type: 'text/csv;charset=utf-8;'
+    });
+
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'opening_balances.csv');
+    link.setAttribute('download', `الأرصدة_الافتتاحية_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const importOpeningBalances = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -296,37 +306,65 @@ const OpeningBalanceEntry: React.FC = () => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const csv = e.target?.result as string;
-      const lines = csv.split('\n');
-      const headers = lines[0].split(',');
-      
-      const importedBalances: OpeningBalanceEntry[] = [];
-      
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',');
-        if (values.length >= 4) {
-          const accountCode = values[0];
-          const account = accounts.find(acc => acc.code === accountCode);
-          
-          if (account) {
-            importedBalances.push({
-              id: '',
-              accountId: account.id,
-              accountCode: account.code,
-              accountName: account.name,
-              balance: parseFloat(values[2]) || 0,
-              type: values[3] === 'مدين' ? 'debit' : 'credit',
-              currency: values[4] || 'LYD',
-              exchangeRate: parseFloat(values[5]) || 1,
-              description: values[6] || ''
-            });
+      try {
+        const csv = e.target?.result as string;
+        // إزالة BOM إذا كان موجوداً
+        const cleanCsv = csv.replace(/^\uFEFF/, '');
+        const lines = cleanCsv.split('\n').filter(line => line.trim());
+
+        if (lines.length < 2) {
+          alert('الملف فارغ أو لا يحتوي على بيانات صحيحة');
+          return;
+        }
+
+        const importedBalances: OpeningBalanceEntry[] = [];
+
+        for (let i = 1; i < lines.length; i++) {
+          // تحليل CSV مع دعم الاقتباسات
+          const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+          const cleanValues = values.map(val => val.replace(/^"|"$/g, '').trim());
+
+          if (cleanValues.length >= 4) {
+            const accountCode = cleanValues[0];
+            const account = accounts.find(acc => acc.code === accountCode);
+
+            if (account) {
+              const balanceStr = cleanValues[2].replace(/[,٬]/g, ''); // إزالة فواصل الآلاف
+              const balance = parseFloat(balanceStr) || 0;
+
+              importedBalances.push({
+                id: '',
+                accountId: account.id,
+                accountCode: account.code,
+                accountName: account.name,
+                balance: balance,
+                type: cleanValues[3] === 'مدين' ? 'debit' : 'credit',
+                currency: cleanValues[4] || 'LYD',
+                exchangeRate: parseFloat(cleanValues[5]) || 1,
+                description: cleanValues[6] || ''
+              });
+            }
           }
         }
+
+        if (importedBalances.length > 0) {
+          setOpeningBalances(importedBalances);
+          alert(`تم استيراد ${importedBalances.length} رصيد افتتاحي بنجاح`);
+        } else {
+          alert('لم يتم العثور على بيانات صحيحة للاستيراد');
+        }
+
+      } catch (error) {
+        console.error('Error importing file:', error);
+        alert('حدث خطأ أثناء استيراد الملف. تأكد من صحة تنسيق الملف.');
       }
-      
-      setOpeningBalances(importedBalances);
     };
-    reader.readAsText(file);
+
+    // قراءة الملف مع ترميز UTF-8
+    reader.readAsText(file, 'UTF-8');
+
+    // إعادة تعيين قيمة input لتمكين استيراد نفس الملف مرة أخرى
+    event.target.value = '';
   };
 
   const existingTotalDebit = openingBalances
@@ -1013,8 +1051,36 @@ const OpeningBalanceEntry: React.FC = () => {
                       onClick={() => {
                         // تصدير إلى Excel
                         const exportData = formData.lines.filter(line => line.accountId);
-                        console.log('Exporting to Excel:', exportData);
-                        // يمكن إضافة منطق التصدير هنا
+                        if (exportData.length === 0) return;
+
+                        const headers = ['رقم الحساب', 'اسم الحساب', 'الوصف', 'مدين', 'دائن', 'الملاحظات'];
+                        const csvRows = [
+                          headers.join(','),
+                          ...exportData.map(line => [
+                            `"${line.accountCode}"`,
+                            `"${line.accountName}"`,
+                            `"${line.description || ''}"`,
+                            `"${line.debit > 0 ? line.debit.toLocaleString('ar-LY') : ''}"`,
+                            `"${line.credit > 0 ? line.credit.toLocaleString('ar-LY') : ''}"`,
+                            `"${line.notes || ''}"`
+                          ].join(','))
+                        ];
+
+                        const csvContent = csvRows.join('\n');
+                        const BOM = '\uFEFF';
+                        const blob = new Blob([BOM + csvContent], {
+                          type: 'text/csv;charset=utf-8;'
+                        });
+
+                        const link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', `القيد_الافتتاحي_${new Date().toISOString().split('T')[0]}.csv`);
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
                       }}
                       disabled={formData.lines.filter(line => line.accountId).length === 0}
                       className="px-4 py-2 border border-green-300 rounded-md text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed"
