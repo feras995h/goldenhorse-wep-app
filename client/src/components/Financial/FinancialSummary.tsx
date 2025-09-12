@@ -151,86 +151,33 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ data, loading, erro
 
   return (
     <div className="space-y-6">
-      {/* Main Summary Cards */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">الملخص المالي الرئيسي</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {summaryCards.map((card, index) => {
-            const IconComponent = card.icon;
-            return (
-              <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-full bg-${card.color}-100`}>
-                    <IconComponent className={`h-6 w-6 text-${card.color}-600`} />
-                  </div>
-                  {card.trend !== 'neutral' && (
-                    <div className={`flex items-center gap-1 ${getTrendColor(card.trend)}`}>
-                      {getTrendIcon(card.trend)}
-                      <span className="text-sm font-medium">
-                        {card.trend === 'up' ? '+' : '-'}{card.trendValue?.toFixed(1) || 0}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm font-medium text-gray-600 mb-2">{card.title}</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {card.value?.toLocaleString('ar-LY') || '0'} د.ل
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Detailed Financial Metrics */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">المؤشرات المالية التفصيلية</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {detailCards.map((card, index) => {
-            const IconComponent = card.icon;
-            return (
-              <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-full bg-${card.color}-100`}>
-                    <IconComponent className={`h-6 w-6 text-${card.color}-600`} />
-                  </div>
-                </div>
-                <p className="text-sm font-medium text-gray-600 mb-2">{card.title}</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {card.value?.toLocaleString('ar-LY') || '0'} د.ل
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Financial Ratios */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">النسب المالية</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">نسبة السيولة</h4>
-            <p className="text-2xl font-bold text-gray-900">
-              {data.totalAssets > 0 ? ((data.cashFlow / data.totalAssets) * 100).toFixed(1) : '0'}%
-            </p>
-            <p className="text-xs text-gray-500 mt-1">النقدية / إجمالي الأصول</p>
+      {/* Clean Financial Dashboard */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <div className="max-w-md mx-auto">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <DollarSign className="h-8 w-8 text-blue-600" />
           </div>
-          
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">نسبة الربحية</h4>
-            <p className="text-2xl font-bold text-gray-900">
-              {data.totalSales > 0 ? ((data.netProfit / data.totalSales) * 100).toFixed(1) : '0'}%
-            </p>
-            <p className="text-xs text-gray-500 mt-1">صافي الربح / إجمالي المبيعات</p>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">نسبة المديونية</h4>
-            <p className="text-2xl font-bold text-gray-900">
-              {data.totalAssets > 0 ? ((data.totalLiabilities / data.totalAssets) * 100).toFixed(1) : '0'}%
-            </p>
-            <p className="text-xs text-gray-500 mt-1">إجمالي المطلوبات / إجمالي الأصول</p>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">لوحة المدير المالي</h3>
+          <p className="text-gray-600 mb-6">
+            مرحباً بك في لوحة التحكم المالية. يمكنك الوصول إلى جميع الأدوات المالية والمحاسبية من القائمة الجانبية.
+          </p>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="font-medium text-gray-900">دليل الحسابات</p>
+              <p className="text-gray-600">إدارة الحسابات المحاسبية</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="font-medium text-gray-900">القيود المحاسبية</p>
+              <p className="text-gray-600">إدخال وإدارة القيود</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="font-medium text-gray-900">التقارير المالية</p>
+              <p className="text-gray-600">عرض التقارير والتحليلات</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="font-medium text-gray-900">الأرصدة الافتتاحية</p>
+              <p className="text-gray-600">إدخال الأرصدة الأولية</p>
+            </div>
           </div>
         </div>
       </div>
