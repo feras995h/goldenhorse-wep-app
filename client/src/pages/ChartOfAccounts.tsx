@@ -300,6 +300,27 @@ const ChartOfAccounts: React.FC = () => {
       return;
     }
 
+    // For sub accounts, ensure parent account is a group
+    if (formData.parentId && selectedParentAccount && !selectedParentAccount.isGroup) {
+      const shouldConvert = window.confirm(
+        `الحساب الأب "${selectedParentAccount.name}" ليس مجموعة. هل تريد تحويله إلى مجموعة لإضافة حسابات فرعية تحته؟`
+      );
+
+      if (shouldConvert) {
+        try {
+          await financialAPI.updateAccount(selectedParentAccount.id, { isGroup: true });
+          // Update the selectedParentAccount object
+          selectedParentAccount.isGroup = true;
+        } catch (error) {
+          console.error('Error updating parent account:', error);
+          alert('حدث خطأ أثناء تحديث الحساب الأب');
+          return;
+        }
+      } else {
+        return;
+      }
+    }
+
     // For main accounts (no parent), parentId should be empty
     // For sub accounts, parentId should be set
     if (formData.parentId && !selectedParentAccount) {
@@ -312,7 +333,9 @@ const ChartOfAccounts: React.FC = () => {
       const accountData = {
         ...formData,
         parentId: formData.parentId || null, // Convert empty string to null
-        isGroup: formData.accountType === 'main' ? true : false, // Set isGroup based on accountType
+        // For sub accounts, isGroup can be true or false based on user choice
+        // For main accounts, default to true to allow sub accounts
+        isGroup: formData.accountType === 'main' ? true : (formData.isGroup !== undefined ? formData.isGroup : false),
         isActive: formData.isActive !== undefined ? formData.isActive : true,
         currency: formData.currency || 'LYD',
         nature: formData.nature || 'debit'

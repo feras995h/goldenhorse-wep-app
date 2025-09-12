@@ -164,7 +164,7 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
               </div>
             </div>
           </div>
-          
+
           {/* Balance */}
           <div className="text-gray-500 text-sm text-left flex-shrink-0 min-w-0">
             <div className="font-medium text-xs sm:text-sm truncate">
