@@ -46,37 +46,28 @@ const LoginLogo: React.FC<LoginLogoProps> = ({ size = 'md', className = '', show
 
   const checkForCustomLogo = async () => {
     try {
-      // Try to get the logo directly without authentication
+      // For login page, we'll try to get the logo without authentication
+      // but handle errors gracefully and fall back to default logo
       const timestamp = Date.now();
-      let response = await fetch(`/api/settings/logo?t=${timestamp}`, {
-        method: 'HEAD', // Use HEAD to check if logo exists without downloading
+      const response = await fetch(`/api/settings/logo?t=${timestamp}`, {
+        method: 'GET',
         headers: {
           'Accept': 'image/*'
         }
       });
-
-      // If HEAD fails, try GET as fallback
-      if (!response.ok && response.status !== 404) {
-        response = await fetch(`/api/settings/logo?t=${timestamp}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'image/*'
-          }
-        });
-      }
 
       if (response.ok) {
         // If we get a successful response, use the logo URL with timestamp
         setCustomLogoUrl(`/api/settings/logo?t=${timestamp}`);
         setLogoError(false);
       } else {
-        // No custom logo available, use default
+        // No custom logo available or authentication required, use default
         setCustomLogoUrl(null);
         setLogoError(false);
       }
     } catch (error) {
-      // If there's an error, use the default logo
-      console.log('Error loading custom logo, using default:', error);
+      // If there's an error (including network errors), use the default logo
+      // Don't log the error to avoid console spam on login page
       setCustomLogoUrl(null);
       setLogoError(false);
     }
