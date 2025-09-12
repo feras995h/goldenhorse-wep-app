@@ -133,7 +133,14 @@ test-results/
 
 # Seed files with dummy data (keep basic seed only)
 server/src/scripts/seedDummy*
+
+# Data files (should be in database, not files)
 server/src/data/
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!vite.config.ts
 
 # Local scripts
 scripts/local/

@@ -14,6 +14,9 @@ server/database/
 *.sqlite
 *.db
 
+# Data files (should be in database, not files)
+server/src/data/
+
 # Logs
 logs
 *.log

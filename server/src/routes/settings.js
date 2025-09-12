@@ -59,16 +59,36 @@ const upload = multer({
   }
 });
 
-// Settings data file path
-const settingsFile = path.join(__dirname, '../data/settings.json');
-
-// Initialize settings file if it doesn't exist
-const initializeSettings = async () => {
+// Helper function to read settings from database
+const readSettings = async () => {
   try {
-    await fs.access(settingsFile);
+    const logoFilename = await Setting.get('logo_filename', null);
+    const logoOriginalName = await Setting.get('logo_originalname', null);
+    const logoUploadDate = await Setting.get('logo_uploaddate', null);
+    const logoSize = await Setting.get('logo_size', null);
+    const logoMimetype = await Setting.get('logo_mimetype', null);
+    const lastUpdated = await Setting.get('lastUpdated', new Date().toISOString());
+
+    return {
+      logo: logoFilename ? {
+        filename: logoFilename,
+        originalName: logoOriginalName,
+        uploadDate: logoUploadDate,
+        size: logoSize ? parseInt(logoSize) : null,
+        mimetype: logoMimetype
+      } : {
+        filename: null,
+        originalName: null,
+        uploadDate: null,
+        size: null,
+        mimetype: null
+      },
+      lastUpdated: lastUpdated
+    };
   } catch (error) {
-    // File doesn't exist, create it with default settings
-    const defaultSettings = {
+    console.error('Error reading settings from database:', error);
+    // Return default settings if database read fails
+    return {
       logo: {
         filename: null,
         originalName: null,
@@ -78,27 +98,27 @@ const initializeSettings = async () => {
       },
       lastUpdated: new Date().toISOString()
     };
-
-    // Ensure the data directory exists
-    const dataDir = path.dirname(settingsFile);
-    if (!fsSync.existsSync(dataDir)) {
-      fsSync.mkdirSync(dataDir, { recursive: true });
-    }
-    await fs.writeFile(settingsFile, JSON.stringify(defaultSettings, null, 2));
   }
 };
 
-// Helper function to read settings
-const readSettings = async () => {
-  await initializeSettings();
-  const data = await fs.readFile(settingsFile, 'utf8');
-  return JSON.parse(data);
-};
-
-// Helper function to write settings
+// Helper function to write settings to database
 const writeSettings = async (settings) => {
-  settings.lastUpdated = new Date().toISOString();
-  await fs.writeFile(settingsFile, JSON.stringify(settings, null, 2));
+  try {
+    if (settings.logo) {
+      await Setting.set('logo_filename', settings.logo.filename || null);
+      await Setting.set('logo_originalname', settings.logo.originalName || null);
+      await Setting.set('logo_uploaddate', settings.logo.uploadDate || null);
+      await Setting.set('logo_size', settings.logo.size ? settings.logo.size.toString() : null);
+      await Setting.set('logo_mimetype', settings.logo.mimetype || null);
+    }
+
+    await Setting.set('lastUpdated', new Date().toISOString());
+
+    console.log('✅ Settings saved to database successfully');
+  } catch (error) {
+    console.error('❌ Error saving settings to database:', error);
+    throw error;
+  }
 };
 
 // GET /api/settings - Get current settings
