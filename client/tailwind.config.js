@@ -7,19 +7,53 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Golden Horse Professional Color Palette
+        // Enhanced Golden Horse Professional Color Palette
         golden: {
           25: '#fffef7',
-          50: '#fffef7',
-          100: '#fffbeb',
-          200: '#fef3c7',
-          300: '#fde68a',
-          400: '#fcd34d',
+          50: '#fffbeb',
+          75: '#fef9e0',
+          100: '#fef3c7',
+          150: '#fdeaa3',
+          200: '#fde68a',
+          250: '#fce070',
+          300: '#fcd34d',
+          350: '#fbc638',
+          400: '#fbbf24',
+          450: '#f5b014',
           500: '#f59e0b',
+          550: '#e8900a',
           600: '#d97706',
+          650: '#c96d06',
           700: '#b45309',
+          750: '#a04808',
           800: '#92400e',
+          850: '#7d3a0d',
           900: '#78350f',
+          950: '#5c2a0c',
+        },
+        // Accent Colors
+        accent: {
+          blue: '#3b82f6',
+          'blue-light': '#60a5fa',
+          'blue-dark': '#1d4ed8',
+          purple: '#8b5cf6',
+          'purple-light': '#a78bfa',
+          'purple-dark': '#7c3aed',
+          teal: '#14b8a6',
+          'teal-light': '#5eead4',
+          'teal-dark': '#0f766e',
+        },
+        // Enhanced Box Shadows
+        boxShadow: {
+          'golden-sm': '0 1px 2px 0 rgba(251, 191, 36, 0.15)',
+          'golden-md': '0 4px 6px -1px rgba(251, 191, 36, 0.2), 0 2px 4px -1px rgba(251, 191, 36, 0.1)',
+          'golden-lg': '0 10px 15px -3px rgba(251, 191, 36, 0.25), 0 4px 6px -2px rgba(251, 191, 36, 0.1)',
+          'golden-xl': '0 20px 25px -5px rgba(251, 191, 36, 0.3), 0 10px 10px -5px rgba(251, 191, 36, 0.1)',
+          'golden-2xl': '0 25px 50px -12px rgba(251, 191, 36, 0.4)',
+          'professional': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          'professional-md': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          'professional-lg': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          'professional-xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         },
         dark: {
           50: '#f8fafc',
