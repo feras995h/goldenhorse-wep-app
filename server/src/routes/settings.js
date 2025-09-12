@@ -8,6 +8,8 @@ import { dirname } from 'path';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 import models from '../models/index.js';
 
+const { Setting } = models;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -97,8 +99,18 @@ const writeSettings = async (settings) => {
 // GET /api/settings - Get current settings
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const logoData = await models.Setting.get('logo', null);
-    const lastUpdated = await models.Setting.get('lastUpdated', new Date().toISOString());
+    const logoDataStr = await Setting.get('logo', null);
+    const lastUpdated = await Setting.get('lastUpdated', new Date().toISOString());
+
+    let logoData = null;
+    if (logoDataStr) {
+      try {
+        logoData = typeof logoDataStr === 'string' ? JSON.parse(logoDataStr) : logoDataStr;
+      } catch (e) {
+        console.error('Error parsing logo data:', e);
+        logoData = null;
+      }
+    }
 
     const settings = {
       logo: logoData ? {
@@ -147,7 +159,15 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
     const base64Data = fileBuffer.toString('base64');
 
     // Get old logo data to clean up
-    const oldLogoData = await models.Setting.get('logo', {});
+    const oldLogoDataStr = await Setting.get('logo', null);
+    let oldLogoData = null;
+    if (oldLogoDataStr) {
+      try {
+        oldLogoData = typeof oldLogoDataStr === 'string' ? JSON.parse(oldLogoDataStr) : oldLogoDataStr;
+      } catch (e) {
+        console.error('Error parsing old logo data:', e);
+      }
+    }
 
     // Store logo data in database
     const logoData = {
@@ -159,7 +179,7 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       data: base64Data
     };
 
-    await models.Setting.set('logo', logoData, {
+    await Setting.set('logo', JSON.stringify(logoData), {
       type: 'json',
       description: 'Company logo data'
     });
@@ -214,7 +234,17 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
 // GET/HEAD /api/settings/logo - Get current logo file
 router.get('/logo', async (req, res) => {
   try {
-    const logoData = await models.Setting.get('logo', null);
+    const logoDataStr = await Setting.get('logo', null);
+
+    let logoData = null;
+    if (logoDataStr) {
+      try {
+        logoData = typeof logoDataStr === 'string' ? JSON.parse(logoDataStr) : logoDataStr;
+      } catch (e) {
+        console.error('Error parsing logo data:', e);
+        return res.status(404).json({ message: 'Invalid logo data' });
+      }
+    }
 
     if (!logoData || !logoData.data) {
       return res.status(404).json({ message: 'No logo uploaded' });
@@ -258,20 +288,29 @@ router.options('/logo', (req, res) => {
 // DELETE /api/settings/logo - Delete current logo
 router.delete('/logo', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
-    const logoData = await models.Setting.get('logo', null);
+    const logoDataStr = await Setting.get('logo', null);
+
+    let logoData = null;
+    if (logoDataStr) {
+      try {
+        logoData = typeof logoDataStr === 'string' ? JSON.parse(logoDataStr) : logoDataStr;
+      } catch (e) {
+        console.error('Error parsing logo data:', e);
+      }
+    }
 
     if (!logoData || !logoData.filename) {
       return res.status(404).json({ message: 'No logo to delete' });
     }
 
     // Delete logo from database
-    await models.Setting.set('logo', null, {
+    await Setting.set('logo', null, {
       type: 'json',
       description: 'Company logo data'
     });
 
     // Update last updated timestamp
-    await models.Setting.set('lastUpdated', new Date().toISOString(), {
+    await Setting.set('lastUpdated', new Date().toISOString(), {
       type: 'string',
       description: 'Last system update'
     });
@@ -286,7 +325,17 @@ router.delete('/logo', authenticateToken, requireRole(['admin']), async (req, re
 // HEAD /api/settings/logo - Check if logo exists
 router.head('/logo', async (req, res) => {
   try {
-    const logoData = await models.Setting.get('logo', null);
+    const logoDataStr = await Setting.get('logo', null);
+
+    let logoData = null;
+    if (logoDataStr) {
+      try {
+        logoData = typeof logoDataStr === 'string' ? JSON.parse(logoDataStr) : logoDataStr;
+      } catch (e) {
+        console.error('Error parsing logo data:', e);
+        return res.status(404).end();
+      }
+    }
 
     if (!logoData || !logoData.data) {
       return res.status(404).end();
