@@ -302,40 +302,8 @@ const ChartOfAccounts: React.FC = () => {
       return;
     }
 
-    // For sub accounts, ensure parent account is a group
-    if (formData.parentId && selectedParentAccount && !selectedParentAccount.isGroup) {
-      const shouldConvert = window.confirm(
-        `الحساب الأب "${selectedParentAccount.name}" ليس مجموعة. هل تريد تحويله إلى مجموعة لإضافة حسابات فرعية تحته؟`
-      );
-
-      if (shouldConvert) {
-        try {
-          await financialAPI.updateAccount(selectedParentAccount.id, { isGroup: true });
-
-          // Update the selectedParentAccount object
-          selectedParentAccount.isGroup = true;
-
-          // Update the accounts list to reflect the change
-          setAccounts(prevAccounts =>
-            prevAccounts.map(acc =>
-              acc.id === selectedParentAccount.id
-                ? { ...acc, isGroup: true }
-                : acc
-            )
-          );
-
-          // Reload accounts to ensure consistency
-          await loadAccounts();
-
-        } catch (error) {
-          console.error('Error updating parent account:', error);
-          alert('حدث خطأ أثناء تحديث الحساب الأب');
-          return;
-        }
-      } else {
-        return;
-      }
-    }
+    // Note: Parent account conversion to group is now handled automatically by the server
+    // No need for user confirmation - the server will convert the parent account automatically
 
     // For main accounts (no parent), parentId should be empty
     // For sub accounts, parentId should be set
