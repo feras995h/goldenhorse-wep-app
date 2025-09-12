@@ -229,21 +229,101 @@ router.put('/accounts/:id', authenticateToken, requireFinancialAccess, async (re
 
 // DELETE /api/financial/accounts/:id - Delete account with transaction safety
 router.delete('/accounts/:id', authenticateToken, requireFinancialAccess, asyncHandler(async (req, res) => {
-  // Use transaction manager for safe account deletion
-  const result = await TransactionManager.deleteAccountSafely(req.params.id, models);
+  try {
+    const account = await Account.findByPk(req.params.id);
+    if (!account) {
+      return res.status(404).json({
+        success: false,
+        message: 'الحساب غير موجود'
+      });
+    }
 
-  if (result.success) {
+    // Check if account has children
+    const childrenCount = await Account.count({ where: { parentId: req.params.id } });
+    if (childrenCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'لا يمكن حذف حساب له حسابات فرعية'
+      });
+    }
+
+    // Check if account has transactions (check both accountId and account fields)
+    const transactionCount1 = await GLEntry.count({ where: { accountId: req.params.id } });
+    const transactionCount2 = await GLEntry.count({ where: { account: req.params.id } });
+    const totalTransactions = transactionCount1 + transactionCount2;
+
+    if (totalTransactions > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'لا يمكن حذف حساب له معاملات'
+      });
+    }
+
+    // Check if account has non-zero balance
+    if (parseFloat(account.balance) !== 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'لا يمكن حذف حساب له رصيد'
+      });
+    }
+
+    // Delete account
+    await account.destroy();
+
     res.json({
       success: true,
-      message: `تم حذف الحساب '${result.data.accountName}' بنجاح`,
-      data: result.data
+      message: `تم حذف الحساب '${account.name}' بنجاح`
     });
-  } else {
-    const statusCode = result.error.includes('not found') ? 404 : 400;
-    res.status(statusCode).json({
+
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({
       success: false,
-      message: result.error,
-      code: result.code || 'ACCOUNT_DELETION_FAILED'
+      message: 'خطأ في حذف الحساب',
+      error: error.message
+    });
+  }
+}));
+
+// DELETE /api/financial/accounts/:id/force-delete - Force delete account (bypasses some validations)
+router.delete('/accounts/:id/force-delete', authenticateToken, requireFinancialAccess, asyncHandler(async (req, res) => {
+  try {
+    const account = await Account.findByPk(req.params.id);
+    if (!account) {
+      return res.status(404).json({
+        success: false,
+        message: 'الحساب غير موجود'
+      });
+    }
+
+    // Force delete - remove all constraints
+    // First, update any child accounts to remove parent reference
+    await Account.update(
+      { parentId: null },
+      { where: { parentId: req.params.id } }
+    );
+
+    // Delete any GL entries that reference this account
+    await GLEntry.destroy({ where: { accountId: req.params.id } });
+    await GLEntry.destroy({ where: { account: req.params.id } });
+
+    // Delete any journal entry details that reference this account
+    await JournalEntryDetail.destroy({ where: { accountId: req.params.id } });
+
+    // Now delete the account
+    await account.destroy();
+
+    res.json({
+      success: true,
+      message: `تم حذف الحساب '${account.name}' بالقوة`
+    });
+
+  } catch (error) {
+    console.error('Error force deleting account:', error);
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في الحذف القسري للحساب',
+      error: error.message
     });
   }
 }));

@@ -52,26 +52,41 @@ const AccountsManagement: React.FC<AccountsManagementProps> = () => {
 
   const forceDeleteAccount = async (account: Account) => {
     try {
-      // Step 1: Remove system account protection
-      if (account.isSystemAccount) {
-        await financialAPI.updateAccount(account.id, { isSystemAccount: false });
-      }
+      // Step 1: Remove system account protection and clear balance
+      await financialAPI.updateAccount(account.id, {
+        isSystemAccount: false,
+        balance: 0
+      });
 
-      // Step 2: Clear account balance
-      if (parseFloat(account.balance?.toString() || '0') !== 0) {
-        await financialAPI.updateAccount(account.id, { balance: 0 });
-      }
-
-      // Step 3: Move child accounts to parent or make them root
+      // Step 2: Handle child accounts - move them to parent or make them root
       const childAccounts = accounts.filter(acc => acc.parentId === account.id);
       for (const child of childAccounts) {
-        await financialAPI.updateAccount(child.id, { 
-          parentId: account.parentId || null 
+        await financialAPI.updateAccount(child.id, {
+          parentId: account.parentId || null,
+          level: account.parentId ? (account.level || 1) : 1
         });
       }
 
-      // Step 4: Delete the account
-      await financialAPI.deleteAccount(account.id);
+      // Step 3: Try to delete the account using the regular API first
+      try {
+        await financialAPI.deleteAccount(account.id);
+      } catch (deleteError) {
+        // If regular delete fails, try to use a force delete endpoint
+        console.warn('Regular delete failed, attempting force delete:', deleteError);
+
+        // Create a custom delete request that bypasses some validations
+        const response = await fetch(`/api/financial/accounts/${account.id}/force-delete`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Force delete failed: ${response.statusText}`);
+        }
+      }
     } catch (error) {
       throw error;
     }
@@ -133,18 +148,63 @@ const AccountsManagement: React.FC<AccountsManagementProps> = () => {
 
       // Step 3: Create new simple accounts
       const newAccounts = [
-        { code: '1', name: 'الأصول', type: 'asset', nature: 'debit' },
-        { code: '2', name: 'المصروفات', type: 'expense', nature: 'debit' },
-        { code: '3', name: 'الالتزامات', type: 'liability', nature: 'credit' },
-        { code: '4', name: 'حقوق الملكية', type: 'equity', nature: 'credit' },
-        { code: '5', name: 'الإيرادات', type: 'revenue', nature: 'credit' }
+        {
+          code: '1',
+          name: 'الأصول',
+          nameEn: 'Assets',
+          type: 'asset',
+          rootType: 'Asset',
+          reportType: 'Balance Sheet',
+          nature: 'debit'
+        },
+        {
+          code: '2',
+          name: 'المصروفات',
+          nameEn: 'Expenses',
+          type: 'expense',
+          rootType: 'Expense',
+          reportType: 'Profit and Loss',
+          nature: 'debit'
+        },
+        {
+          code: '3',
+          name: 'الالتزامات',
+          nameEn: 'Liabilities',
+          type: 'liability',
+          rootType: 'Liability',
+          reportType: 'Balance Sheet',
+          nature: 'credit'
+        },
+        {
+          code: '4',
+          name: 'حقوق الملكية',
+          nameEn: 'Equity',
+          type: 'equity',
+          rootType: 'Equity',
+          reportType: 'Balance Sheet',
+          nature: 'credit'
+        },
+        {
+          code: '5',
+          name: 'الإيرادات',
+          nameEn: 'Revenue',
+          type: 'revenue',
+          rootType: 'Income',
+          reportType: 'Profit and Loss',
+          nature: 'credit'
+        }
       ];
 
       for (const account of newAccounts) {
         await financialAPI.createAccount({
-          ...account,
-          nameEn: account.name,
+          code: account.code,
+          name: account.name,
+          nameEn: account.nameEn,
+          type: account.type,
+          rootType: account.rootType,
+          reportType: account.reportType,
           accountType: 'main',
+          nature: account.nature,
           level: 1,
           isActive: true,
           currency: 'LYD',
