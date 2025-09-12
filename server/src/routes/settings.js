@@ -104,26 +104,21 @@ const writeSettings = async (settings) => {
 // GET /api/settings - Get current settings
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const logoDataStr = await Setting.get('logo', null);
+    // Get logo data from separate fields
+    const logoFilename = await Setting.get('logo_filename', null);
+    const logoOriginalName = await Setting.get('logo_originalname', null);
+    const logoUploadDate = await Setting.get('logo_uploaddate', null);
+    const logoSize = await Setting.get('logo_size', null);
+    const logoMimetype = await Setting.get('logo_mimetype', null);
     const lastUpdated = await Setting.get('lastUpdated', new Date().toISOString());
 
-    let logoData = null;
-    if (logoDataStr) {
-      try {
-        logoData = typeof logoDataStr === 'string' ? JSON.parse(logoDataStr) : logoDataStr;
-      } catch (e) {
-        console.error('Error parsing logo data:', e);
-        logoData = null;
-      }
-    }
-
     const settings = {
-      logo: logoData ? {
-        filename: logoData.filename || null,
-        originalName: logoData.originalName || null,
-        uploadDate: logoData.uploadDate || null,
-        size: logoData.size || null,
-        mimetype: logoData.mimetype || null
+      logo: logoFilename ? {
+        filename: logoFilename,
+        originalName: logoOriginalName,
+        uploadDate: logoUploadDate,
+        size: logoSize ? parseInt(logoSize) : null,
+        mimetype: logoMimetype
       } : {
         filename: null,
         originalName: null,
@@ -152,7 +147,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// POST /api/settings/logo - Upload new logo
+// POST /api/settings/logo - Upload new logo (Simplified version)
 router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('logo'), async (req, res) => {
   try {
     console.log('📤 Logo upload started');
@@ -166,47 +161,62 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       filename: req.file.filename,
       originalname: req.file.originalname,
       size: req.file.size,
-      mimetype: req.file.mimetype
+      mimetype: req.file.mimetype,
+      path: req.file.path
     });
 
-    // Move file to persistent uploads directory
-    console.log('📁 Moving file to persistent directory...');
-    const finalPath = path.join(uploadsDir, req.file.filename);
-    await fs.rename(req.file.path, finalPath);
-    console.log('✅ File moved to:', finalPath);
-
-    // Get old logo data to clean up
-    console.log('🔍 Getting old logo data...');
-    const oldLogoDataStr = await Setting.get('logo', null);
-    let oldLogoData = null;
-    if (oldLogoDataStr) {
-      try {
-        oldLogoData = typeof oldLogoDataStr === 'string' ? JSON.parse(oldLogoDataStr) : oldLogoDataStr;
-        console.log('📄 Old logo data found');
-      } catch (e) {
-        console.error('❌ Error parsing old logo data:', e);
-      }
-    } else {
-      console.log('📄 No old logo data found');
-    }
-
-    // Store logo metadata in database (not the file data)
+    // Simple approach: just store metadata, keep file in original location
     console.log('💾 Preparing logo metadata for database...');
     const logoData = {
       filename: req.file.filename,
       originalName: req.file.originalname,
       uploadDate: new Date().toISOString(),
       size: req.file.size,
-      mimetype: req.file.mimetype,
-      path: finalPath
+      mimetype: req.file.mimetype
     };
 
     console.log('💾 Saving logo metadata to database...');
-    await Setting.set('logo', JSON.stringify(logoData), {
-      type: 'json',
-      description: 'Company logo metadata'
-    });
-    console.log('✅ Logo metadata saved to database successfully');
+    console.log('💾 Logo data to save:', logoData);
+
+    // Try to save to database - save each field separately
+    try {
+      console.log('💾 Saving logo_filename:', req.file.filename);
+      await Setting.set('logo_filename', req.file.filename, {
+        type: 'string',
+        description: 'Logo filename'
+      });
+
+      console.log('💾 Saving logo_originalname:', req.file.originalname);
+      await Setting.set('logo_originalname', req.file.originalname, {
+        type: 'string',
+        description: 'Logo original name'
+      });
+
+      console.log('💾 Saving logo_mimetype:', req.file.mimetype);
+      await Setting.set('logo_mimetype', req.file.mimetype, {
+        type: 'string',
+        description: 'Logo MIME type'
+      });
+
+      console.log('💾 Saving logo_size:', req.file.size.toString());
+      await Setting.set('logo_size', req.file.size.toString(), {
+        type: 'string',
+        description: 'Logo file size'
+      });
+
+      const uploadDate = new Date().toISOString();
+      console.log('💾 Saving logo_uploaddate:', uploadDate);
+      await Setting.set('logo_uploaddate', uploadDate, {
+        type: 'string',
+        description: 'Logo upload date'
+      });
+
+      console.log('✅ Logo metadata saved to database successfully');
+    } catch (dbError) {
+      console.error('❌ Database error:', dbError);
+      console.error('❌ Database error stack:', dbError.stack);
+      throw new Error('Database save failed: ' + dbError.message);
+    }
 
     // Clean up old logo file if it exists
     if (oldLogoData && oldLogoData.filename) {
@@ -263,30 +273,29 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
 // GET/HEAD /api/settings/logo - Get current logo file
 router.get('/logo', async (req, res) => {
   try {
-    const logoDataStr = await Setting.get('logo', null);
+    console.log('🔍 Getting logo...');
 
-    let logoData = null;
-    if (logoDataStr) {
-      try {
-        logoData = typeof logoDataStr === 'string' ? JSON.parse(logoDataStr) : logoDataStr;
-      } catch (e) {
-        console.error('Error parsing logo data:', e);
-        return res.status(404).json({ message: 'Invalid logo data' });
-      }
-    }
+    // Get logo metadata from database
+    const filename = await Setting.get('logo_filename', null);
+    const mimetype = await Setting.get('logo_mimetype', null);
 
-    if (!logoData || !logoData.filename) {
+    console.log('📄 Logo metadata:', { filename, mimetype });
+
+    if (!filename) {
+      console.log('❌ No logo filename found');
       return res.status(404).json({ message: 'No logo uploaded' });
     }
 
     // Get logo file path
-    const logoPath = logoData.path || path.join(uploadsDir, logoData.filename);
+    const logoPath = path.join(uploadsDir, filename);
+    console.log('📁 Logo path:', logoPath);
 
     // Check if file exists
     try {
       await fs.access(logoPath);
+      console.log('✅ Logo file found');
     } catch (error) {
-      console.error('Logo file not found:', logoPath);
+      console.error('❌ Logo file not found:', logoPath);
       return res.status(404).json({ message: 'Logo file not found' });
     }
 
@@ -297,7 +306,7 @@ router.get('/logo', async (req, res) => {
     res.setHeader('Access-Control-Expose-Headers', 'Content-Type, Content-Length, Content-Disposition');
 
     // Set appropriate content type
-    res.setHeader('Content-Type', logoData.mimetype || 'image/png');
+    res.setHeader('Content-Type', mimetype || 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
 
     // For HEAD requests, just send headers without body
@@ -307,7 +316,7 @@ router.get('/logo', async (req, res) => {
       res.sendFile(logoPath);
     }
   } catch (error) {
-    console.error('Error serving logo:', error);
+    console.error('❌ Error serving logo:', error);
     res.status(500).json({ message: 'Failed to serve logo' });
   }
 });
