@@ -212,15 +212,11 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       });
 
       console.log('✅ Logo metadata saved to database successfully');
-    } catch (dbError) {
-      console.error('❌ Database error:', dbError);
-      console.error('❌ Database error stack:', dbError.stack);
-      throw new Error('Database save failed: ' + dbError.message);
-    }
 
     // Clean up old logo file if it exists
-    if (oldLogoData && oldLogoData.filename) {
-      const oldLogoPath = oldLogoData.path || path.join(uploadsDir, oldLogoData.filename);
+    const oldLogoFilename = await Setting.get('logo_filename', null);
+    if (oldLogoFilename && oldLogoFilename !== req.file.filename) {
+      const oldLogoPath = path.join(uploadsDir, oldLogoFilename);
       try {
         await fs.unlink(oldLogoPath);
         console.log('🗑️ Deleted old logo file:', oldLogoPath);
@@ -229,14 +225,20 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       }
     }
 
+    } catch (dbError) {
+      console.error('❌ Database error:', dbError);
+      console.error('❌ Database error stack:', dbError.stack);
+      throw new Error('Database save failed: ' + dbError.message);
+    }
+
     res.json({
       message: 'Logo uploaded successfully',
       logo: {
-        filename: logoData.filename,
-        originalName: logoData.originalName,
-        uploadDate: logoData.uploadDate,
-        size: logoData.size,
-        mimetype: logoData.mimetype
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        uploadDate: new Date().toISOString(),
+        size: req.file.size,
+        mimetype: req.file.mimetype
       }
     });
   } catch (error) {
