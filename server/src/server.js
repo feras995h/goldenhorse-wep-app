@@ -114,8 +114,14 @@ if (process.env.TRUST_PROXY === '1' || process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-// Security middleware
-app.use(helmet());
+// Security middleware - configured for HTTP deployment
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for now to avoid HTTPS issues
+  crossOriginOpenerPolicy: false, // Disable COOP for HTTP
+  crossOriginResourcePolicy: false, // Disable CORP for HTTP
+  originAgentCluster: false, // Disable Origin-Agent-Cluster header
+  hsts: false, // Disable HSTS for HTTP
+}));
 
 // Rate limiting middleware
 const generalLimiter = rateLimit({
@@ -221,8 +227,25 @@ if (process.env.NODE_ENV === 'production') {
   const clientBuildPath = path.join(__dirname, '../../client/dist');
   console.log('📁 Serving static files from:', clientBuildPath);
 
-  // Serve static files
-  app.use(express.static(clientBuildPath));
+  // Serve static files with proper headers for HTTP
+  app.use(express.static(clientBuildPath, {
+    setHeaders: (res, path) => {
+      // Set proper MIME types
+      if (path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (path.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+      } else if (path.endsWith('.png')) {
+        res.setHeader('Content-Type', 'image/png');
+      } else if (path.endsWith('.svg')) {
+        res.setHeader('Content-Type', 'image/svg+xml');
+      }
+      // Disable HTTPS-only headers for HTTP deployment
+      res.removeHeader('Cross-Origin-Opener-Policy');
+      res.removeHeader('Cross-Origin-Resource-Policy');
+      res.removeHeader('Origin-Agent-Cluster');
+    }
+  }));
 }
 
 // Routes

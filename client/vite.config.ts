@@ -12,8 +12,18 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: undefined,
+        // Ensure assets use relative paths
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
       },
     },
+  },
+  // Ensure proper asset handling
+  experimental: {
+    renderBuiltUrl(filename: string) {
+      return '/' + filename
+    }
   },
   server: {
     host: '0.0.0.0',
