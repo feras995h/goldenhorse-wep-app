@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
+import models from '../models/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -96,7 +97,26 @@ const writeSettings = async (settings) => {
 // GET /api/settings - Get current settings
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const settings = await readSettings();
+    const logoData = await models.Setting.get('logo', null);
+    const lastUpdated = await models.Setting.get('lastUpdated', new Date().toISOString());
+
+    const settings = {
+      logo: logoData ? {
+        filename: logoData.filename || null,
+        originalName: logoData.originalName || null,
+        uploadDate: logoData.uploadDate || null,
+        size: logoData.size || null,
+        mimetype: logoData.mimetype || null
+      } : {
+        filename: null,
+        originalName: null,
+        uploadDate: null,
+        size: null,
+        mimetype: null
+      },
+      lastUpdated: lastUpdated
+    };
+
     res.json(settings);
   } catch (error) {
     console.error('Error reading settings:', error);
@@ -122,11 +142,38 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const settings = await readSettings();
+    // Convert file to base64 for database storage
+    const fileBuffer = await fs.readFile(req.file.path);
+    const base64Data = fileBuffer.toString('base64');
 
-    // Delete old logo file if it exists
-    if (settings.logo.filename) {
-      const oldLogoPath = path.join(uploadsDir, settings.logo.filename);
+    // Get old logo data to clean up
+    const oldLogoData = await models.Setting.get('logo', {});
+
+    // Store logo data in database
+    const logoData = {
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      uploadDate: new Date().toISOString(),
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      data: base64Data
+    };
+
+    await models.Setting.set('logo', logoData, {
+      type: 'json',
+      description: 'Company logo data'
+    });
+
+    // Clean up uploaded file (we don't need it anymore)
+    try {
+      await fs.unlink(req.file.path);
+    } catch (error) {
+      console.warn('Could not delete temporary file:', error.message);
+    }
+
+    // Clean up old logo file if it exists
+    if (oldLogoData && oldLogoData.filename) {
+      const oldLogoPath = path.join(uploadsDir, oldLogoData.filename);
       try {
         await fs.unlink(oldLogoPath);
       } catch (error) {
@@ -134,20 +181,15 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
       }
     }
 
-    // Update settings with new logo info
-    settings.logo = {
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      uploadDate: new Date().toISOString(),
-      size: req.file.size,
-      mimetype: req.file.mimetype
-    };
-
-    await writeSettings(settings);
-
     res.json({
       message: 'Logo uploaded successfully',
-      logo: settings.logo
+      logo: {
+        filename: logoData.filename,
+        originalName: logoData.originalName,
+        uploadDate: logoData.uploadDate,
+        size: logoData.size,
+        mimetype: logoData.mimetype
+      }
     });
   } catch (error) {
     console.error('Error uploading logo:', error);
@@ -172,20 +214,14 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
 // GET/HEAD /api/settings/logo - Get current logo file
 router.get('/logo', async (req, res) => {
   try {
-    const settings = await readSettings();
+    const logoData = await models.Setting.get('logo', null);
 
-    if (!settings.logo.filename) {
+    if (!logoData || !logoData.data) {
       return res.status(404).json({ message: 'No logo uploaded' });
     }
 
-    const logoPath = path.join(uploadsDir, settings.logo.filename);
-
-    // Check if file exists
-    try {
-      await fs.access(logoPath);
-    } catch (error) {
-      return res.status(404).json({ message: 'Logo file not found' });
-    }
+    // Convert base64 back to buffer
+    const imageBuffer = Buffer.from(logoData.data, 'base64');
 
     // Set CORS headers explicitly for image files
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -194,14 +230,15 @@ router.get('/logo', async (req, res) => {
     res.setHeader('Access-Control-Expose-Headers', 'Content-Type, Content-Length, Content-Disposition');
 
     // Set appropriate content type
-    res.setHeader('Content-Type', settings.logo.mimetype || 'image/png');
+    res.setHeader('Content-Type', logoData.mimetype || 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    res.setHeader('Content-Length', imageBuffer.length);
 
     // For HEAD requests, just send headers without body
     if (req.method === 'HEAD') {
       res.end();
     } else {
-      res.sendFile(logoPath);
+      res.send(imageBuffer);
     }
   } catch (error) {
     console.error('Error serving logo:', error);
@@ -221,30 +258,23 @@ router.options('/logo', (req, res) => {
 // DELETE /api/settings/logo - Delete current logo
 router.delete('/logo', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
-    const settings = await readSettings();
+    const logoData = await models.Setting.get('logo', null);
 
-    if (!settings.logo.filename) {
+    if (!logoData || !logoData.filename) {
       return res.status(404).json({ message: 'No logo to delete' });
     }
 
-    // Delete logo file
-    const logoPath = path.join(uploadsDir, settings.logo.filename);
-    try {
-      await fs.unlink(logoPath);
-    } catch (error) {
-      console.warn('Could not delete logo file:', error.message);
-    }
+    // Delete logo from database
+    await models.Setting.set('logo', null, {
+      type: 'json',
+      description: 'Company logo data'
+    });
 
-    // Reset logo settings
-    settings.logo = {
-      filename: null,
-      originalName: null,
-      uploadDate: null,
-      size: null,
-      mimetype: null
-    };
-
-    await writeSettings(settings);
+    // Update last updated timestamp
+    await models.Setting.set('lastUpdated', new Date().toISOString(), {
+      type: 'string',
+      description: 'Last system update'
+    });
 
     res.json({ message: 'Logo deleted successfully' });
   } catch (error) {
@@ -256,18 +286,9 @@ router.delete('/logo', authenticateToken, requireRole(['admin']), async (req, re
 // HEAD /api/settings/logo - Check if logo exists
 router.head('/logo', async (req, res) => {
   try {
-    const settings = await readSettings();
+    const logoData = await models.Setting.get('logo', null);
 
-    if (!settings.logo.filename) {
-      return res.status(404).end();
-    }
-
-    const logoPath = path.join(uploadsDir, settings.logo.filename);
-
-    // Check if file exists
-    try {
-      await fs.access(logoPath);
-    } catch (error) {
+    if (!logoData || !logoData.data) {
       return res.status(404).end();
     }
 
@@ -277,7 +298,7 @@ router.head('/logo', async (req, res) => {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
 
     // Set appropriate headers
-    res.setHeader('Content-Type', settings.logo.mimetype || 'image/png');
+    res.setHeader('Content-Type', logoData.mimetype || 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
     res.end();
   } catch (error) {
