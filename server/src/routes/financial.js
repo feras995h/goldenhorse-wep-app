@@ -186,6 +186,7 @@ router.post('/accounts', authenticateToken, requireFinancialAccess, async (req, 
     } catch (notificationError) {
       console.error('Error creating account notification:', notificationError);
       // Don't fail the account creation if notification fails
+      // This might happen if notifications table doesn't exist in production
     }
 
     res.status(201).json({
@@ -2383,11 +2384,11 @@ router.get('/reports/cash-flow', authenticateToken, requireFinancialAccess, asyn
     const cashAccounts = await Account.findAll({
       where: {
         [Op.or]: [
-          { name: { [Op.iLike]: '%نقد%' } },
-          { name: { [Op.iLike]: '%صندوق%' } },
-          { name: { [Op.iLike]: '%بنك%' } },
-          { name: { [Op.iLike]: '%cash%' } },
-          { name: { [Op.iLike]: '%bank%' } }
+          { name: { [Op.like]: '%نقد%' } },
+          { name: { [Op.like]: '%صندوق%' } },
+          { name: { [Op.like]: '%بنك%' } },
+          { name: { [Op.like]: '%cash%' } },
+          { name: { [Op.like]: '%bank%' } }
         ],
         isActive: true,
         ...(branch && { branch })

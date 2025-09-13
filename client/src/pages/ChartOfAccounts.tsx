@@ -327,7 +327,9 @@ const ChartOfAccounts: React.FC = () => {
         isGroup: formData.accountType === 'main' ? true : (formData.isGroup !== undefined ? formData.isGroup : false),
         isActive: formData.isActive !== undefined ? formData.isActive : true,
         currency: formData.currency || 'LYD',
-        nature: formData.nature || 'debit'
+        nature: formData.nature || 'debit',
+        // Add required accountType field
+        accountType: formData.accountType || (selectedParentAccount ? 'sub' : 'main')
       };
 
       console.log('Saving account data:', accountData);
