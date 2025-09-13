@@ -63,8 +63,21 @@ const OpeningBalanceEntry: React.FC = () => {
 
   const loadAccounts = async () => {
     try {
-      const response = await financialAPI.getAccounts({ limit: 1000 });
-      setAccounts(response.data || []);
+      console.log('Loading accounts for opening balance entry...');
+      const response = await financialAPI.getAccounts({
+        limit: 1000,
+        includeInactive: false // Only active accounts
+      });
+      console.log('Accounts loaded:', response.data?.length || 0);
+
+      // Filter to include both main accounts and sub-accounts
+      const allAccounts = response.data || [];
+      const filteredAccounts = allAccounts.filter(account =>
+        account.isActive && !account.freezeAccount
+      );
+
+      console.log('Filtered active accounts:', filteredAccounts.length);
+      setAccounts(filteredAccounts);
     } catch (error) {
       console.error('Error loading accounts:', error);
       setAccounts([]);
@@ -121,12 +134,24 @@ const OpeningBalanceEntry: React.FC = () => {
   // البحث في الحسابات
   const handleAccountSearch = (term: string) => {
     setSearchTerm(term);
-    if (term.length >= 2) {
+    if (term.length >= 1) { // Reduced from 2 to 1 for better UX
       const filtered = accounts.filter(account =>
         account.code.toLowerCase().includes(term.toLowerCase()) ||
-        account.name.toLowerCase().includes(term.toLowerCase())
+        account.name.toLowerCase().includes(term.toLowerCase()) ||
+        account.nameEn?.toLowerCase().includes(term.toLowerCase())
       );
-      setFilteredAccounts(filtered);
+
+      // Sort results: exact matches first, then by account code
+      const sorted = filtered.sort((a, b) => {
+        const aExact = a.code.toLowerCase() === term.toLowerCase() || a.name.toLowerCase() === term.toLowerCase();
+        const bExact = b.code.toLowerCase() === term.toLowerCase() || b.name.toLowerCase() === term.toLowerCase();
+
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        return a.code.localeCompare(b.code);
+      });
+
+      setFilteredAccounts(sorted.slice(0, 20)); // Limit to 20 results for performance
     } else {
       setFilteredAccounts([]);
     }
@@ -678,12 +703,13 @@ const OpeningBalanceEntry: React.FC = () => {
                             type="text"
                             value={searchTerm}
                             onChange={(e) => handleAccountSearch(e.target.value)}
-                            placeholder="البحث في الحسابات..."
+                            placeholder="البحث في الحسابات (رقم الحساب أو الاسم)..."
                             className="w-full sm:w-64 px-3 py-3 text-sm sm:text-base border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
                           />
-                          {filteredAccounts.length > 0 && (
+                          {searchTerm.length >= 1 && (
                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                              {filteredAccounts.map((account) => (
+                              {filteredAccounts.length > 0 ? (
+                                filteredAccounts.map((account) => (
                                 <div
                                   key={account.id}
                                   onClick={() => {
@@ -708,11 +734,36 @@ const OpeningBalanceEntry: React.FC = () => {
                                     setSearchTerm('');
                                     setFilteredAccounts([]);
                                   }}
-                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm border-b border-gray-100 last:border-b-0"
                                 >
-                                  <div className="font-medium">{account.code} - {account.name}</div>
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <div className="font-medium text-gray-900">{account.code} - {account.name}</div>
+                                      {account.nameEn && (
+                                        <div className="text-xs text-gray-500">{account.nameEn}</div>
+                                      )}
+                                      <div className="text-xs text-gray-600 mt-1">
+                                        النوع: {account.type} | المستوى: {account.level || 1}
+                                        {account.parentId && ' | حساب فرعي'}
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {account.balance?.toLocaleString() || '0'} {account.currency || 'LYD'}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        الرصيد الحالي
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                              ))}
+                                ))
+                              ) : (
+                                <div className="px-3 py-4 text-center text-gray-500 text-sm">
+                                  <div>لا توجد حسابات تطابق البحث "{searchTerm}"</div>
+                                  <div className="text-xs mt-1">تأكد من كتابة رقم الحساب أو اسمه بشكل صحيح</div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

@@ -20,10 +20,14 @@ export default (sequelize) => {
       allowNull: false
     },
 
-    category: {
-      type: DataTypes.ENUM('buildings', 'machinery', 'vehicles', 'equipment', 'furniture', 'computers', 'other'),
+    categoryAccountId: {
+      type: DataTypes.UUID,
       allowNull: false,
-      defaultValue: 'other'
+      references: {
+        model: 'accounts',
+        key: 'id'
+      },
+      comment: 'Reference to the fixed asset category account from chart of accounts'
     },
     purchaseDate: {
       type: DataTypes.DATEONLY,
@@ -102,7 +106,25 @@ export default (sequelize) => {
       }
     ],
     hooks: {
-      beforeCreate: (asset) => {
+      beforeCreate: async (asset) => {
+        // Generate asset number if not provided
+        if (!asset.assetNumber) {
+          const lastAsset = await FixedAsset.findOne({
+            order: [['assetNumber', 'DESC']]
+          });
+
+          let nextNumber = 1;
+          if (lastAsset && lastAsset.assetNumber) {
+            // Extract number from asset number (assuming format like "FA000001")
+            const match = lastAsset.assetNumber.match(/\d+$/);
+            if (match) {
+              nextNumber = parseInt(match[0]) + 1;
+            }
+          }
+
+          asset.assetNumber = `FA${String(nextNumber).padStart(6, '0')}`;
+        }
+
         // Calculate current value initially
         asset.currentValue = asset.purchaseCost;
       },
@@ -162,8 +184,8 @@ export default (sequelize) => {
     return this.findAll({ where: { status: 'active' } });
   };
 
-  FixedAsset.findByCategory = function(category) {
-    return this.findAll({ where: { category } });
+  FixedAsset.findByCategory = function(categoryAccountId) {
+    return this.findAll({ where: { categoryAccountId } });
   };
 
 
@@ -184,7 +206,11 @@ export default (sequelize) => {
 
   // Associations
   FixedAsset.associate = (models) => {
-    // Add associations if needed
+    FixedAsset.belongsTo(models.Account, {
+      foreignKey: 'categoryAccountId',
+      as: 'categoryAccount',
+      onDelete: 'RESTRICT'
+    });
   };
 
   return FixedAsset;

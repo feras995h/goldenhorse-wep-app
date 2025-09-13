@@ -6,8 +6,14 @@ import SearchFilter from '../components/Financial/SearchFilter';
 import Modal from '../components/Financial/Modal';
 import FormField from '../components/Financial/FormField';
 import { Customer } from '../types/financial';
+import { useAuth } from '../contexts/AuthContext';
 
 const CustomersManagement: React.FC = () => {
+  const { user } = useAuth();
+  const isFinancialManager = user?.role === 'financial';
+
+
+
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
@@ -130,9 +136,10 @@ const CustomersManagement: React.FC = () => {
   const validateForm = () => {
     const errors: Record<string, string> = {};
     
-    if (!formData.code.trim()) {
-      errors.code = 'رمز العميل مطلوب';
-    }
+    // Code is now optional - will be auto-generated if empty
+    // if (!formData.code.trim()) {
+    //   errors.code = 'رمز العميل مطلوب';
+    // }
     
     if (!formData.name.trim()) {
       errors.name = 'اسم العميل مطلوب';
@@ -165,8 +172,16 @@ const CustomersManagement: React.FC = () => {
       setSubmitting(true);
       
       if (modalMode === 'create') {
+        // المدير المالي لا يمكنه إنشاء عملاء - استخدم API المبيعات
+        if (isFinancialManager) {
+          throw new Error('المدير المالي لا يمكنه إنشاء عملاء. يرجى التواصل مع قسم المبيعات.');
+        }
         await financialAPI.createCustomer(formData);
       } else if (modalMode === 'edit' && selectedCustomer) {
+        // المدير المالي لا يمكنه تعديل العملاء - استخدم API المبيعات
+        if (isFinancialManager) {
+          throw new Error('المدير المالي لا يمكنه تعديل العملاء. يرجى التواصل مع قسم المبيعات.');
+        }
         await financialAPI.updateCustomer(selectedCustomer.id, formData);
       }
       
@@ -247,6 +262,22 @@ const CustomersManagement: React.FC = () => {
       )
     },
     {
+      key: 'balance',
+      title: 'الرصيد الحالي',
+      width: '120px',
+      align: 'left' as const,
+      render: (value: number, record: Customer) => (
+        <div className="text-left">
+          <span className={`font-medium ${
+            (value || 0) > 0 ? 'text-green-600' : (value || 0) < 0 ? 'text-red-600' : 'text-gray-600'
+          }`}>
+            {new Intl.NumberFormat('ar-LY').format(value || 0)}
+          </span>
+          <span className="text-gray-500 text-sm mr-1">{record.currency}</span>
+        </div>
+      )
+    },
+    {
       key: 'isActive',
       title: 'الحالة',
       width: '80px',
@@ -274,16 +305,18 @@ const CustomersManagement: React.FC = () => {
           >
             <Eye className="h-4 w-4" />
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              openModal('edit', record);
-            }}
-            className="text-green-600 hover:text-green-800"
-            title="تعديل"
-          >
-            <Edit className="h-4 w-4" />
-          </button>
+          {(user?.role === 'sales' || user?.role === 'admin') && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                openModal('edit', record);
+              }}
+              className="text-green-600 hover:text-green-800"
+              title="تعديل"
+            >
+              <Edit className="h-4 w-4" />
+            </button>
+          )}
         </div>
       )
     }
@@ -308,17 +341,24 @@ const CustomersManagement: React.FC = () => {
         <div className="flex items-center">
           <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 ml-3" />
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">إدارة العملاء</h1>
-            <p className="text-sm sm:text-base text-gray-600">بيانات العملاء والأرصدة</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              {isFinancialManager ? 'متابعة العملاء' : 'إدارة العملاء'}
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600">
+              {isFinancialManager ? 'متابعة الحركة المالية والأرصدة' : 'بيانات العملاء والأرصدة'}
+            </p>
           </div>
         </div>
-        <button
-          onClick={() => openModal('create')}
-          className="btn-primary flex items-center justify-center w-full sm:w-auto"
-        >
-          <Plus className="h-5 w-5 ml-2" />
-          عميل جديد
-        </button>
+        {user?.role === 'sales' || user?.role === 'admin' ? (
+          <button
+            onClick={() => openModal('create')}
+            className="btn-primary flex items-center justify-center w-full sm:w-auto"
+          >
+            <Plus className="h-5 w-5 ml-2" />
+            عميل جديد
+          </button>
+        ) : null}
+
       </div>
 
       {/* Search and Filters */}
@@ -392,9 +432,10 @@ const CustomersManagement: React.FC = () => {
             name="code"
             value={formData.code}
             onChange={(value) => setFormData(prev => ({ ...prev, code: value as string }))}
-            required
+            placeholder="سيتم إنشاؤه تلقائياً إذا ترك فارغاً"
             error={formErrors.code}
             disabled={modalMode === 'view'}
+            helpText="اتركه فارغاً لإنشاء رمز تلقائي من دليل الحسابات"
           />
           
           <FormField

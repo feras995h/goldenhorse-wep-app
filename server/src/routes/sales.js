@@ -168,19 +168,21 @@ router.post('/customers',
     } = req.body;
     
     // Validate required fields
-    if (!code || !name) {
-      return res.status(400).json({ message: 'كود العميل والاسم مطلوبان' });
+    if (!name) {
+      return res.status(400).json({ message: 'اسم العميل مطلوب' });
     }
-    
-    // Check if customer code already exists
-    const existingCustomer = await Customer.findOne({ where: { code } });
-    if (existingCustomer) {
-      return res.status(400).json({ message: 'كود العميل موجود مسبقاً' });
+
+    // Check if customer code already exists (only if provided)
+    if (code) {
+      const existingCustomer = await Customer.findOne({ where: { code } });
+      if (existingCustomer) {
+        return res.status(400).json({ message: 'كود العميل موجود مسبقاً' });
+      }
     }
     
     const newCustomer = await Customer.create({
       id: uuidv4(),
-      code,
+      code: code || undefined, // Let the model generate it if not provided
       name,
       nameEn,
       type,

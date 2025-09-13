@@ -85,7 +85,15 @@ const FormField: React.FC<FormFieldProps> = ({
             type="number"
             name={name}
             value={value}
-            onChange={(e) => onChange(e.target.value ? parseFloat(e.target.value) : '')}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '') {
+                onChange(0);
+              } else {
+                const parsed = parseFloat(val);
+                onChange(isNaN(parsed) ? 0 : parsed);
+              }
+            }}
             placeholder={placeholder}
             disabled={disabled}
             min={min}

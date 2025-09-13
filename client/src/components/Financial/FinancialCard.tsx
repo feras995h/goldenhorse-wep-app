@@ -54,7 +54,7 @@ const FinancialCard: React.FC<FinancialCardProps> = ({
   trend,
   currency = 'د.ل'
 }) => {
-  const colors = colorClasses[color];
+  const colors = colorClasses[color] || colorClasses.blue;
   
   const formatValue = (val: string | number) => {
     if (typeof val === 'number') {

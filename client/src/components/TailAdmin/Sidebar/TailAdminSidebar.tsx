@@ -19,6 +19,7 @@ import {
   Eye,
   FileText,
   TrendingUp,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { UserRole } from '../../../types/auth';
@@ -109,10 +110,11 @@ const navigationItems: NavigationItem[] = [
       {
         id: 'financial-customers',
         path: '/financial/customers',
-        label: 'إدارة العملاء',
-        icon: <Headphones className="h-4 w-4" />,
+        label: 'متابعة العملاء',
+        icon: <Users className="h-4 w-4" />,
         roles: ['admin', 'financial']
       },
+
       {
         id: 'financial-payroll',
         path: '/financial/payroll',
@@ -145,10 +147,25 @@ const navigationItems: NavigationItem[] = [
   },
   {
     id: 'sales',
-    path: '/sales',
     label: 'المبيعات',
     icon: <ShoppingCart className="h-5 w-5" />,
-    roles: ['admin', 'sales']
+    roles: ['admin', 'sales'],
+    children: [
+      {
+        id: 'sales-dashboard',
+        path: '/sales',
+        label: 'لوحة المبيعات',
+        icon: <TrendingUp className="h-4 w-4" />,
+        roles: ['admin', 'sales']
+      },
+      {
+        id: 'sales-customers',
+        path: '/sales/customers',
+        label: 'إدارة العملاء',
+        icon: <Users className="h-4 w-4" />,
+        roles: ['admin', 'sales']
+      },
+    ]
   },
 
 ];

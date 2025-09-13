@@ -57,6 +57,14 @@ export default (sequelize) => {
       type: DataTypes.STRING(50),
       allowNull: false
     },
+    journalEntryId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'journal_entries',
+        key: 'id'
+      }
+    },
     remarks: {
       type: DataTypes.TEXT,
       allowNull: true
@@ -201,6 +209,7 @@ export default (sequelize) => {
     GLEntry.belongsTo(models.Account, { foreignKey: 'accountId', as: 'account' });
     GLEntry.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
     GLEntry.belongsTo(models.User, { foreignKey: 'cancelledBy', as: 'canceller' });
+    GLEntry.belongsTo(models.JournalEntry, { foreignKey: 'journalEntryId', as: 'journalEntry' });
   };
 
   return GLEntry;

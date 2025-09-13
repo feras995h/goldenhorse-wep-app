@@ -15,9 +15,12 @@ import {
   RefreshCw,
   BarChart3,
   PieChart,
-  Activity
+  Activity,
+  Eye,
+  FileText
 } from 'lucide-react';
 import { financialAPI } from '../services/api';
+import { Modal } from '../components/UI/Modal';
 
 interface ReportData {
   totalAmount: number;
@@ -30,6 +33,7 @@ interface ReportData {
 interface InstantReports {
   receipts: ReportData;
   payments: ReportData;
+  expenses: ReportData;
   revenue: ReportData;
   receivables: ReportData;
   payables: ReportData;
@@ -42,6 +46,10 @@ const InstantReports: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('today');
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [categoryDetails, setCategoryDetails] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
   const [reportDetails, setReportDetails] = useState<any[]>([]);
 
   useEffect(() => {
@@ -51,10 +59,22 @@ const InstantReports: React.FC = () => {
     const loadInstantReports = async () => {
     setLoading(true);
     try {
+      console.log('Loading instant reports for period:', selectedPeriod);
       const data = await financialAPI.getInstantReports({ period: selectedPeriod });
+      console.log('Instant reports data received:', data);
       setReports(data);
          } catch (error) {
        console.error('Error loading instant reports:', error);
+       // Set empty data structure to prevent blank cards
+       setReports({
+         receipts: { totalAmount: 0, count: 0, trend: 0, period: selectedPeriod, details: [] },
+         payments: { totalAmount: 0, count: 0, trend: 0, period: selectedPeriod, details: [] },
+         expenses: { totalAmount: 0, count: 0, trend: 0, period: selectedPeriod, details: [] },
+         revenue: { totalAmount: 0, count: 0, trend: 0, period: selectedPeriod, details: [] },
+         receivables: { totalAmount: 0, count: 0, trend: 0, period: selectedPeriod, details: [] },
+         payables: { totalAmount: 0, count: 0, trend: 0, period: selectedPeriod, details: [] },
+         cashFlow: { totalAmount: 0, count: 0, trend: 0, period: selectedPeriod, details: [] }
+       });
      } finally {
        setLoading(false);
      }
@@ -62,8 +82,109 @@ const InstantReports: React.FC = () => {
 
   const handleReportClick = (reportType: string) => {
     setSelectedReport(reportType);
-    if (reports) {
-      setReportDetails(reports[reportType as keyof InstantReports]?.details || []);
+    setSelectedCategory(reportType);
+    setIsModalOpen(true);
+    loadCategoryDetails(reportType);
+  };
+
+  const loadCategoryDetails = async (category: string) => {
+    try {
+      setDetailsLoading(true);
+      console.log(`🔄 Loading details for category: ${category}`);
+
+      let response;
+      switch (category) {
+        case 'revenue':
+          response = await financialAPI.getGLEntries({
+            accountType: 'revenue',
+            limit: 100,
+            orderBy: 'postingDate',
+            orderDirection: 'DESC'
+          });
+          break;
+        case 'receipts':
+          response = await financialAPI.getGLEntries({
+            voucherType: 'Receipt',
+            limit: 100,
+            orderBy: 'postingDate',
+            orderDirection: 'DESC'
+          });
+          break;
+        case 'payments':
+          response = await financialAPI.getGLEntries({
+            voucherType: 'Payment',
+            limit: 100,
+            orderBy: 'postingDate',
+            orderDirection: 'DESC'
+          });
+          break;
+        case 'expenses':
+          // Try to get GL entries first
+          try {
+            response = await financialAPI.getGLEntries({
+              accountType: 'expense',
+              limit: 100,
+              orderBy: 'postingDate',
+              orderDirection: 'DESC'
+            });
+          } catch (error) {
+            console.warn('Could not fetch GL entries for expenses, using instant reports data');
+            // Fallback to using the details from instant reports
+            response = {
+              data: reports?.expenses?.details?.map(detail => ({
+                id: `expense-${detail.account}`,
+                account: {
+                  code: detail.account,
+                  name: detail.type,
+                  type: 'expense'
+                },
+                debit: detail.amount,
+                credit: 0,
+                postingDate: detail.date,
+                description: `مصروف - ${detail.type}`,
+                voucherType: 'Expense'
+              })) || []
+            };
+          }
+          break;
+        case 'receivables':
+          response = await financialAPI.getGLEntries({
+            accountType: 'asset',
+            search: 'مدين',
+            limit: 100,
+            orderBy: 'postingDate',
+            orderDirection: 'DESC'
+          });
+          break;
+        case 'payables':
+          response = await financialAPI.getGLEntries({
+            accountType: 'liability',
+            search: 'دائن',
+            limit: 100,
+            orderBy: 'postingDate',
+            orderDirection: 'DESC'
+          });
+          break;
+        case 'cashFlow':
+          response = await financialAPI.getGLEntries({
+            accountType: 'asset',
+            search: 'نقدية',
+            limit: 100,
+            orderBy: 'postingDate',
+            orderDirection: 'DESC'
+          });
+          break;
+        default:
+          response = { data: [] };
+      }
+
+      setCategoryDetails(response.data || []);
+      console.log(`✅ Loaded ${response.data?.length || 0} detail records`);
+    } catch (error) {
+      console.error(`❌ Error loading category details for ${category}:`, error);
+      setCategoryDetails([]);
+    } finally {
+      setDetailsLoading(false);
     }
   };
 
@@ -130,8 +251,15 @@ const InstantReports: React.FC = () => {
     {
       key: 'payments',
       title: 'المدفوعات',
-      description: 'إجمالي المدفوعات والمصروفات',
+      description: 'إجمالي المدفوعات النقدية',
       icon: CreditCard,
+      color: 'red'
+    },
+    {
+      key: 'expenses',
+      title: 'المصروفات',
+      description: 'إجمالي المصروفات والتكاليف',
+      icon: TrendingDown,
       color: 'red'
     },
     {
@@ -271,35 +399,57 @@ const InstantReports: React.FC = () => {
               <h3 className="text-lg font-bold text-gray-900 mb-2">{config.title}</h3>
               <p className="text-sm text-gray-600 mb-4">{config.description}</p>
               
-              {reportData && (
+              {reportData ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">المبلغ الإجمالي</span>
                     <span className="text-lg font-bold text-gray-900">
-                      {formatCurrency(reportData.totalAmount)}
+                      {formatCurrency(reportData.totalAmount || 0)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">عدد العمليات</span>
                     <span className="text-sm font-medium text-gray-900">
-                      {reportData.count}
+                      {reportData.count || 0}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">المعدل</span>
                     <div className="flex items-center">
-                      {reportData.trend > 0 ? (
+                      {(reportData.trend || 0) > 0 ? (
                         <TrendingUp className="h-4 w-4 text-green-500 ml-1" />
                       ) : (
                         <TrendingDown className="h-4 w-4 text-red-500 ml-1" />
                       )}
                       <span className={`text-sm font-medium ${
-                        reportData.trend > 0 ? 'text-green-600' : 'text-red-600'
+                        (reportData.trend || 0) > 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {Math.abs(reportData.trend)}%
+                        {Math.abs(reportData.trend || 0)}%
                       </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReportClick(config.key);
+                      }}
+                      className="w-full inline-flex items-center justify-center px-3 py-2 border border-golden-300 rounded-md shadow-sm text-sm font-medium text-golden-700 bg-golden-50 hover:bg-golden-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                    >
+                      <Eye className="h-4 w-4 ml-2" />
+                      عرض التفاصيل الكاملة
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                      <RefreshCw className="h-8 w-8 animate-spin text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">جاري تحميل البيانات...</p>
                     </div>
                   </div>
                 </div>
@@ -309,61 +459,92 @@ const InstantReports: React.FC = () => {
         })}
       </div>
 
-      {/* Report Details Modal */}
-      {selectedReport && reportDetails.length > 0 && (
-        <div className="card">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                تفاصيل {reportConfigs.find(c => c.key === selectedReport)?.title}
-              </h2>
-              <p className="text-sm text-gray-600">
-                الفترة: {getPeriodLabel(selectedPeriod)}
-              </p>
-            </div>
-            <button
-              onClick={() => setSelectedReport(null)}
-              className="btn btn-outline btn-sm"
-            >
-              إغلاق
-            </button>
+      {/* Category Details Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={`تفاصيل ${reportConfigs.find(c => c.key === selectedCategory)?.title || selectedCategory}`}
+        size="xl"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              الفترة: {getPeriodLabel(selectedPeriod)}
+            </p>
+            <p className="text-sm text-gray-600">
+              إجمالي السجلات: {categoryDetails.length}
+            </p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-2 sm:px-4 py-3 text-right font-medium text-gray-700 text-xs sm:text-sm">التفاصيل</th>
-                  <th className="px-2 sm:px-4 py-3 text-right font-medium text-gray-700 text-xs sm:text-sm">المبلغ</th>
-                  <th className="px-2 sm:px-4 py-3 text-right font-medium text-gray-700 text-xs sm:text-sm whitespace-nowrap">التاريخ</th>
-                  <th className="px-2 sm:px-4 py-3 text-right font-medium text-gray-700 text-xs sm:text-sm">الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reportDetails.map((detail, index) => (
-                  <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900 truncate max-w-32 sm:max-w-none">
-                      {detail.customer || detail.supplier || detail.product || detail.type}
-                    </td>
-                    <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium text-gray-900 whitespace-nowrap">
-                      {formatCurrency(detail.amount)}
-                    </td>
-                    <td className="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap">
-                      {new Date(detail.date || detail.dueDate).toLocaleDateString('ar-LY')}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {detail.method || detail.category || detail.daysOverdue ? 
-                        (detail.daysOverdue > 0 ? `متأخر ${detail.daysOverdue} يوم` : 'في الموعد') : 
-                        'مكتمل'
-                      }
-                    </td>
+          {detailsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <RefreshCw className="h-8 w-8 animate-spin text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">جاري تحميل التفاصيل...</p>
+              </div>
+            </div>
+          ) : categoryDetails.length > 0 ? (
+            <div className="overflow-x-auto max-h-96">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      التاريخ
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      الحساب
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      الوصف
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      نوع السند
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      مدين
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      دائن
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {categoryDetails.map((detail, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(detail.postingDate).toLocaleDateString('ar-LY')}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        <div>
+                          <div className="font-medium">{detail.account?.name || 'غير محدد'}</div>
+                          <div className="text-xs text-gray-500">{detail.account?.code}</div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {detail.remarks || 'بدون وصف'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {detail.voucherType}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {detail.debit > 0 ? formatCurrency(detail.debit) : '-'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {detail.credit > 0 ? formatCurrency(detail.credit) : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">لا توجد بيانات متاحة لهذه الفئة</p>
+            </div>
+          )}
         </div>
-      )}
+      </Modal>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -15,6 +15,15 @@ export default (sequelize) => {
         len: [1, 20]
       }
     },
+    accountId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'accounts',
+        key: 'id'
+      },
+      comment: 'Reference to the customer account in chart of accounts'
+    },
     name: {
       type: DataTypes.STRING(200),
       allowNull: false
@@ -95,6 +104,69 @@ export default (sequelize) => {
     timestamps: true,
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
+    hooks: {
+      beforeCreate: async (customer) => {
+        // Generate customer code if not provided
+        if (!customer.code) {
+          const lastCustomer = await Customer.findOne({
+            order: [['code', 'DESC']]
+          });
+
+          let nextNumber = 1;
+          if (lastCustomer && lastCustomer.code) {
+            // Extract number from customer code (assuming format like "C000001")
+            const match = lastCustomer.code.match(/\d+$/);
+            if (match) {
+              nextNumber = parseInt(match[0]) + 1;
+            }
+          }
+
+          customer.code = `C${String(nextNumber).padStart(6, '0')}`;
+        }
+      },
+      afterCreate: async (customer, options) => {
+        // Create corresponding account in chart of accounts
+        const { Account } = sequelize.models;
+
+        try {
+          // Find the customers parent account (usually under receivables)
+          const customersParentAccount = await Account.findOne({
+            where: {
+              [sequelize.Op.or]: [
+                { name: { [sequelize.Op.iLike]: '%عملاء%' } },
+                { name: { [sequelize.Op.iLike]: '%customers%' } },
+                { name: { [sequelize.Op.iLike]: '%receivables%' } },
+                { name: { [sequelize.Op.iLike]: '%مدينون%' } }
+              ],
+              type: 'asset'
+            }
+          });
+
+          const customerAccount = await Account.create({
+            code: customer.code,
+            name: customer.name,
+            nameEn: customer.nameEn,
+            type: 'asset',
+            accountCategory: 'receivables',
+            parentId: customersParentAccount?.id || null,
+            level: customersParentAccount ? (customersParentAccount.level + 1) : 1,
+            isActive: true,
+            currency: customer.currency,
+            balance: 0,
+            description: `حساب العميل: ${customer.name}`
+          }, { transaction: options.transaction });
+
+          // Update customer with account reference
+          await customer.update({
+            accountId: customerAccount.id
+          }, { transaction: options.transaction });
+
+        } catch (error) {
+          console.error('Error creating customer account:', error);
+          // Don't fail customer creation if account creation fails
+        }
+      }
+    },
     indexes: [
       {
         unique: true,

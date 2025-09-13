@@ -118,6 +118,12 @@ function App() {
                 </ProtectedRoute>
               } />
 
+              <Route path="sales/customers" element={
+                <ProtectedRoute allowedRoles={['admin', 'sales']}>
+                  <CustomersManagement />
+                </ProtectedRoute>
+              } />
+
               <Route path="sales/invoices" element={
                 <ProtectedRoute allowedRoles={['admin', 'sales']}>
                   <InvoiceManagement />

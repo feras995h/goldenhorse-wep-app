@@ -29,5 +29,9 @@
   "devDependencies": {
     "concurrently": "^8.2.2",
     "postcss-import": "^16.1.1"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "sqlite3": "^5.1.7"
   }
 }

@@ -105,6 +105,11 @@ export default (sequelize) => {
     isSystemAccount: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    isMonitored: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Whether this account is being monitored for changes'
     }
   }, {
     tableName: 'accounts',
@@ -127,6 +132,9 @@ export default (sequelize) => {
       },
       {
         fields: ['isActive']
+      },
+      {
+        fields: ['isMonitored']
       }
     ]
   });

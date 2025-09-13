@@ -119,12 +119,14 @@ export const financialAPI = {
   },
 
   createCustomer: async (customerData: any) => {
-    const response = await api.post('/financial/customers', customerData);
+    // المدير المالي لا يمكنه إنشاء عملاء - هذه مهمة موظف المبيعات
+    const response = await api.post('/sales/customers', customerData);
     return response.data;
   },
 
   updateCustomer: async (id: string, customerData: any) => {
-    const response = await api.put(`/financial/customers/${id}`, customerData);
+    // المدير المالي لا يمكنه تعديل العملاء - هذه مهمة موظف المبيعات
+    const response = await api.put(`/sales/customers/${id}`, customerData);
     return response.data;
   },
 
@@ -256,6 +258,11 @@ export const financialAPI = {
     return response.data;
   },
 
+  getFixedAssetCategories: async () => {
+    const response = await api.get('/financial/fixed-assets/categories');
+    return response.data;
+  },
+
   // Financial Reports
   getTrialBalance: async (params: {
     dateFrom: string;
@@ -332,6 +339,22 @@ export const financialAPI = {
     period?: string;
   }) => {
     const response = await api.get('/financial/instant-reports', { params });
+    return response.data;
+  },
+
+  // Monitored Accounts
+  getMonitoredAccounts: async () => {
+    const response = await api.get('/financial/monitored-accounts');
+    return response.data;
+  },
+
+  createMonitoredAccount: async (accountData: any) => {
+    const response = await api.post('/financial/monitored-accounts', accountData);
+    return response.data;
+  },
+
+  deleteMonitoredAccount: async (accountId: string) => {
+    const response = await api.delete(`/financial/monitored-accounts/${accountId}`);
     return response.data;
   },
 

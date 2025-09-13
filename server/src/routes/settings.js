@@ -304,8 +304,16 @@ router.get('/logo', async (req, res) => {
     console.log('📄 Logo metadata:', { filename, mimetype });
 
     if (!filename) {
-      console.log('❌ No logo filename found');
-      return res.status(404).json({ message: 'No logo uploaded' });
+      console.log('❌ No logo filename found - returning default logo');
+      // Return a simple SVG logo as default
+      const defaultLogo = `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" fill="#D4AF37"/>
+        <text x="50" y="55" font-family="Arial" font-size="14" fill="white" text-anchor="middle">LOGO</text>
+      </svg>`;
+
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(defaultLogo);
     }
 
     // Get logo file path

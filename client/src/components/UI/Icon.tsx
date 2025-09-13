@@ -48,9 +48,9 @@ const Icon: React.FC<IconProps> = ({
   };
 
   const baseClasses = `
-    ${sizeClasses[size]}
-    ${colorClasses[color]}
-    ${variantClasses[variant]}
+    ${sizeClasses[size] || sizeClasses.md}
+    ${colorClasses[color] || colorClasses.current}
+    ${variantClasses[variant] || variantClasses.solid}
     ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity duration-200' : ''}
     ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
     ${loading ? 'animate-spin' : ''}

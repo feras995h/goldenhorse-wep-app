@@ -111,6 +111,7 @@ export const validateAccount = [
 // Customer validation
 export const validateCustomer = [
   body('code')
+    .optional()
     .trim()
     .isLength({ min: 1, max: 20 })
     .withMessage('Customer code must be between 1 and 20 characters')

@@ -234,14 +234,14 @@ class EmployeeAccountService {
       };
 
       if (startDate && endDate) {
-        whereClause.date = {
+        whereClause.postingDate = {
           [sequelize.Sequelize.Op.between]: [startDate, endDate]
         };
       }
 
       const entries = await GLEntry.findAll({
         where: whereClause,
-        order: [['date', 'ASC'], ['createdAt', 'ASC']],
+        order: [['postingDate', 'ASC'], ['createdAt', 'ASC']],
         include: [
           {
             model: Account,
@@ -440,7 +440,7 @@ class EmployeeAccountService {
           },
           isActive: true
         },
-        order: [['date', 'DESC']],
+        order: [['postingDate', 'DESC']],
         limit: 10,
         include: [
           {

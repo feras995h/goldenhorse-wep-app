@@ -98,38 +98,41 @@ const AccountStatement: React.FC = () => {
       setLoading(true);
       
       const params: any = {
-        accountId: selectedAccount.id,
-        dateFrom: showAllPeriods ? undefined : dateFrom,
-        dateTo: showAllPeriods ? undefined : dateTo
+        fromDate: showAllPeriods ? undefined : dateFrom,
+        toDate: showAllPeriods ? undefined : dateTo
       };
 
-      const response = await financialAPI.getAccountStatement(params);
+      const response = await financialAPI.getAccountStatement(selectedAccount.id, params);
       
       // Process the response to create statement entries
       const entries: AccountStatementEntry[] = [];
-      let runningBalance = showAllPeriods ? 0 : (response.openingBalance || 0);
-      
+      const openingBalance = response.totals?.openingBalance || 0;
+      let runningBalance = showAllPeriods ? 0 : openingBalance;
+
       if (response.entries) {
         response.entries.forEach((entry: any) => {
           const debit = entry.debit || 0;
           const credit = entry.credit || 0;
-          runningBalance += debit - credit;
-          
+
+          // Use the runningBalance from server if available, otherwise calculate
+          const balance = entry.runningBalance !== undefined ? entry.runningBalance : (runningBalance + debit - credit);
+          runningBalance = balance;
+
           entries.push({
-            date: entry.date,
+            date: entry.postingDate || entry.date,
             description: entry.description || entry.journalEntry?.description || '',
             reference: entry.journalEntry?.entryNumber || '',
             debit,
             credit,
-            balance: runningBalance,
+            balance,
             entryNumber: entry.journalEntry?.entryNumber || ''
           });
         });
       }
 
       setStatementEntries(entries);
-      setOpeningBalance(response.openingBalance || 0);
-      setClosingBalance(runningBalance);
+      setOpeningBalance(openingBalance);
+      setClosingBalance(response.totals?.closingBalance || runningBalance);
     } catch (error) {
       console.error('Error loading account statement:', error);
       setStatementEntries([]);

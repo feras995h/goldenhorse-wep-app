@@ -9,6 +9,7 @@ import { FixedAsset } from '../types/financial';
 
 const FixedAssetsManagement: React.FC = () => {
   const [assets, setAssets] = useState<FixedAsset[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -25,14 +26,15 @@ const FixedAssetsManagement: React.FC = () => {
   const [selectedAsset, setSelectedAsset] = useState<FixedAsset | null>(null);
 
   // Form state
-  const [formData, setFormData] = useState({
+  // Default form data to prevent undefined values
+  const getDefaultFormData = () => ({
     assetNumber: '',
     name: '',
     nameEn: '',
-    category: '',
+    categoryAccountId: '',
     branch: '',
     purchaseDate: new Date().toISOString().split('T')[0],
-    purchasePrice: 0,
+    purchaseCost: 0,
     currency: 'LYD',
     depreciationMethod: 'straight_line',
     usefulLife: 5,
@@ -41,13 +43,16 @@ const FixedAssetsManagement: React.FC = () => {
     serialNumber: '',
     supplier: '',
     warrantyExpiry: '',
-    notes: ''
+    description: ''
   });
+
+  const [formData, setFormData] = useState(getDefaultFormData());
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadAssets();
+    loadCategories();
   }, [pagination.current, searchValue, categoryFilter, statusFilter]);
 
   const loadAssets = async () => {
@@ -71,6 +76,16 @@ const FixedAssetsManagement: React.FC = () => {
       console.error('Error loading fixed assets:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await financialAPI.getFixedAssetCategories();
+      setCategories(response);
+    } catch (error) {
+      console.error('Error loading fixed asset categories:', error);
+      setCategories([]);
     }
   };
 
@@ -101,42 +116,41 @@ const FixedAssetsManagement: React.FC = () => {
     setSelectedAsset(asset || null);
     
     if (mode === 'create') {
-      setFormData({
-        assetNumber: '',
-        name: '',
-        nameEn: '',
-        category: '',
-        branch: '',
-        purchaseDate: new Date().toISOString().split('T')[0],
-        purchasePrice: 0,
-        currency: 'LYD',
-        depreciationMethod: 'straight_line',
-        usefulLife: 5,
-        salvageValue: 0,
-        location: '',
-        serialNumber: '',
-        supplier: '',
-        warrantyExpiry: '',
-        notes: ''
-      });
+      const initialData = getDefaultFormData();
+      setFormData(initialData);
+
+      // If there's only one category, auto-select it and generate asset number
+      if (categories.length === 1) {
+        const categoryId = categories[0].id;
+        setTimeout(async () => {
+          const generatedNumber = await generateAssetNumber(categoryId);
+          setFormData(prev => ({
+            ...prev,
+            categoryAccountId: categoryId,
+            assetNumber: generatedNumber || ''
+          }));
+        }, 100);
+      }
     } else if (asset) {
+      const defaultData = getDefaultFormData();
       setFormData({
-        assetNumber: asset.assetNumber,
-        name: asset.name,
-        nameEn: asset.nameEn || '',
-        category: asset.category,
-        branch: asset.branch,
-        purchaseDate: asset.purchaseDate,
-        purchasePrice: asset.purchasePrice,
-        currency: asset.currency,
-        depreciationMethod: asset.depreciationMethod,
-        usefulLife: asset.usefulLife,
-        salvageValue: asset.salvageValue,
-        location: asset.location || '',
-        serialNumber: asset.serialNumber || '',
-        supplier: asset.supplier || '',
-        warrantyExpiry: asset.warrantyExpiry || '',
-        notes: asset.notes || ''
+        ...defaultData,
+        assetNumber: asset.assetNumber || defaultData.assetNumber,
+        name: asset.name || defaultData.name,
+        nameEn: asset.nameEn || defaultData.nameEn,
+        categoryAccountId: (asset as any).categoryAccountId || defaultData.categoryAccountId,
+        branch: asset.branch || defaultData.branch,
+        purchaseDate: asset.purchaseDate || defaultData.purchaseDate,
+        purchaseCost: (asset as any).purchaseCost ?? defaultData.purchaseCost,
+        currency: asset.currency || defaultData.currency,
+        depreciationMethod: asset.depreciationMethod || defaultData.depreciationMethod,
+        usefulLife: asset.usefulLife ?? defaultData.usefulLife,
+        salvageValue: asset.salvageValue ?? defaultData.salvageValue,
+        location: asset.location || defaultData.location,
+        serialNumber: asset.serialNumber || defaultData.serialNumber,
+        supplier: asset.supplier || defaultData.supplier,
+        warrantyExpiry: asset.warrantyExpiry || defaultData.warrantyExpiry,
+        description: (asset as any).description || defaultData.description
       });
     }
     
@@ -150,6 +164,45 @@ const FixedAssetsManagement: React.FC = () => {
     setFormErrors({});
   };
 
+  // Generate asset number automatically
+  const generateAssetNumber = async (categoryAccountId: string) => {
+    if (!categoryAccountId) return '';
+
+    try {
+      // Find the selected category
+      const selectedCategory = categories.find(cat => cat.id === categoryAccountId);
+      if (!selectedCategory) return '';
+
+      // Get existing assets for this category to determine next number
+      const existingAssets = assets.filter(asset =>
+        (asset as any).categoryAccountId === categoryAccountId
+      );
+
+      // Generate next number (FA + category code + sequential number)
+      const categoryCode = selectedCategory.code.replace(/\./g, ''); // Remove dots
+      const nextNumber = existingAssets.length + 1;
+      const paddedNumber = nextNumber.toString().padStart(3, '0');
+
+      return `FA${categoryCode}${paddedNumber}`;
+    } catch (error) {
+      console.error('Error generating asset number:', error);
+      return '';
+    }
+  };
+
+  // Handle category change and auto-generate asset number
+  const handleCategoryChange = async (categoryAccountId: string) => {
+    setFormData(prev => ({ ...prev, categoryAccountId }));
+
+    // Auto-generate asset number if in create mode and no manual number entered
+    if (modalMode === 'create' && !formData.assetNumber.trim()) {
+      const generatedNumber = await generateAssetNumber(categoryAccountId);
+      if (generatedNumber) {
+        setFormData(prev => ({ ...prev, assetNumber: generatedNumber }));
+      }
+    }
+  };
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
     
@@ -161,20 +214,16 @@ const FixedAssetsManagement: React.FC = () => {
       errors.name = 'اسم الأصل مطلوب';
     }
     
-    if (!formData.category.trim()) {
-      errors.category = 'فئة الأصل مطلوبة';
+    if (!formData.categoryAccountId.trim()) {
+      errors.categoryAccountId = 'فئة الأصل مطلوبة';
     }
-    
-    if (!formData.branch.trim()) {
-      errors.branch = 'الفرع مطلوب';
-    }
-    
+
     if (!formData.purchaseDate) {
       errors.purchaseDate = 'تاريخ الشراء مطلوب';
     }
-    
-    if (!formData.purchasePrice || formData.purchasePrice <= 0) {
-      errors.purchasePrice = 'سعر الشراء مطلوب ويجب أن يكون أكبر من صفر';
+
+    if (!formData.purchaseCost || formData.purchaseCost <= 0) {
+      errors.purchaseCost = 'تكلفة الشراء مطلوبة ويجب أن تكون أكبر من صفر';
     }
     
     if (!formData.usefulLife || formData.usefulLife <= 0) {
@@ -216,9 +265,24 @@ const FixedAssetsManagement: React.FC = () => {
 
   const handleDepreciation = async (asset: FixedAsset) => {
     try {
-      await financialAPI.calculateDepreciation(asset.id);
-      loadAssets();
-      alert('تم حساب الاستهلاك بنجاح');
+      const result = await financialAPI.calculateDepreciation(asset.id);
+      if (result.success) {
+        const data = result.data;
+        const message = `تم حساب الاستهلاك بنجاح:
+
+الأصل: ${data.assetName}
+رقم الأصل: ${data.assetNumber}
+طريقة الاستهلاك: ${data.depreciationMethod === 'straight_line' ? 'القسط الثابت' : data.depreciationMethod}
+تكلفة الشراء: ${data.purchaseCost.toLocaleString()} ${asset.currency || 'LYD'}
+القيمة المتبقية: ${data.salvageValue.toLocaleString()} ${asset.currency || 'LYD'}
+العمر الإنتاجي: ${data.usefulLife} سنوات
+الاستهلاك السنوي: ${data.annualDepreciation.toLocaleString()} ${asset.currency || 'LYD'}
+الاستهلاك الشهري: ${data.monthlyDepreciation.toLocaleString()} ${asset.currency || 'LYD'}`;
+
+        alert(message);
+      } else {
+        alert('تم حساب الاستهلاك بنجاح');
+      }
     } catch (error) {
       console.error('Error calculating depreciation:', error);
       alert('حدث خطأ أثناء حساب الاستهلاك');
@@ -336,7 +400,7 @@ const FixedAssetsManagement: React.FC = () => {
           disposed: { label: 'مباع', color: 'bg-yellow-100 text-yellow-800' },
           scrapped: { label: 'مستهلك', color: 'bg-red-100 text-red-800' }
         };
-        const status = statusLabels[value as keyof typeof statusLabels];
+        const status = statusLabels[value as keyof typeof statusLabels] || { label: 'غير محدد', color: 'bg-gray-100 text-gray-800' };
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
             {status.label}
@@ -389,15 +453,10 @@ const FixedAssetsManagement: React.FC = () => {
     }
   ];
 
-  const categoryOptions = [
-    { value: 'vehicles', label: 'مركبات' },
-    { value: 'equipment', label: 'معدات' },
-    { value: 'furniture', label: 'أثاث' },
-    { value: 'computers', label: 'حاسوب' },
-    { value: 'machinery', label: 'آلات' },
-    { value: 'buildings', label: 'مباني' },
-    { value: 'other', label: 'أخرى' }
-  ];
+  const categoryOptions = categories.map(cat => ({
+    value: cat.id,
+    label: `${cat.code} - ${cat.name}`
+  }));
 
   const statusOptions = [
     { value: 'active', label: 'نشط' },
@@ -518,25 +577,41 @@ const FixedAssetsManagement: React.FC = () => {
         <div className="space-y-4">
           {/* Basic Information */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              label="رقم الأصل"
-              name="assetNumber"
-              value={formData.assetNumber}
-              onChange={(value) => setFormData(prev => ({ ...prev, assetNumber: value as string }))}
-              required
-              error={formErrors.assetNumber}
-              disabled={modalMode === 'view'}
-            />
+            <div className="space-y-2">
+              <FormField
+                label="رقم الأصل"
+                name="assetNumber"
+                value={formData.assetNumber}
+                onChange={(value) => setFormData(prev => ({ ...prev, assetNumber: value as string }))}
+                required
+                error={formErrors.assetNumber}
+                disabled={modalMode === 'view'}
+              />
+              {modalMode === 'create' && formData.categoryAccountId && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const generatedNumber = await generateAssetNumber(formData.categoryAccountId);
+                    if (generatedNumber) {
+                      setFormData(prev => ({ ...prev, assetNumber: generatedNumber }));
+                    }
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  توليد رقم تلقائي
+                </button>
+              )}
+            </div>
 
             <FormField
               label="الفئة"
-              name="category"
+              name="categoryAccountId"
               type="select"
-              value={formData.category}
-              onChange={(value) => setFormData(prev => ({ ...prev, category: value as string }))}
-              options={categoryOptions}
+              value={formData.categoryAccountId}
+              onChange={(value) => handleCategoryChange(value as string)}
+              options={categories.map(cat => ({ value: cat.id, label: `${cat.code} - ${cat.name}` }))}
               required
-              error={formErrors.category}
+              error={formErrors.categoryAccountId}
               disabled={modalMode === 'view'}
             />
           </div>
@@ -598,14 +673,14 @@ const FixedAssetsManagement: React.FC = () => {
 
               <FormField
                 label="سعر الشراء"
-                name="purchasePrice"
+                name="purchaseCost"
                 type="number"
-                value={formData.purchasePrice}
-                onChange={(value) => setFormData(prev => ({ ...prev, purchasePrice: value as number }))}
+                value={formData.purchaseCost}
+                onChange={(value) => setFormData(prev => ({ ...prev, purchaseCost: value as number }))}
                 min={0}
                 step={0.01}
                 required
-                error={formErrors.purchasePrice}
+                error={formErrors.purchaseCost}
                 disabled={modalMode === 'view'}
               />
 

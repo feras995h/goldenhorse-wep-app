@@ -63,6 +63,8 @@ const JournalEntries: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
+  const [batchApproving, setBatchApproving] = useState(false);
 
   useEffect(() => {
     loadJournalEntries();
@@ -373,7 +375,7 @@ const JournalEntries: React.FC = () => {
 
   const handleApprove = async (entry: JournalEntry) => {
     if (!confirm(`هل أنت متأكد من اعتماد القيد "${entry.entryNumber}"؟`)) return;
-    
+
     try {
       await financialAPI.approveJournalEntry(entry.id);
       loadJournalEntries();
@@ -383,7 +385,78 @@ const JournalEntries: React.FC = () => {
     }
   };
 
+  const handleBatchApprove = async () => {
+    const draftEntries = journalEntries.filter(entry =>
+      selectedEntries.includes(entry.id) && entry.status === 'draft'
+    );
+
+    if (draftEntries.length === 0) {
+      alert('لا توجد قيود مسودة محددة للاعتماد');
+      return;
+    }
+
+    if (!confirm(`هل أنت متأكد من اعتماد ${draftEntries.length} قيد؟`)) return;
+
+    try {
+      setBatchApproving(true);
+
+      for (const entry of draftEntries) {
+        await financialAPI.approveJournalEntry(entry.id);
+      }
+
+      setSelectedEntries([]);
+      loadJournalEntries();
+      alert(`تم اعتماد ${draftEntries.length} قيد بنجاح`);
+    } catch (error) {
+      console.error('Error batch approving journal entries:', error);
+      alert('حدث خطأ أثناء اعتماد القيود');
+    } finally {
+      setBatchApproving(false);
+    }
+  };
+
+  const toggleSelectEntry = (entryId: string) => {
+    setSelectedEntries(prev =>
+      prev.includes(entryId)
+        ? prev.filter(id => id !== entryId)
+        : [...prev, entryId]
+    );
+  };
+
+  const selectAllDraftEntries = () => {
+    const draftEntryIds = journalEntries
+      .filter(entry => entry.status === 'draft')
+      .map(entry => entry.id);
+    setSelectedEntries(draftEntryIds);
+  };
+
+  const clearSelection = () => {
+    setSelectedEntries([]);
+  };
+
   const columns = [
+    {
+      key: 'select',
+      title: (
+        <input
+          type="checkbox"
+          checked={selectedEntries.length > 0 && selectedEntries.length === journalEntries.filter(e => e.status === 'draft').length}
+          onChange={(e) => e.target.checked ? selectAllDraftEntries() : clearSelection()}
+          className="rounded border-gray-300 text-golden-600 focus:ring-golden-500"
+        />
+      ),
+      width: '50px',
+      render: (value: any, record: JournalEntry) => (
+        record.status === 'draft' ? (
+          <input
+            type="checkbox"
+            checked={selectedEntries.includes(record.id)}
+            onChange={() => toggleSelectEntry(record.id)}
+            className="rounded border-gray-300 text-golden-600 focus:ring-golden-500"
+          />
+        ) : null
+      )
+    },
     {
       key: 'entryNumber',
       title: 'رقم القيد',
@@ -434,14 +507,22 @@ const JournalEntries: React.FC = () => {
       render: (value: string) => {
         const statusLabels = {
           draft: { label: 'مسودة', color: 'bg-yellow-100 text-yellow-800' },
+          approved: { label: 'معتمد', color: 'bg-blue-100 text-blue-800' },
           posted: { label: 'معتمد', color: 'bg-green-100 text-green-800' },
           cancelled: { label: 'ملغي', color: 'bg-red-100 text-red-800' }
         };
-        const status = statusLabels[value as keyof typeof statusLabels];
+        const status = statusLabels[value as keyof typeof statusLabels] || { label: 'غير محدد', color: 'bg-gray-100 text-gray-800' };
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
-            {status.label}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
+              {status.label}
+            </span>
+            {value === 'draft' && (
+              <span className="text-xs text-amber-600 font-medium">
+                (يحتاج اعتماد)
+              </span>
+            )}
+          </div>
         );
       }
     },
@@ -564,14 +645,31 @@ const JournalEntries: React.FC = () => {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">قيود اليومية</h1>
           <p className="text-sm sm:text-base text-gray-600">إدارة القيود المحاسبية واليومية</p>
+          {selectedEntries.length > 0 && (
+            <p className="text-sm text-golden-600 mt-1">
+              تم تحديد {selectedEntries.length} قيد
+            </p>
+          )}
         </div>
-        <button
-          onClick={() => openModal('create')}
-          className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
-        >
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة قيد جديد
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          {selectedEntries.length > 0 && (
+            <button
+              onClick={handleBatchApprove}
+              disabled={batchApproving}
+              className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+            >
+              <CheckCircle className="h-4 w-4 ml-2" />
+              {batchApproving ? 'جاري الاعتماد...' : `اعتماد ${selectedEntries.length} قيد`}
+            </button>
+          )}
+          <button
+            onClick={() => openModal('create')}
+            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+          >
+            <Plus className="h-4 w-4 ml-2" />
+            إضافة قيد جديد
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters */}
