@@ -5467,13 +5467,13 @@ router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess
     // Ensure Fixed Assets parent and default categories (Vehicles, Equipment & Machinery, Furniture)
     const { fixedAssetsParent } = await ensureFixedAssetsStructure();
 
-    // Only return direct children under Fixed Assets parent
+    // Return direct children under Fixed Assets parent that are asset accounts
+    // These are the categories that can be used for fixed assets
     const categories = await Account.findAll({
       where: {
         parentId: fixedAssetsParent.id,
         type: 'asset',
-        isActive: true,
-        isGroup: false
+        isActive: true
       },
       attributes: ['id', 'code', 'name', 'nameEn', 'type', 'level', 'parentId'],
       order: [['code', 'ASC']]
