@@ -5474,6 +5474,17 @@ router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess
     // Return direct children under Fixed Assets parent that are asset accounts
     // These are the categories that can be used for fixed assets
     console.log('🔍 Finding categories under parent ID:', fixedAssetsParent?.id);
+    
+    // Add a safety check to ensure fixedAssetsParent exists
+    if (!fixedAssetsParent || !fixedAssetsParent.id) {
+      console.warn('❌ Fixed Assets parent not properly initialized');
+      return res.status(500).json({ 
+        success: false,
+        message: 'خطأ في تهيئة هيكل الأصول الثابتة',
+        error: 'Fixed Assets parent not found'
+      });
+    }
+    
     const categories = await Account.findAll({
       where: {
         parentId: fixedAssetsParent.id,
@@ -5498,10 +5509,16 @@ router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess
       stack: error.stack,
       name: error.name
     });
+    
+    // Provide more user-friendly error message
+    const userMessage = process.env.NODE_ENV === 'development' 
+      ? `خطأ في جلب فئات الأصول الثابتة: ${error.message}`
+      : 'حدث خطأ أثناء جلب فئات الأصول الثابتة';
+      
     res.status(500).json({ 
       success: false,
-      message: 'خطأ في جلب فئات الأصول الثابتة',
-      error: error.message
+      message: userMessage,
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });

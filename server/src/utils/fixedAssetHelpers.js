@@ -1,6 +1,19 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../models/index.js';
-const likeOp = (sequelize.getDialect && sequelize.getDialect() === 'sqlite') ? Op.like : Op.iLike;
+// More robust way to determine the like operator
+let likeOp = Op.like; // Default to case-sensitive LIKE
+try {
+  if (sequelize.getDialect && typeof sequelize.getDialect === 'function') {
+    const dialect = sequelize.getDialect();
+    console.log('🔍 Database dialect detected:', dialect);
+    // Use case-insensitive LIKE for PostgreSQL and MySQL, case-sensitive for SQLite
+    if (dialect === 'postgres' || dialect === 'mysql' || dialect === 'mariadb') {
+      likeOp = Op.iLike;
+    }
+  }
+} catch (error) {
+  console.warn('⚠️  Could not determine database dialect, using default LIKE operator:', error.message);
+}
 import { v4 as uuidv4 } from 'uuid';
 import models from '../models/index.js';
 
