@@ -16,56 +16,53 @@ interface AccountTreeProps {
 const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
-  // Build tree structure with all sub-accounts grouped under main accounts
+  // Build proper hierarchical tree structure
   const buildTree = (): AccountTreeNode[] => {
-    const accountMap = new Map<string, AccountTreeNode>();
+    // Create a map of all accounts by ID for quick lookup
+    const accountMap = new Map<string, Account>();
+    accounts.forEach(account => {
+      accountMap.set(account.id, account);
+    });
 
     // Create nodes for all accounts
+    const nodeMap = new Map<string, AccountTreeNode>();
     accounts.forEach(account => {
-      accountMap.set(account.id, {
+      nodeMap.set(account.id, {
         account,
         children: [],
         level: account.level || 1
       });
     });
 
-    // Build flattened parent-child relationships (all sub-accounts under main account)
+    // Build parent-child relationships
     const rootNodes: AccountTreeNode[] = [];
 
     accounts.forEach(account => {
-      const node = accountMap.get(account.id);
+      const node = nodeMap.get(account.id);
       if (!node) return;
 
       if (account.parentId) {
-        // Find the root parent (main account) for this sub-account
-        const rootParent = findRootParent(account, accounts);
-        if (rootParent) {
-          const rootNode = accountMap.get(rootParent.id);
-          if (rootNode) {
-            rootNode.children.push(node);
-          }
+        // Add as child to parent
+        const parentNode = nodeMap.get(account.parentId);
+        if (parentNode) {
+          parentNode.children.push(node);
         }
       } else {
+        // Add as root node
         rootNodes.push(node);
       }
     });
 
+    // Sort children by account code
+    const sortChildren = (node: AccountTreeNode) => {
+      node.children.sort((a, b) => a.account.code.localeCompare(b.account.code));
+      node.children.forEach(child => sortChildren(child));
+    };
+
+    rootNodes.forEach(node => sortChildren(node));
+    rootNodes.sort((a, b) => a.account.code.localeCompare(b.account.code));
+
     return rootNodes;
-  };
-
-  // Helper function to find the root parent (main account) of any account
-  const findRootParent = (account: Account, allAccounts: Account[]): Account | null => {
-    if (!account.parentId) {
-      return account; // This is already a root account
-    }
-
-    const parent = allAccounts.find(acc => acc.id === account.parentId);
-    if (!parent) {
-      return null;
-    }
-
-    // Recursively find the root parent
-    return findRootParent(parent, allAccounts);
   };
 
   const treeData = buildTree();
@@ -104,74 +101,9 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
     return types[type as keyof typeof types] || type;
   };
 
-  const renderFlatSubAccount = (node: AccountTreeNode) => {
-    return (
-      <div key={node.account.id} className="mb-1">
-        <div
-          className={`flex items-center py-2 px-2 sm:px-3 rounded-md hover:bg-golden-50 cursor-pointer transition-professional overflow-hidden ${
-            onAccountSelect ? 'hover:bg-golden-100' : ''
-          }`}
-          onClick={() => onAccountSelect?.(node.account)}
-          style={{ marginRight: '20px' }} // Fixed indentation for all sub-accounts
-        >
-          {/* No expand/collapse button for flat view */}
-          <div className="w-6 mr-2" /> {/* Spacer for alignment */}
-
-          <div className="flex-1 flex items-center">
-            {/* Account Icon */}
-            <div className="mr-2">
-              <FileText className={`h-4 w-4 ${getAccountTypeColor(node.account.type)}`} />
-            </div>
-
-            {/* Account Code and Name */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center flex-wrap gap-1">
-                <span className="font-medium text-gray-900 text-sm sm:text-base whitespace-nowrap">
-                  {node.account.code}
-                </span>
-                <span className="text-gray-700 text-sm sm:text-base truncate">
-                  {node.account.name}
-                </span>
-                {node.account.isSystemAccount && (
-                  <Shield className="h-3 w-3 text-blue-600 flex-shrink-0" aria-label="حساب نظام أساسي" />
-                )}
-                {node.account.nameEn && (
-                  <span className="text-gray-500 text-xs sm:text-sm truncate">
-                    ({node.account.nameEn})
-                  </span>
-                )}
-              </div>
-
-              {/* Account Type and Level Info */}
-              <div className="flex items-center flex-wrap gap-1 mt-1">
-                <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${getAccountTypeColor(node.account.type)} bg-opacity-10`}>
-                  {getAccountTypeLabel(node.account.type)}
-                </span>
-                <span className="text-xs text-gray-500 whitespace-nowrap">
-                  حساب فرعي - مستوى {node.account.level}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Balance */}
-          <div className="text-gray-500 text-sm text-left flex-shrink-0 min-w-0">
-            <div className="font-medium text-xs sm:text-sm truncate">
-              {node.account.balance?.toLocaleString()} {node.account.currency}
-            </div>
-            <div className="text-xs text-gray-400 whitespace-nowrap">
-              {node.account.balance && node.account.balance >= 0 ? 'مدين' : 'دائن'}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderTreeNode = (node: AccountTreeNode) => {
+  const renderTreeNode = (node: AccountTreeNode, isChild: boolean = false) => {
     const isExpanded = expandedNodes.has(node.account.id);
     const hasChildren = node.children.length > 0;
-    const isParentAccount = hasChildren || accounts.some(acc => acc.parentId === node.account.id);
     
     return (
       <div key={node.account.id} className="mb-1">
@@ -180,7 +112,7 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
             onAccountSelect ? 'hover:bg-golden-100' : ''
           }`}
           onClick={() => onAccountSelect?.(node.account)}
-          style={{ marginRight: `${node.account.parentId ? 20 : 0}px` }}
+          style={{ marginRight: `${isChild ? 20 : 0}px` }}
         >
           {hasChildren ? (
             <button 
@@ -203,7 +135,7 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
           <div className="flex-1 flex items-center">
             {/* Account Icon */}
             <div className="mr-2">
-              {isParentAccount ? (
+              {hasChildren ? (
                 <Folder className={`h-4 w-4 ${getAccountTypeColor(node.account.type)}`} />
               ) : (
                 <FileText className={`h-4 w-4 ${getAccountTypeColor(node.account.type)}`} />
@@ -229,7 +161,7 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
                 )}
               </div>
               
-              {/* Account Type and Parent Info */}
+              {/* Account Type and Children Info */}
               <div className="flex items-center flex-wrap gap-1 mt-1">
                 <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${getAccountTypeColor(node.account.type)} bg-opacity-10`}>
                   {getAccountTypeLabel(node.account.type)}
@@ -259,9 +191,10 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
           </div>
         </div>
         
+        {/* Render children if expanded */}
         {hasChildren && isExpanded && (
           <div className="mt-1">
-            {node.children.map(child => renderFlatSubAccount(child))}
+            {node.children.map(child => renderTreeNode(child, true))}
           </div>
         )}
       </div>
