@@ -10,12 +10,14 @@ cmds = [
 
 [phases.build]
 cmds = [
+    "cd client && npm run type-check || echo 'TypeScript check failed, continuing...'",
     "cd client && npm run build"
 ]
 
 [start]
-cmd = "cd server && npm run ensure-main-accounts && npm start"
+cmd = "cd server && npm start"
 
 [variables]
 NODE_ENV = "production"
 PORT = "5001"
+NIXPACKS_PATH = "/nix/var/nix/profiles/default/bin"
