@@ -85,7 +85,8 @@ const FixedAssetsManagement: React.FC = () => {
   const loadCategories = async () => {
     try {
       const resp = await financialAPI.getFixedAssetCategories();
-      const cats = (resp && (resp.data || resp)) || [];
+      // Handle consistent response format
+      const cats = resp?.data || resp || [];
       setCategories(Array.isArray(cats) ? cats : []);
     } catch (error) {
       console.error('Error loading fixed asset categories:', error);

@@ -5480,10 +5480,19 @@ router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess
     });
 
     console.log(`Found ${categories.length} fixed asset categories (under Fixed Assets)`);
-    res.json(categories);
+    // Return consistent response format with data property
+    res.json({
+      success: true,
+      data: categories,
+      total: categories.length
+    });
   } catch (error) {
     console.error('Error fetching fixed asset categories:', error);
-    res.status(500).json({ message: 'خطأ في جلب فئات الأصول الثابتة' });
+    res.status(500).json({ 
+      success: false,
+      message: 'خطأ في جلب فئات الأصول الثابتة',
+      error: error.message
+    });
   }
 });
 
