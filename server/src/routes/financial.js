@@ -5485,11 +5485,28 @@ router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess
       });
     }
     
-    const categories = await Account.findAll({
+    // Find all sub-groups under Fixed Assets (like 1.2.1, 1.2.2, etc.)
+    const subGroups = await Account.findAll({
       where: {
         parentId: fixedAssetsParent.id,
         type: 'asset',
-        isActive: true
+        isActive: true,
+        isGroup: true
+      },
+      attributes: ['id']
+    });
+    
+    console.log(`🔍 Found ${subGroups.length} sub-groups under Fixed Assets`);
+    
+    // Find categories under these sub-groups (non-group accounts)
+    const categories = await Account.findAll({
+      where: {
+        parentId: {
+          [Op.in]: subGroups.map(group => group.id)
+        },
+        type: 'asset',
+        isActive: true,
+        isGroup: false
       },
       attributes: ['id', 'code', 'name', 'nameEn', 'type', 'level', 'parentId'],
       order: [['code', 'ASC']]
