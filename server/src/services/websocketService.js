@@ -77,37 +77,44 @@ class WebSocketService {
    */
   setupEventHandlers() {
     this.io.on('connection', (socket) => {
-      console.log(`User ${socket.user.name} connected (${socket.id})`);
+      const userName = socket.user?.name || 'Anonymous';
+      const userId = socket.userId || 'guest';
       
-      // Store connected user
-      this.connectedUsers.set(socket.userId, {
-        socketId: socket.id,
-        user: socket.user,
-        connectedAt: new Date()
-      });
+      console.log(`User ${userName} connected (${socket.id})`);
+      
+      // Store connected user (only if authenticated)
+      if (socket.userId && socket.user) {
+        this.connectedUsers.set(socket.userId, {
+          socketId: socket.id,
+          user: socket.user,
+          connectedAt: new Date()
+        });
+      }
 
       // Handle account subscription
       socket.on('subscribe_account', (accountId) => {
         socket.join(`account_${accountId}`);
-        console.log(`User ${socket.user.name} subscribed to account ${accountId}`);
+        console.log(`User ${userName} subscribed to account ${accountId}`);
       });
 
       // Handle account unsubscription
       socket.on('unsubscribe_account', (accountId) => {
         socket.leave(`account_${accountId}`);
-        console.log(`User ${socket.user.name} unsubscribed from account ${accountId}`);
+        console.log(`User ${userName} unsubscribed from account ${accountId}`);
       });
 
       // Handle financial module subscription
       socket.on('subscribe_financial', () => {
         socket.join('financial_updates');
-        console.log(`User ${socket.user.name} subscribed to financial updates`);
+        console.log(`User ${userName} subscribed to financial updates`);
       });
 
       // Handle disconnection
       socket.on('disconnect', () => {
-        console.log(`User ${socket.user.name} disconnected (${socket.id})`);
-        this.connectedUsers.delete(socket.userId);
+        console.log(`User ${userName} disconnected (${socket.id})`);
+        if (socket.userId) {
+          this.connectedUsers.delete(socket.userId);
+        }
       });
 
       // Handle ping for connection health

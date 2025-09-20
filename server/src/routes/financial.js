@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken, requireRole } from '../middleware/auth.js';
+import { authenticateToken, requireRole, requireAccountingAccess } from '../middleware/auth.js';
 import { v4 as uuidv4 } from 'uuid';
 import models, { sequelize } from '../models/index.js';
 import { ensureOperationalSubAccounts } from '../utils/ensureDefaultAccounts.js';
@@ -4408,9 +4408,10 @@ router.get('/vouchers/payments', authenticateToken, requireTreasuryAccess, async
     const payments = await Payment.findAndCountAll({
       where: whereClause,
       include: [
-        { model: Account, as: 'account', attributes: ['id', 'code', 'name'] },
-        { model: Customer, as: 'customer', attributes: ['id', 'name'], required: false },
-        { model: User, as: 'creator', attributes: ['id', 'name'], required: false }
+        { model: Account, as: 'account', attributes: ['id', 'code', 'name'], required: false },
+        { model: Customer, as: 'customer', attributes: ['id', 'name'], required: false }
+        // Temporarily removed User association to fix production error
+        // { model: User, as: 'creator', attributes: ['id', 'name'], required: false }
       ],
       limit: parseInt(limit),
       offset: parseInt(offset),

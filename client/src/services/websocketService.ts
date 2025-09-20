@@ -60,10 +60,22 @@ class WebSocketService {
   connect(token: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const serverUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 
-                         (window.location.protocol === 'https:' ? 
-                          `wss://${window.location.host}` : 
-                          'http://localhost:5001');
+        // Smart URL resolution for different environments
+        let serverUrl: string;
+        
+        if (import.meta.env.VITE_API_URL) {
+          // Use configured API URL, replace /api with empty for WebSocket
+          serverUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+        } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          // Development environment
+          serverUrl = 'http://localhost:5001';
+        } else {
+          // Production environment - use current domain with correct protocol
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          serverUrl = `${protocol}//${window.location.host}`;
+        }
+        
+        console.log('🔌 Connecting to WebSocket server:', serverUrl);
         
         this.socket = io(serverUrl, {
           auth: {
@@ -71,7 +83,8 @@ class WebSocketService {
           },
           transports: ['websocket', 'polling'],
           timeout: 10000,
-          forceNew: true
+          forceNew: true,
+          autoConnect: true
         });
 
         this.setupEventListeners();

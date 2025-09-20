@@ -3330,10 +3330,16 @@ router.post('/sales-invoices/:id/payment', authenticateToken, requireSalesAccess
 
 
     res.json({
-      message: '\u062a\u0645 \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u0641\u0639 \u0648\u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0642\u064a\u062f \u0627\u0644\u0645\u062d\u0627\u0633\u0628\u064a \u0628\u0646\u062c\u0627\u062d',
+      message: 'تم تسجيل الدفع وإنشاء القيد المحاسبي بنجاح',
       invoice: updatedInvoice,
       payment: result.payment
     });
+
+  } catch (error) {
+    console.error('Error recording payment for sales invoice:', error);
+    res.status(500).json({ message: 'خطأ في تسجيل الدفع' });
+  }
+});
 
 // ==================== SALES REPORTS ROUTES ====================
 
@@ -3454,14 +3460,6 @@ router.get('/reports', authenticateToken, requireSalesAccess, async (req, res) =
     console.error('Error generating sales reports:', error);
     res.status(500).json({ message: 'خطأ في إنشاء تقرير المبيعات' });
   }
-});
-
-
-  } catch (error) {
-    console.error('Error recording payment for sales invoice:', error);
-    res.status(500).json({ message: 'خطأ في تسجيل الدفع' });
-  }
-
 });
 
 // ==================== SALES RETURNS ENDPOINTS ====================
