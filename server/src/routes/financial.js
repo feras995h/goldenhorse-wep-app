@@ -5464,11 +5464,16 @@ router.get('/fixed-assets', authenticateToken, requireFinancialAccess, async (re
 // GET /api/financial/fixed-assets/categories - Get fixed asset categories from chart of accounts
 router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess, async (req, res) => {
   try {
+    console.log('🔍 Fetching fixed asset categories...');
+    
     // Ensure Fixed Assets parent and default categories (Vehicles, Equipment & Machinery, Furniture)
+    console.log('🔧 Ensuring fixed assets structure...');
     const { fixedAssetsParent } = await ensureFixedAssetsStructure();
+    console.log('✅ Fixed assets structure ensured, parent:', fixedAssetsParent?.name, fixedAssetsParent?.code);
 
     // Return direct children under Fixed Assets parent that are asset accounts
     // These are the categories that can be used for fixed assets
+    console.log('🔍 Finding categories under parent ID:', fixedAssetsParent?.id);
     const categories = await Account.findAll({
       where: {
         parentId: fixedAssetsParent.id,
@@ -5479,7 +5484,7 @@ router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess
       order: [['code', 'ASC']]
     });
 
-    console.log(`Found ${categories.length} fixed asset categories (under Fixed Assets)`);
+    console.log(`✅ Found ${categories.length} fixed asset categories (under Fixed Assets)`);
     // Return consistent response format with data property
     res.json({
       success: true,
@@ -5487,7 +5492,12 @@ router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess
       total: categories.length
     });
   } catch (error) {
-    console.error('Error fetching fixed asset categories:', error);
+    console.error('❌ Error fetching fixed asset categories:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     res.status(500).json({ 
       success: false,
       message: 'خطأ في جلب فئات الأصول الثابتة',

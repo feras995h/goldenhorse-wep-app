@@ -392,7 +392,10 @@ export const formatCurrency = (amount) => {
  * and ensures leaf categories: سيارات, معدات وآلات, أثاث
  */
 export const ensureFixedAssetsStructure = async (transaction = null) => {
+  console.log('🔧 ensureFixedAssetsStructure: Starting...');
+  
   // 1) Find or create Fixed Assets parent (code '1.2' or by name)
+  console.log('🔍 Looking for Fixed Assets parent account...');
   let fixedAssetsParent = await Account.findOne({
     where: {
       [Op.or]: [
@@ -403,17 +406,23 @@ export const ensureFixedAssetsStructure = async (transaction = null) => {
       type: 'asset'
     }
   });
+  
+  console.log('🔍 Fixed Assets parent search result:', fixedAssetsParent?.name, fixedAssetsParent?.code);
 
   // If not found, try to locate main Assets root '1'
   if (!fixedAssetsParent) {
+    console.log('❌ Fixed Assets parent not found, looking for main Assets root...');
     const assetsRoot = await Account.findOne({
       where: {
         code: '1',
         type: 'asset'
       }
     });
+    
+    console.log('🔍 Assets root search result:', assetsRoot?.name, assetsRoot?.code);
 
     if (assetsRoot) {
+      console.log('✅ Found assets root, creating Fixed Assets parent under it...');
       // Create Fixed Assets parent under assets root
       fixedAssetsParent = await Account.create({
         code: '1.2',
@@ -433,7 +442,9 @@ export const ensureFixedAssetsStructure = async (transaction = null) => {
         description: 'مجموعة الأصول الثابتة',
         isSystemAccount: true
       }, { transaction });
+      console.log('✅ Created Fixed Assets parent under assets root:', fixedAssetsParent.name, fixedAssetsParent.code);
     } else {
+      console.log('❌ Assets root not found, creating Fixed Assets as top-level...');
       // As a last resort, create Fixed Assets as a top-level asset group with code '1.2'
       fixedAssetsParent = await Account.create({
         code: '1.2',
@@ -453,11 +464,15 @@ export const ensureFixedAssetsStructure = async (transaction = null) => {
         description: 'مجموعة الأصول الثابتة',
         isSystemAccount: true
       }, { transaction });
+      console.log('✅ Created Fixed Assets as top-level:', fixedAssetsParent.name, fixedAssetsParent.code);
     }
+  } else {
+    console.log('✅ Found existing Fixed Assets parent:', fixedAssetsParent.name, fixedAssetsParent.code);
   }
 
   // Helper to create/find a category by name and suggested code
   const ensureCategory = async (arabicName, englishName, suggestedCodeSuffix) => {
+    console.log(`🔍 Ensuring category: ${arabicName} (${englishName})`);
     // Find existing by name under parent
     let cat = await Account.findOne({
       where: {
@@ -469,14 +484,19 @@ export const ensureFixedAssetsStructure = async (transaction = null) => {
       }
     });
 
-    if (cat) return cat;
+    if (cat) {
+      console.log(`✅ Found existing category: ${cat.name} (${cat.code})`);
+      return cat;
+    }
 
     // Determine code
     const suggestedCode = `${fixedAssetsParent.code}.${suggestedCodeSuffix}`;
+    console.log(`🔧 Suggested code for ${arabicName}: ${suggestedCode}`);
     // If suggested code taken, pick next available integer suffix
     let codeToUse = suggestedCode;
     const existingSameCode = await Account.findOne({ where: { code: codeToUse } });
     if (existingSameCode) {
+      console.log(`❌ Suggested code ${suggestedCode} already taken, finding next available...`);
       // Find max numeric suffix
       const siblings = await Account.findAll({
         where: {
@@ -492,8 +512,10 @@ export const ensureFixedAssetsStructure = async (transaction = null) => {
         if (!isNaN(last) && last > maxSuffix) maxSuffix = last;
       });
       codeToUse = `${fixedAssetsParent.code}.${maxSuffix + 1}`;
+      console.log(`🔧 Using code: ${codeToUse}`);
     }
 
+    console.log(`➕ Creating new category: ${arabicName} with code ${codeToUse}`);
     return await Account.create({
       code: codeToUse,
       name: arabicName,
@@ -514,10 +536,12 @@ export const ensureFixedAssetsStructure = async (transaction = null) => {
     }, { transaction });
   };
 
+  console.log('🔧 Ensuring default categories...');
   const vehicles = await ensureCategory('سيارات', 'Vehicles', '1');
   const equipment = await ensureCategory('معدات وآلات', 'Equipment and Machinery', '2');
   const furniture = await ensureCategory('أثاث', 'Furniture', '3');
-
+  
+  console.log('✅ All categories ensured');
   return { fixedAssetsParent, vehicles, equipment, furniture };
 };
 
