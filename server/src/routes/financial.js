@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticateToken, requireRole, requireAccountingAccess } from '../middleware/auth.js';
 import { v4 as uuidv4 } from 'uuid';
 import models, { sequelize } from '../models/index.js';
+import { Op } from 'sequelize';
 import { ensureOperationalSubAccounts } from '../utils/ensureDefaultAccounts.js';
 import { validateFixedAsset, handleValidationErrors } from '../middleware/validation.js';
 import FinancialReportsController from '../controllers/financialReportsController.js';
