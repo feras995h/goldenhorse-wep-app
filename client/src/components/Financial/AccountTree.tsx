@@ -112,7 +112,10 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
             onAccountSelect ? 'hover:bg-golden-100' : ''
           }`}
           onClick={() => onAccountSelect?.(node.account)}
-          style={{ marginRight: `${isChild ? 20 : 0}px` }}
+          style={{
+            paddingRight: `${isChild ? (node.level * 20) : 0}px`,
+            borderRight: isChild ? '2px solid #f3f4f6' : 'none'
+          }}
         >
           {hasChildren ? (
             <button 
@@ -120,7 +123,7 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
                 e.stopPropagation();
                 toggleNode(node.account.id);
               }}
-              className="mr-2 text-gray-500 hover:text-gray-700"
+              className="mr-2 text-gray-500 hover:text-gray-700 flex-shrink-0"
             >
               {isExpanded ? (
                 <ChevronDown className="h-4 w-4" />
@@ -129,12 +132,12 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
               )}
             </button>
           ) : (
-            <div className="w-6 mr-2" /> // Spacer for alignment
+            <div className="w-6 mr-2 flex-shrink-0" /> // Spacer for alignment
           )}
           
-          <div className="flex-1 flex items-center">
+          <div className="flex-1 flex items-center min-w-0">
             {/* Account Icon */}
-            <div className="mr-2">
+            <div className="mr-2 flex-shrink-0">
               {hasChildren ? (
                 <Folder className={`h-4 w-4 ${getAccountTypeColor(node.account.type)}`} />
               ) : (
@@ -168,7 +171,7 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
                 </span>
                 {node.account.parentId && (
                   <span className="text-xs text-gray-500 whitespace-nowrap">
-                    حساب فرعي
+                    حساب فرعي - مستوى {node.level}
                   </span>
                 )}
                 {hasChildren && (
@@ -181,7 +184,7 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
           </div>
 
           {/* Balance */}
-          <div className="text-gray-500 text-sm text-left flex-shrink-0 min-w-0">
+          <div className="text-gray-500 text-sm text-left flex-shrink-0 min-w-0 ml-2">
             <div className="font-medium text-xs sm:text-sm truncate">
               {node.account.balance?.toLocaleString()} {node.account.currency}
             </div>
@@ -193,7 +196,7 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
         
         {/* Render children if expanded */}
         {hasChildren && isExpanded && (
-          <div className="mt-1">
+          <div className="mt-1 border-r-2 border-gray-100 mr-4">
             {node.children.map(child => renderTreeNode(child, true))}
           </div>
         )}
