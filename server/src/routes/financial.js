@@ -8210,43 +8210,132 @@ router.get('/vouchers/receipts', authenticateToken, requireTreasuryAccess, async
     const { page = 1, limit = 50, search, accountId, partyType, partyId, startDate, endDate } = req.query;
     const offset = (page - 1) * limit;
 
-    let whereClause = {};
+    // Build WHERE conditions for SQL query
+    let whereConditions = ['r."isActive" = true'];
+    let queryParams = [];
+    let paramIndex = 1;
 
     if (search) {
-      whereClause[Op.or] = [
-        { receiptNo: { [Op.like]: `%${search}%` } },
-        { remarks: { [Op.like]: `%${search}%` } }
-      ];
+      whereConditions.push(`(r."receiptNo" ILIKE $${paramIndex} OR r.remarks ILIKE $${paramIndex + 1})`);
+      queryParams.push(`%${search}%`, `%${search}%`);
+      paramIndex += 2;
     }
 
-    if (accountId) whereClause.accountId = accountId;
-    if (partyType) whereClause.partyType = partyType;
-    if (partyId) whereClause.partyId = partyId;
+    if (accountId) {
+      whereConditions.push(`r."accountId" = $${paramIndex}`);
+      queryParams.push(accountId);
+      paramIndex++;
+    }
+
+    if (partyType) {
+      whereConditions.push(`r."partyType" = $${paramIndex}`);
+      queryParams.push(partyType);
+      paramIndex++;
+    }
+
+    if (partyId) {
+      whereConditions.push(`r."partyId" = $${paramIndex}`);
+      queryParams.push(partyId);
+      paramIndex++;
+    }
 
     if (startDate && endDate) {
-      whereClause.receiptDate = {
-        [Op.between]: [startDate, endDate]
-      };
+      whereConditions.push(`r."receiptDate" BETWEEN $${paramIndex} AND $${paramIndex + 1}`);
+      queryParams.push(startDate, endDate);
+      paramIndex += 2;
     }
 
-    const receipts = await Receipt.findAndCountAll({
-      where: whereClause,
-      include: [
-        { model: Account, as: 'account', attributes: ['id', 'code', 'name'] },
-        { model: Supplier, as: 'supplier', attributes: ['id', 'name'], required: false },
-        { model: User, as: 'creator', attributes: ['id', 'name'], required: false }
-      ],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: [['receiptDate', 'DESC']]
+    const whereClause = whereConditions.join(' AND ');
+
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as count
+      FROM receipts r
+      WHERE ${whereClause}
+    `;
+
+    const countResult = await sequelize.query(countQuery, {
+      bind: queryParams,
+      type: sequelize.QueryTypes.SELECT
     });
+
+    const total = parseInt(countResult[0].count);
+
+    // Get paginated data
+    const dataQuery = `
+      SELECT
+        r.id,
+        r."receiptNo",
+        r."receiptDate",
+        r.amount,
+        r.status,
+        r."paymentMethod",
+        r.remarks,
+        r."partyType",
+        r."partyId",
+        r."createdAt",
+        r."updatedAt",
+        a.id as "account_id",
+        a.code as "account_code",
+        a.name as "account_name",
+        s.id as "supplier_id",
+        s.name as "supplier_name",
+        s.code as "supplier_code",
+        u.id as "creator_id",
+        u.name as "creator_name",
+        u.username as "creator_username"
+      FROM receipts r
+      LEFT JOIN accounts a ON r."accountId" = a.id
+      LEFT JOIN suppliers s ON r."supplierId" = s.id
+      LEFT JOIN users u ON r."createdBy" = u.id
+      WHERE ${whereClause}
+      ORDER BY r."receiptDate" DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    queryParams.push(parseInt(limit), parseInt(offset));
+
+    const receipts = await sequelize.query(dataQuery, {
+      bind: queryParams,
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    // Format the response to match expected structure
+    const formattedReceipts = receipts.map(receipt => ({
+      id: receipt.id,
+      receiptNo: receipt.receiptNo,
+      receiptDate: receipt.receiptDate,
+      amount: receipt.amount,
+      status: receipt.status,
+      paymentMethod: receipt.paymentMethod,
+      remarks: receipt.remarks,
+      partyType: receipt.partyType,
+      partyId: receipt.partyId,
+      createdAt: receipt.createdAt,
+      updatedAt: receipt.updatedAt,
+      account: receipt.account_id ? {
+        id: receipt.account_id,
+        code: receipt.account_code,
+        name: receipt.account_name
+      } : null,
+      supplier: receipt.supplier_id ? {
+        id: receipt.supplier_id,
+        name: receipt.supplier_name,
+        code: receipt.supplier_code
+      } : null,
+      creator: receipt.creator_id ? {
+        id: receipt.creator_id,
+        name: receipt.creator_name,
+        username: receipt.creator_username
+      } : null
+    }));
 
     res.json({
       success: true,
-      data: receipts.rows,
-      total: receipts.count,
+      data: formattedReceipts,
+      total: total,
       page: parseInt(page),
-      totalPages: Math.ceil(receipts.count / limit)
+      totalPages: Math.ceil(total / limit)
     });
   } catch (error) {
     console.error('Error fetching receipt vouchers:', error);
@@ -8446,44 +8535,141 @@ router.get('/vouchers/payments', authenticateToken, requireTreasuryAccess, async
     const { page = 1, limit = 50, search, accountId, partyType, partyId, startDate, endDate } = req.query;
     const offset = (page - 1) * limit;
 
-    let whereClause = {};
+    // Build WHERE conditions for SQL query
+    let whereConditions = ['p."isActive" = true'];
+    let queryParams = [];
+    let paramIndex = 1;
 
     if (search) {
-      whereClause[Op.or] = [
-        { paymentNumber: { [Op.like]: `%${search}%` } },
-        { notes: { [Op.like]: `%${search}%` } }
-      ];
+      whereConditions.push(`(p."paymentNumber" ILIKE $${paramIndex} OR p.notes ILIKE $${paramIndex + 1})`);
+      queryParams.push(`%${search}%`, `%${search}%`);
+      paramIndex += 2;
     }
 
-    if (accountId) whereClause.accountId = accountId;
-    if (partyType) whereClause.partyType = partyType;
-    if (partyId) whereClause.partyId = partyId;
+    if (accountId) {
+      whereConditions.push(`p."accountId" = $${paramIndex}`);
+      queryParams.push(accountId);
+      paramIndex++;
+    }
+
+    if (partyType) {
+      whereConditions.push(`p."partyType" = $${paramIndex}`);
+      queryParams.push(partyType);
+      paramIndex++;
+    }
+
+    if (partyId) {
+      whereConditions.push(`p."partyId" = $${paramIndex}`);
+      queryParams.push(partyId);
+      paramIndex++;
+    }
 
     if (startDate && endDate) {
-      whereClause.date = {
-        [Op.between]: [startDate, endDate]
-      };
+      whereConditions.push(`p.date BETWEEN $${paramIndex} AND $${paramIndex + 1}`);
+      queryParams.push(startDate, endDate);
+      paramIndex += 2;
     }
 
-    const payments = await Payment.findAndCountAll({
-      where: whereClause,
-      include: [
-        { model: Account, as: 'account', attributes: ['id', 'code', 'name'], required: false },
-        { model: Customer, as: 'customer', attributes: ['id', 'name'], required: false }
-        // Temporarily removed User association to fix production error
-        // { model: User, as: 'creator', attributes: ['id', 'name'], required: false }
-      ],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: [['date', 'DESC']]
+    const whereClause = whereConditions.join(' AND ');
+
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as count
+      FROM payments p
+      WHERE ${whereClause}
+    `;
+
+    const countResult = await sequelize.query(countQuery, {
+      bind: queryParams,
+      type: sequelize.QueryTypes.SELECT
     });
+
+    const total = parseInt(countResult[0].count);
+
+    // Get paginated data
+    const dataQuery = `
+      SELECT
+        p.id,
+        p."paymentNumber",
+        p.date,
+        p.amount,
+        p.status,
+        p."paymentMethod",
+        p.notes,
+        p."partyType",
+        p."partyId",
+        p."createdAt",
+        p."updatedAt",
+        a.id as "account_id",
+        a.code as "account_code",
+        a.name as "account_name",
+        c.id as "customer_id",
+        c.name as "customer_name",
+        c.code as "customer_code",
+        s.id as "supplier_id",
+        s.name as "supplier_name",
+        s.code as "supplier_code",
+        u.id as "creator_id",
+        u.name as "creator_name",
+        u.username as "creator_username"
+      FROM payments p
+      LEFT JOIN accounts a ON p."accountId" = a.id
+      LEFT JOIN customers c ON p."customerId" = c.id
+      LEFT JOIN suppliers s ON p."supplierId" = s.id
+      LEFT JOIN users u ON p."createdBy" = u.id
+      WHERE ${whereClause}
+      ORDER BY p.date DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    queryParams.push(parseInt(limit), parseInt(offset));
+
+    const payments = await sequelize.query(dataQuery, {
+      bind: queryParams,
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    // Format the response to match expected structure
+    const formattedPayments = payments.map(payment => ({
+      id: payment.id,
+      paymentNumber: payment.paymentNumber,
+      date: payment.date,
+      amount: payment.amount,
+      status: payment.status,
+      paymentMethod: payment.paymentMethod,
+      notes: payment.notes,
+      partyType: payment.partyType,
+      partyId: payment.partyId,
+      createdAt: payment.createdAt,
+      updatedAt: payment.updatedAt,
+      account: payment.account_id ? {
+        id: payment.account_id,
+        code: payment.account_code,
+        name: payment.account_name
+      } : null,
+      customer: payment.customer_id ? {
+        id: payment.customer_id,
+        name: payment.customer_name,
+        code: payment.customer_code
+      } : null,
+      supplier: payment.supplier_id ? {
+        id: payment.supplier_id,
+        name: payment.supplier_name,
+        code: payment.supplier_code
+      } : null,
+      creator: payment.creator_id ? {
+        id: payment.creator_id,
+        name: payment.creator_name,
+        username: payment.creator_username
+      } : null
+    }));
 
     res.json({
       success: true,
-      data: payments.rows,
-      total: payments.count,
+      data: formattedPayments,
+      total: total,
       page: parseInt(page),
-      totalPages: Math.ceil(payments.count / limit)
+      totalPages: Math.ceil(total / limit)
     });
   } catch (error) {
     console.error('Error fetching payment vouchers:', error);
