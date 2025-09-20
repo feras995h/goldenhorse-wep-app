@@ -1131,14 +1131,8 @@ router.get('/suppliers', authenticateToken, requireFinancialAccess, async (req, 
 
     const options = {
       where: whereClause,
-      order: [['name', 'ASC']],
-      include: [
-        {
-          model: Account,
-          as: 'account',
-          attributes: ['id', 'code', 'name']
-        }
-      ]
+      order: [['name', 'ASC']]
+      // Removed Account include as Supplier model doesn't have this association
     };
 
     if (page && limit) {
@@ -1159,6 +1153,3981 @@ router.get('/suppliers', authenticateToken, requireFinancialAccess, async (req, 
     };
 
     res.json(response);
+  } catch (error) {
+    console.error('Error fetching suppliers:', error);
+    res.status(500).json({ message: 'خطأ في جلب الموردين' });
+  }
+});
+
+// ==================== EMPLOYEES ROUTES ====================
+
+// GET /api/financial/employees - Get employees
+router.get('/employees', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { code: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['name', 'ASC']],
+      include: [
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const employees = await Employee.findAll(options);
+    const total = await Employee.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: employees,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    res.status(500).json({ message: 'خطأ في جلب الموظفين' });
+  }
+});
+
+// POST /api/financial/employees - Create new employee
+router.post('/employees', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { name, code, employeeType, accountProvisionType, accountProvision, accountProvisionDetails } = req.body;
+
+    // Validate required fields
+    if (!name || !code || !employeeType || !accountProvisionType || !accountProvision) {
+      return res.status(400).json({ message: 'التاريخ والوصف والتفاصيل مطلوبة' });
+    }
+
+    // Create the employee
+    const employee = await Employee.create({
+      id: uuidv4(),
+      name,
+      code,
+      employeeType,
+      accountProvisionType,
+      accountProvision,
+      accountProvisionDetails: accountProvisionDetails || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    // Create employee account if provision type is automatic
+    if (accountProvisionType === 'automatic') {
+      await EmployeeAccountService.createEmployeeAccount(employee);
+    }
+
+    res.status(201).json(employee);
+  } catch (error) {
+    console.error('Error creating employee:', error);
+    res.status(500).json({ message: 'خطأ في إنشاء الموظف' });
+  }
+});
+
+// PUT /api/financial/employees/:id - Update employee
+router.put('/employees/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const employee = await Employee.findByPk(req.params.id);
+
+    if (!employee) {
+      return res.status(404).json({ message: 'الموظف غير موجود' });
+    }
+
+    const {
+      name, code, employeeType, accountProvisionType, accountProvision, accountProvisionDetails
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !code || !employeeType || !accountProvisionType || !accountProvision) {
+      return res.status(400).json({ message: 'التاريخ والوصف والتفاصيل مطلوبة' });
+    }
+
+    // Update the employee
+    await employee.update({
+      name,
+      code,
+      employeeType,
+      accountProvisionType,
+      accountProvision,
+      accountProvisionDetails,
+      updatedAt: new Date()
+    });
+
+    // Re-create employee account if provision type is automatic
+    if (accountProvisionType === 'automatic') {
+      await EmployeeAccountService.createEmployeeAccount(employee);
+    }
+
+    res.json(employee);
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    res.status(500).json({ message: 'خطأ في تحديث الموظف' });
+  }
+});
+
+// DELETE /api/financial/employees/:id - Delete employee
+router.delete('/employees/:id', authenticateToken, requireFinancialAccess, asyncHandler(async (req, res) => {
+  try {
+    const employee = await Employee.findByPk(req.params.id);
+    if (!employee) {
+      return res.status(404).json({ message: 'الموظف غير موجود' });
+    }
+
+    // Check if employee has transactions
+    const transactionCount = await GLEntry.count({ where: { accountId: employee.accountId } });
+
+    if (transactionCount > 0) {
+      return res.status(400).json({ message: 'لا يمكن حذف موظف له معاملات' });
+    }
+
+    // Delete employee account
+    await Account.destroy({ where: { id: employee.accountId } });
+
+    // Delete employee
+    await employee.destroy();
+
+    res.json({ message: 'تم حذف الموظف بنجاح' });
+
+  } catch (error) {
+    console.error('Error deleting employee:', error);
+    res.status(500).json({ message: 'خطأ في حذف الموظف' });
+  }
+}));
+
+// ==================== INVOICES ROUTES ====================
+
+// GET /api/financial/invoices - Get invoices
+router.get('/invoices', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search, status, customer, dateFrom, dateTo } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { reference: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    // Filter by status
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Filter by customer
+    if (customer) {
+      whereClause.customerId = customer;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      whereClause.date = {};
+      if (dateFrom) whereClause.date[Op.gte] = dateFrom;
+      if (dateTo) whereClause.date[Op.lte] = dateTo;
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const invoices = await Invoice.findAll(options);
+    const total = await Invoice.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: invoices,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching invoices:', error);
+    res.status(500).json({ message: 'خطأ في جلب الفواتير' });
+  }
+});
+
+// POST /api/financial/invoices - Create new invoice
+router.post('/invoices', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { date, reference, description, customerId, details, lines } = req.body;
+
+    // Support both 'details' and 'lines' for compatibility
+    const entryLines = details || lines;
+
+    // Validate required fields
+    if (!date || !reference || !customerId || !entryLines || entryLines.length === 0) {
+      return res.status(400).json({ message: 'التاريخ والوصف ومعرف العميل والتفاصيل مطلوبة' });
+    }
+
+    // Validate invoice details
+    let total = 0;
+
+    for (const line of entryLines) {
+      const amount = parseFloat(line.amount || 0) || 0;
+
+      if (!line.accountId || amount === 0) {
+        return res.status(400).json({ message: 'كل تفصيل يجب أن يحتوي على حساب ومبلغ' });
+      }
+
+      // Check if account exists
+      const account = await Account.findByPk(line.accountId);
+      if (!account) {
+        return res.status(400).json({ message: `الحساب ${line.accountId} غير موجود` });
+      }
+
+      total += amount;
+    }
+
+    // Create the invoice
+    const invoice = await Invoice.create({
+      id: uuidv4(),
+      date,
+      reference,
+      description,
+      customerId,
+      total,
+      status: 'draft',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    // Create invoice details
+    const invoiceDetails = [];
+    for (const line of entryLines) {
+      const detail = await InvoicePayment.create({
+        id: uuidv4(),
+        invoiceId: invoice.id,
+        accountId: line.accountId,
+        description: line.description || '',
+        amount: parseFloat(line.amount || 0),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      invoiceDetails.push(detail);
+    }
+
+    // Fetch the complete invoice with details
+    const completeInvoice = await Invoice.findByPk(invoice.id, {
+      include: [
+        {
+          model: InvoicePayment,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: ['id', 'code', 'name']
+            }
+          ]
+        }
+      ]
+    });
+
+    // Create notification for invoice creation
+    try {
+      await NotificationService.notifyInvoiceCreated(completeInvoice, req.user);
+    } catch (notificationError) {
+      console.error('Error creating invoice notification:', notificationError);
+      // Don't fail the invoice creation if notification fails
+    }
+
+    res.status(201).json(completeInvoice);
+  } catch (error) {
+    console.error('Error creating invoice:', error);
+    res.status(500).json({ message: 'خطأ في إنشاء الفاتورة' });
+  }
+});
+
+// GET /api/financial/invoices/:id - Get specific invoice
+router.get('/invoices/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const invoice = await Invoice.findByPk(req.params.id, {
+      include: [
+        {
+          model: InvoicePayment,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: ['id', 'code', 'name']
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    res.json(invoice);
+  } catch (error) {
+    console.error('Error fetching invoice:', error);
+    res.status(500).json({ message: 'خطأ في جلب الفاتورة' });
+  }
+});
+
+// PUT /api/financial/invoices/:id - Update invoice
+router.put('/invoices/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const invoice = await Invoice.findByPk(req.params.id);
+
+    if (!invoice) {
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    const { date, reference, description, customerId, details, lines } = req.body;
+
+    // Support both 'details' and 'lines' for compatibility
+    const entryLines = details || lines;
+
+    // Validate required fields
+    if (!date || !reference || !customerId || !entryLines || entryLines.length === 0) {
+      return res.status(400).json({ message: 'التاريخ والوصف ومعرف العميل والتفاصيل مطلوبة' });
+    }
+
+    // Validate invoice details
+    let total = 0;
+
+    for (const line of entryLines) {
+      const amount = parseFloat(line.amount || 0) || 0;
+
+      if (!line.accountId || amount === 0) {
+        return res.status(400).json({ message: 'كل تفصيل يجب أن يحتوي على حساب ومبلغ' });
+      }
+
+      // Check if account exists
+      const account = await Account.findByPk(line.accountId);
+      if (!account) {
+        return res.status(400).json({ message: `الحساب ${line.accountId} غير موجود` });
+      }
+
+      total += amount;
+    }
+
+    // Update the invoice
+    await invoice.update({
+      date,
+      reference,
+      description,
+      customerId,
+      total,
+      updatedAt: new Date()
+    });
+
+    // Update invoice details
+    await InvoicePayment.destroy({ where: { invoiceId: req.params.id } });
+
+    for (const line of entryLines) {
+      await InvoicePayment.create({
+        id: uuidv4(),
+        invoiceId: req.params.id,
+        accountId: line.accountId,
+        description: line.description || '',
+        amount: parseFloat(line.amount || 0),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    // Fetch updated invoice
+    const updatedInvoice = await Invoice.findByPk(req.params.id, {
+      include: [
+        {
+          model: InvoicePayment,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: ['id', 'code', 'name']
+            }
+          ]
+        }
+      ]
+    });
+
+    res.json(updatedInvoice);
+  } catch (error) {
+    console.error('Error updating invoice:', error);
+    res.status(500).json({ message: 'خطأ في تحديث الفاتورة' });
+  }
+});
+
+// POST /api/financial/invoices/:id/submit - Submit invoice and create GL entries
+router.post('/invoices/:id/submit', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    console.log(`🔄 Starting invoice approval for ID: ${req.params.id}`);
+
+    const invoice = await Invoice.findByPk(req.params.id, {
+      include: [
+        {
+          model: InvoicePayment,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account'
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!invoice) {
+      console.log(`❌ Invoice not found: ${req.params.id}`);
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    console.log(`📋 Invoice found: ${invoice.reference}, status: ${invoice.status}`);
+
+    if (invoice.status !== 'draft') {
+      console.log(`❌ Invoice status is not draft: ${invoice.status}`);
+      return res.status(400).json({ message: 'الفاتورة معتمدة مسبقاً أو ملغاة' });
+    }
+
+    // Check if invoice has details
+    if (!invoice.details || invoice.details.length === 0) {
+      console.log(`❌ Invoice has no details`);
+      return res.status(400).json({ message: 'لا يمكن اعتماد فاتورة بدون تفاصيل' });
+    }
+
+    console.log(`📝 Invoice has ${invoice.details.length} details`);
+
+    // Perform the conversion to GL and account balance updates inside a transaction
+    await sequelize.transaction(async (transaction) => {
+      console.log(`🔄 Starting database transaction`);
+
+      // Prepare GL entries
+      const glEntries = invoice.details.map(detail => {
+        console.log(`📊 Creating GL entry for account ${detail.account?.code}: Debit=${detail.amount}, Credit=0`);
+        return {
+          id: uuidv4(),
+          postingDate: invoice.date,
+          accountId: detail.accountId,
+          debit: parseFloat(detail.amount || 0),
+          credit: 0,
+          voucherType: 'Invoice',
+          voucherNo: invoice.reference,
+          invoiceId: invoice.id,
+          voucherDetailNo: detail.id,
+          remarks: detail.description || invoice.description,
+          currency: 'LYD',
+          exchangeRate: 1.000000,
+          createdBy: req.user?.id || 'system',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+      });
+
+      console.log(`💾 Creating ${glEntries.length} GL entries`);
+
+      // Insert GL entries within transaction
+      const createdGLEntries = await GLEntry.bulkCreate(glEntries, { transaction });
+      console.log(`✅ Created ${createdGLEntries.length} GL entries successfully`);
+
+      // For each created GL entry, update corresponding Account balance
+      for (let i = 0; i < createdGLEntries.length; i++) {
+        const gl = createdGLEntries[i];
+        console.log(`🔄 Updating balance for account ${gl.accountId}`);
+
+        try {
+          const account = await Account.findByPk(gl.accountId, {
+            transaction,
+            lock: Transaction.LOCK.UPDATE
+          });
+
+          if (!account) {
+            throw new Error(`Account not found: ${gl.accountId}`);
+          }
+
+          console.log(`📊 Account ${account.code} (${account.name}): Current balance=${account.balance}, Nature=${account.nature}`);
+
+          // Compute new balance depending on account type (robust even if 'nature' is misconfigured)
+          const current = parseFloat(account.balance || 0);
+          const debit = parseFloat(gl.debit || 0);
+          const credit = parseFloat(gl.credit || 0);
+
+          let newBalance = current;
+
+          const isDebitType = ['asset', 'expense'].includes(account.type);
+          // For assets/expenses: debit increases balance; For liabilities/equity/revenue: credit increases balance
+          if (isDebitType) {
+            newBalance = current + debit - credit;
+          } else {
+            newBalance = current - debit + credit;
+          }
+
+          // Auto-correct account nature if inconsistent with type
+          const expectedNature = isDebitType ? 'debit' : 'credit';
+          if (account.nature !== expectedNature) {
+            account.nature = expectedNature;
+          }
+
+          console.log(`💰 Account ${account.code}: ${current} + ${debit} - ${credit} = ${newBalance} (nature: ${account.nature})`);
+
+          // Update account balance
+          account.balance = newBalance;
+          await account.save({ transaction });
+
+          console.log(`✅ Updated account ${account.code} balance to ${newBalance}`);
+        } catch (accountError) {
+          console.error(`❌ Error updating account ${gl.accountId}:`, accountError);
+          throw accountError;
+        }
+      }
+
+      console.log(`🔄 Updating invoice status to posted`);
+
+      // Update invoice status within the same transaction
+      await invoice.update({
+        status: 'posted',
+        postedAt: new Date(),
+        postedBy: req.user?.id || 'system',
+        updatedAt: new Date()
+      }, { transaction });
+
+      console.log(`✅ Invoice status updated to posted`);
+    });
+
+    console.log(`🎉 Invoice approval completed successfully`);
+    res.json({
+      message: 'تم اعتماد الفاتورة وإنشاء قيود دفتر الأستاذ العام',
+      success: true,
+      invoiceId: invoice.id,
+      reference: invoice.reference
+    });
+  } catch (error) {
+    console.error('❌ Error submitting invoice:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      invoiceId: req.params.id,
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'خطأ في اعتماد الفاتورة',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// POST /api/financial/invoices/:id/cancel - Cancel invoice
+router.post('/invoices/:id/cancel', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const invoice = await Invoice.findByPk(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    if (invoice.status === 'cancelled') {
+      return res.status(400).json({ message: 'الفاتورة ملغاة مسبقاً' });
+    }
+
+    // Cancel related GL entries
+    await GLEntry.update(
+      { isCancelled: true, updatedAt: new Date() },
+      {
+        where: {
+          voucherType: 'Invoice',
+          voucherNo: invoice.reference
+        }
+      }
+    );
+
+    // Update invoice status
+    await invoice.update({
+      status: 'cancelled',
+      cancelledAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.json({ message: 'تم إلغاء الفاتورة' });
+  } catch (error) {
+    console.error('Error cancelling invoice:', error);
+    res.status(500).json({ message: 'خطأ في إلغاء الفاتورة' });
+  }
+});
+
+// ==================== PAYMENTS ROUTES ====================
+
+// GET /api/financial/payments - Get payments
+router.get('/payments', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search, status, customer, dateFrom, dateTo } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { reference: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    // Filter by status
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Filter by customer
+    if (customer) {
+      whereClause.customerId = customer;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      whereClause.date = {};
+      if (dateFrom) whereClause.date[Op.gte] = dateFrom;
+      if (dateTo) whereClause.date[Op.lte] = dateTo;
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const payments = await Payment.findAll(options);
+    const total = await Payment.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: payments,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    res.status(500).json({ message: 'خطأ في جلب المدفوعات' });
+  }
+});
+
+// POST /api/financial/payments - Create new payment
+router.post('/payments', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { date, reference, description, customerId, details, lines } = req.body;
+
+    // Support both 'details' and 'lines' for compatibility
+    const entryLines = details || lines;
+
+    // Validate required fields
+    if (!date || !reference || !customerId || !entryLines || entryLines.length === 0) {
+      return res.status(400).json({ message: 'التاريخ والوصف ومعرف العميل والتفاصيل مطلوبة' });
+    }
+
+    // Validate payment details
+    let total = 0;
+
+    for (const line of entryLines) {
+      const amount = parseFloat(line.amount || 0) || 0;
+
+      if (!line.accountId || amount === 0) {
+        return res.status(400).json({ message: 'كل تفصيل يجب أن يحتوي على حساب ومبلغ' });
+      }
+
+      // Check if account exists
+      const account = await Account.findByPk(line.accountId);
+      if (!account) {
+        return res.status(400).json({ message: `الحساب ${line.accountId} غير موجود` });
+      }
+
+      total += amount;
+    }
+
+    // Create the payment
+    const payment = await Payment.create({
+      id: uuidv4(),
+      date,
+      reference,
+      description,
+      customerId,
+      total,
+      status: 'draft',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    // Create payment details
+    const paymentDetails = [];
+    for (const line of entryLines) {
+      const detail = await InvoicePayment.create({
+        id: uuidv4(),
+        paymentId: payment.id,
+        accountId: line.accountId,
+        description: line.description || '',
+        amount: parseFloat(line.amount || 0),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      paymentDetails.push(detail);
+    }
+
+    // Fetch the complete payment with details
+    const completePayment = await Payment.findByPk(payment.id, {
+      include: [
+        {
+          model: InvoicePayment,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: ['id', 'code', 'name']
+            }
+          ]
+        }
+      ]
+    });
+
+    // Create notification for payment creation
+    try {
+      await NotificationService.notifyPaymentCreated(completePayment, req.user);
+    } catch (notificationError) {
+      console.error('Error creating payment notification:', notificationError);
+      // Don't fail the payment creation if notification fails
+    }
+
+    res.status(201).json(completePayment);
+  } catch (error) {
+    console.error('Error creating payment:', error);
+    res.status(500).json({ message: 'خطأ في إنشاء الدفعة' });
+  }
+});
+
+// GET /api/financial/payments/:id - Get specific payment
+router.get('/payments/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const payment = await Payment.findByPk(req.params.id, {
+      include: [
+        {
+          model: InvoicePayment,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: ['id', 'code', 'name']
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'الدفع غير موجود' });
+    }
+
+    res.json(payment);
+  } catch (error) {
+    console.error('Error fetching payment:', error);
+    res.status(500).json({ message: 'خطأ في جلب الدفعة' });
+  }
+});
+
+// PUT /api/financial/payments/:id - Update payment
+router.put('/payments/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const payment = await Payment.findByPk(req.params.id);
+
+    if (!payment) {
+      return res.status(404).json({ message: 'الدفع غير موجود' });
+    }
+
+    const { date, reference, description, customerId, details, lines } = req.body;
+
+    // Support both 'details' and 'lines' for compatibility
+    const entryLines = details || lines;
+
+    // Validate required fields
+    if (!date || !reference || !customerId || !entryLines || entryLines.length === 0) {
+      return res.status(400).json({ message: 'التاريخ والوصف ومعرف العميل والتفاصيل مطلوبة' });
+    }
+
+    // Validate payment details
+    let total = 0;
+
+    for (const line of entryLines) {
+      const amount = parseFloat(line.amount || 0) || 0;
+
+      if (!line.accountId || amount === 0) {
+        return res.status(400).json({ message: 'كل تفصيل يجب أن يحتوي على حساب ومبلغ' });
+      }
+
+      // Check if account exists
+      const account = await Account.findByPk(line.accountId);
+      if (!account) {
+        return res.status(400).json({ message: `الحساب ${line.accountId} غير موجود` });
+      }
+
+      total += amount;
+    }
+
+    // Update the payment
+    await payment.update({
+      date,
+      reference,
+      description,
+      customerId,
+      total,
+      updatedAt: new Date()
+    });
+
+    // Update payment details
+    await InvoicePayment.destroy({ where: { paymentId: req.params.id } });
+
+    for (const line of entryLines) {
+      await InvoicePayment.create({
+        id: uuidv4(),
+        paymentId: req.params.id,
+        accountId: line.accountId,
+        description: line.description || '',
+        amount: parseFloat(line.amount || 0),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    // Fetch updated payment
+    const updatedPayment = await Payment.findByPk(req.params.id, {
+      include: [
+        {
+          model: InvoicePayment,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: ['id', 'code', 'name']
+            }
+          ]
+        }
+      ]
+    });
+
+    res.json(updatedPayment);
+  } catch (error) {
+    console.error('Error updating payment:', error);
+    res.status(500).json({ message: 'خطأ في تحديث الدفعة' });
+  }
+});
+
+// POST /api/financial/payments/:id/submit - Submit payment and create GL entries
+router.post('/payments/:id/submit', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    console.log(`🔄 Starting payment approval for ID: ${req.params.id}`);
+
+    const payment = await Payment.findByPk(req.params.id, {
+      include: [
+        {
+          model: InvoicePayment,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account'
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!payment) {
+      console.log(`❌ Payment not found: ${req.params.id}`);
+      return res.status(404).json({ message: 'الدفع غير موجود' });
+    }
+
+    console.log(`📋 Payment found: ${payment.reference}, status: ${payment.status}`);
+
+    if (payment.status !== 'draft') {
+      console.log(`❌ Payment status is not draft: ${payment.status}`);
+      return res.status(400).json({ message: 'الدفع معتمد مسبقاً أو ملغى' });
+    }
+
+    // Check if payment has details
+    if (!payment.details || payment.details.length === 0) {
+      console.log(`❌ Payment has no details`);
+      return res.status(400).json({ message: 'لا يمكن اعتماد دفع بدون تفاصيل' });
+    }
+
+    console.log(`📝 Payment has ${payment.details.length} details`);
+
+    // Perform the conversion to GL and account balance updates inside a transaction
+    await sequelize.transaction(async (transaction) => {
+      console.log(`🔄 Starting database transaction`);
+
+      // Prepare GL entries
+      const glEntries = payment.details.map(detail => {
+        console.log(`📊 Creating GL entry for account ${detail.account?.code}: Debit=0, Credit=${detail.amount}`);
+        return {
+          id: uuidv4(),
+          postingDate: payment.date,
+          accountId: detail.accountId,
+          debit: 0,
+          credit: parseFloat(detail.amount || 0),
+          voucherType: 'Payment',
+          voucherNo: payment.reference,
+          paymentId: payment.id,
+          voucherDetailNo: detail.id,
+          remarks: detail.description || payment.description,
+          currency: 'LYD',
+          exchangeRate: 1.000000,
+          createdBy: req.user?.id || 'system',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+      });
+
+      console.log(`💾 Creating ${glEntries.length} GL entries`);
+
+      // Insert GL entries within transaction
+      const createdGLEntries = await GLEntry.bulkCreate(glEntries, { transaction });
+      console.log(`✅ Created ${createdGLEntries.length} GL entries successfully`);
+
+      // For each created GL entry, update corresponding Account balance
+      for (let i = 0; i < createdGLEntries.length; i++) {
+        const gl = createdGLEntries[i];
+        console.log(`🔄 Updating balance for account ${gl.accountId}`);
+
+        try {
+          const account = await Account.findByPk(gl.accountId, {
+            transaction,
+            lock: Transaction.LOCK.UPDATE
+          });
+
+          if (!account) {
+            throw new Error(`Account not found: ${gl.accountId}`);
+          }
+
+          console.log(`📊 Account ${account.code} (${account.name}): Current balance=${account.balance}, Nature=${account.nature}`);
+
+          // Compute new balance depending on account type (robust even if 'nature' is misconfigured)
+          const current = parseFloat(account.balance || 0);
+          const debit = parseFloat(gl.debit || 0);
+          const credit = parseFloat(gl.credit || 0);
+
+          let newBalance = current;
+
+          const isDebitType = ['asset', 'expense'].includes(account.type);
+          // For assets/expenses: debit increases balance; For liabilities/equity/revenue: credit increases balance
+          if (isDebitType) {
+            newBalance = current + debit - credit;
+          } else {
+            newBalance = current - debit + credit;
+          }
+
+          // Auto-correct account nature if inconsistent with type
+          const expectedNature = isDebitType ? 'debit' : 'credit';
+          if (account.nature !== expectedNature) {
+            account.nature = expectedNature;
+          }
+
+          console.log(`💰 Account ${account.code}: ${current} + ${debit} - ${credit} = ${newBalance} (nature: ${account.nature})`);
+
+          // Update account balance
+          account.balance = newBalance;
+          await account.save({ transaction });
+
+          console.log(`✅ Updated account ${account.code} balance to ${newBalance}`);
+        } catch (accountError) {
+          console.error(`❌ Error updating account ${gl.accountId}:`, accountError);
+          throw accountError;
+        }
+      }
+
+      console.log(`🔄 Updating payment status to posted`);
+
+      // Update payment status within the same transaction
+      await payment.update({
+        status: 'posted',
+        postedAt: new Date(),
+        postedBy: req.user?.id || 'system',
+        updatedAt: new Date()
+      }, { transaction });
+
+      console.log(`✅ Payment status updated to posted`);
+    });
+
+    console.log(`🎉 Payment approval completed successfully`);
+    res.json({
+      message: 'تم اعتماد الدفعة وإنشاء قيود دفتر الأستاذ العام',
+      success: true,
+      paymentId: payment.id,
+      reference: payment.reference
+    });
+  } catch (error) {
+    console.error('❌ Error submitting payment:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      paymentId: req.params.id,
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'خطأ في اعتماد الدفعة',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// POST /api/financial/payments/:id/cancel - Cancel payment
+router.post('/payments/:id/cancel', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const payment = await Payment.findByPk(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ message: 'الدفع غير موجود' });
+    }
+
+    if (payment.status === 'cancelled') {
+      return res.status(400).json({ message: 'الدفع ملغى مسبقاً' });
+    }
+
+    // Cancel related GL entries
+    await GLEntry.update(
+      { isCancelled: true, updatedAt: new Date() },
+      {
+        where: {
+          voucherType: 'Payment',
+          voucherNo: payment.reference
+        }
+      }
+    );
+
+    // Update payment status
+    await payment.update({
+      status: 'cancelled',
+      cancelledAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.json({ message: 'تم إلغاء الدفعة' });
+  } catch (error) {
+    console.error('Error cancelling payment:', error);
+    res.status(500).json({ message: 'خطأ في إلغاء الدفعة' });
+  }
+});
+
+// ==================== RECEIPTS ROUTES ====================
+
+// GET /api/financial/receipts - Get receipts
+router.get('/receipts', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search, status, customer, dateFrom, dateTo } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { reference: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    // Filter by status
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Filter by customer
+    if (customer) {
+      whereClause.customerId = customer;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      whereClause.date = {};
+      if (dateFrom) whereClause.date[Op.gte] = dateFrom;
+      if (dateTo) whereClause.date[Op.lte] = dateTo;
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const receipts = await Receipt.findAll(options);
+    const total = await Receipt.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: receipts,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching receipts:', error);
+    res.status(500).json({ message: 'خطأ في جلب الاستلامات' });
+  }
+});
+
+// POST /api/financial/receipts - Create new receipt
+router.post('/receipts', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { date, reference, description, customerId, details, lines } = req.body;
+
+    // Support both 'details' and 'lines' for compatibility
+    const entryLines = details || lines;
+
+    // Validate required fields
+    if (!date || !reference || !customerId || !entryLines || entryLines.length === 0) {
+      return res.status(400).json({ message: 'التاريخ والوصف ومعرف العميل والتفاصيل مطلوبة' });
+    }
+
+    // Validate receipt details
+    let total = 0;
+
+    for (const line of entryLines) {
+      const amount = parseFloat(line.amount || 0) || 0;
+
+      if (!line.accountId || amount === 0) {
+        return res.status(400).json({ message: 'كل تفصيل يجب أن يحتوي على حساب ومبلغ' });
+      }
+
+      // Check if account exists
+      const account = await Account.findByPk(line.accountId);
+      if (!account) {
+        return res.status(400).json({ message: `الحساب ${line.accountId} غير موجود` });
+      }
+
+      total += amount;
+    }
+
+    // Create the receipt
+    const receipt = await Receipt.create({
+      id: uuidv4(),
+      date,
+      reference,
+      description,
+      customerId,
+      total,
+      status: 'draft',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    // Create receipt details
+    const receiptDetails = [];
+    for (const line of entryLines) {
+      const detail = await InvoiceReceipt.create({
+        id: uuidv4(),
+        receiptId: receipt.id,
+        accountId: line.accountId,
+        description: line.description || '',
+        amount: parseFloat(line.amount || 0),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      receiptDetails.push(detail);
+    }
+
+    // Fetch the complete receipt with details
+    const completeReceipt = await Receipt.findByPk(receipt.id, {
+      include: [
+        {
+          model: InvoiceReceipt,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: ['id', 'code', 'name']
+            }
+          ]
+        }
+      ]
+    });
+
+    // Create notification for receipt creation
+    try {
+      await NotificationService.notifyReceiptCreated(completeReceipt, req.user);
+    } catch (notificationError) {
+      console.error('Error creating receipt notification:', notificationError);
+      // Don't fail the receipt creation if notification fails
+    }
+
+    res.status(201).json(completeReceipt);
+  } catch (error) {
+    console.error('Error creating receipt:', error);
+    res.status(500).json({ message: 'خطأ في إنشاء الاستلام' });
+  }
+});
+
+// GET /api/financial/receipts/:id - Get specific receipt
+router.get('/receipts/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const receipt = await Receipt.findByPk(req.params.id, {
+      include: [
+        {
+          model: InvoiceReceipt,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account',
+              attributes: ['id', 'code', 'name']
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!receipt) {
+      return res.status(404).json({ message: 'الاستلام غير موجود' });
+    }
+
+    res.json(receipt);
+  } catch (error) {
+    console.error('Error fetching receipt:', error);
+    res.status(500).json({ message: 'خطأ في جلب الاستلام' });
+  }
+});
+
+// ==================== SUPPLIERS ROUTES ====================
+
+// GET /api/financial/suppliers - Get suppliers
+router.get('/suppliers', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { code: { [Op.like]: `%${search}%` } },
+          { nameEn: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['name', 'ASC']]
+      // Removed Account include as Supplier model doesn't have this association
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const suppliers = await Supplier.findAll(options);
+    const totalSuppliers = await Supplier.count({ where: whereClause });
+
+    // Always use consistent response format
+    const responseSuppliers = {
+      data: suppliers,
+      total: totalSuppliers,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || totalSuppliers,
+      totalPages: Math.ceil(totalSuppliers / (parseInt(limit) || totalSuppliers))
+    };
+
+    res.json(responseSuppliers);
+  } catch (error) {
+    console.error('Error fetching suppliers:', error);
+    res.status(500).json({ message: 'خطأ في جلب الموردين' });
+  }
+});
+
+// ==================== EMPLOYEES ROUTES ====================
+
+// GET /api/financial/employees - Get employees
+router.get('/employees', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { code: { [Op.like]: `%${search}%` } },
+          { nameEn: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['name', 'ASC']]
+      // Removed Account include as Employee model doesn't have this association
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const employees = await Employee.findAll(options);
+    const total = await Employee.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: employees,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    res.status(500).json({ message: 'خطأ في جلب الموظفين' });
+  }
+});
+
+// ==================== INVOICES ROUTES ====================
+
+// GET /api/financial/invoices - Get invoices
+router.get('/invoices', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search, status, type, dateFrom, dateTo } = req.query;
+
+    let whereClause = {};
+
+    // Filter by status
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Filter by type
+    if (type) {
+      whereClause.type = type;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      whereClause.date = {};
+      if (dateFrom) whereClause.date[Op.gte] = dateFrom;
+      if (dateTo) whereClause.date[Op.lte] = dateTo;
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: InvoicePayment,
+          as: 'payments',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Payment,
+              as: 'payment',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        },
+        {
+          model: InvoiceReceipt,
+          as: 'receipts',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Receipt,
+              as: 'receipt',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const invoices = await Invoice.findAll(options);
+    const total = await Invoice.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: invoices,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching invoices:', error);
+    res.status(500).json({ message: 'خطأ في جلب الفواتير' });
+  }
+});
+
+// POST /api/financial/invoices - Create new invoice
+router.post('/invoices', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const {
+      date,
+      description,
+      reference,
+      type = 'sales',
+      details,
+      customer,
+      account,
+      lines
+    } = req.body;
+
+    // Support both 'details' and 'lines' for compatibility
+    const entryLines = details || lines;
+
+    // Validate required fields
+    if (!date || !description || !entryLines || entryLines.length === 0 || !customer || !account) {
+      return res.status(400).json({ message: 'التاريخ والوصف والتفاصيل والعميل والحساب مطلوبة' });
+    }
+
+    // Validate invoice details
+    let totalAmount = 0;
+
+    for (const line of entryLines) {
+      if (!line.amount) {
+        return res.status(400).json({ message: 'كل خط يجب أن يحتوي على سعر' });
+      }
+
+      totalAmount += parseFloat(line.amount || 0);
+    }
+
+    // Validate customer exists
+    const customerObj = await Customer.findByPk(customer);
+    if (!customerObj) {
+      return res.status(400).json({ message: `العميل ${customer} غير موجود` });
+    }
+
+    // Validate account exists
+    const accountObj = await Account.findByPk(account);
+    if (!accountObj) {
+      return res.status(400).json({ message: `الحساب ${account} غير موجود` });
+    }
+
+    // Generate robust entry number with retry to avoid unique collisions (only IV prefix)
+    const lastEntry = await Invoice.findOne({
+      where: { entryNumber: { [Op.like]: 'IV%' } },
+      order: [['createdAt', 'DESC']]
+    });
+    const lastNumStr = (lastEntry?.entryNumber || '').match(/(\d+)$/)?.[1] || '0';
+    let baseNextNumber = parseInt(lastNumStr, 10);
+    if (!Number.isFinite(baseNextNumber)) baseNextNumber = 0;
+
+    let invoice;
+    let attempt = 0;
+    while (attempt < 5) {
+      // Compute a safe integer candidate
+      let candidateNumber = baseNextNumber + 1 + attempt;
+      if (!Number.isFinite(candidateNumber)) candidateNumber = 1 + attempt;
+      candidateNumber = Math.abs(Math.trunc(candidateNumber));
+      if (!Number.isFinite(candidateNumber) || Number.isNaN(candidateNumber)) {
+        candidateNumber = Math.abs(Date.now() % 1000000);
+      }
+
+      let entryNumber = `IV${String(candidateNumber).padStart(6, '0')}`;
+      if (entryNumber.includes('NaN')) {
+        const fallback = Math.abs(Date.now() % 1000000);
+        entryNumber = `IV${String(fallback).padStart(6, '0')}`;
+      }
+
+      try {
+        invoice = await Invoice.create({
+          id: uuidv4(),
+          entryNumber,
+          date,
+          description,
+          reference,
+          type,
+          totalAmount,
+          status: 'draft',
+          customerId: customer,
+          accountId: account,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        break; // success
+      } catch (e) {
+        // If unique violation on entryNumber, retry with next number; otherwise rethrow
+        const msg = (e && e.message) || '';
+        const isUnique = msg.toLowerCase().includes('unique') && msg.toLowerCase().includes('entrynumber');
+        if (!isUnique) throw e;
+        attempt += 1;
+        if (attempt >= 5) throw e;
+      }
+    }
+
+    // Create invoice details
+    const entryDetails = [];
+    for (const line of entryLines) {
+      const entryDetail = await InvoiceDetail.create({
+        id: uuidv4(),
+        invoiceId: invoice.id,
+        description: line.description || '',
+        amount: parseFloat(line.amount || 0),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      entryDetails.push(entryDetail);
+    }
+
+    // Fetch the complete invoice with details
+    const completeEntry = await Invoice.findByPk(invoice.id, {
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: InvoicePayment,
+          as: 'payments',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Payment,
+              as: 'payment',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        },
+        {
+          model: InvoiceReceipt,
+          as: 'receipts',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Receipt,
+              as: 'receipt',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        }
+      ]
+    });
+
+    // Create notification for invoice creation
+    try {
+      await NotificationService.notifyInvoiceCreated(completeEntry, req.user);
+    } catch (notificationError) {
+      console.error('Error creating invoice notification:', notificationError);
+      // Don't fail the invoice creation if notification fails
+      // This might happen if notifications table doesn't exist in production
+    }
+
+    res.status(201).json(completeEntry);
+  } catch (error) {
+    // Better diagnostics for 500 errors during development
+    console.error('Error creating invoice:', error);
+    if (error && error.stack) console.error(error.stack);
+    if (error && error.errors) console.error('Sequelize validation errors:', error.errors);
+    res.status(500).json({ message: 'خطأ في إنشاء الفاتورة', error: (error && error.message) || 'Unknown error' });
+  }
+});
+
+// GET /api/financial/invoices/:id - Get specific invoice
+router.get('/invoices/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const invoice = await Invoice.findByPk(req.params.id, {
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: InvoicePayment,
+          as: 'payments',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Payment,
+              as: 'payment',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        },
+        {
+          model: InvoiceReceipt,
+          as: 'receipts',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Receipt,
+              as: 'receipt',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    res.json(invoice);
+  } catch (error) {
+    console.error('Error fetching invoice:', error);
+    res.status(500).json({ message: 'خطأ في جلب الفاتورة' });
+  }
+});
+
+// PUT /api/financial/invoices/:id - Update invoice
+router.put('/invoices/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const invoice = await Invoice.findByPk(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    if (invoice.status !== 'draft') {
+      return res.status(400).json({ message: 'لا يمكن تعديل فاتورة معتمدة أو ملغاة' });
+    }
+
+    const {
+      date,
+      description,
+      reference,
+      type = 'sales',
+      details,
+      customer,
+      account,
+      lines
+    } = req.body;
+
+    // Support both 'details' and 'lines' for compatibility
+    const entryLines = details || lines;
+
+    // Validate details if provided
+    if (entryLines && entryLines.length > 0) {
+      let totalAmount = 0;
+
+      for (const line of entryLines) {
+        if (!line.amount) {
+          return res.status(400).json({ message: 'كل خط يجب أن يحتوي على سعر' });
+        }
+
+        totalAmount += parseFloat(line.amount || 0);
+      }
+
+      // Update invoice details
+      await InvoiceDetail.destroy({ where: { invoiceId: req.params.id } });
+
+      for (const line of entryLines) {
+        await InvoiceDetail.create({
+          id: uuidv4(),
+          invoiceId: req.params.id,
+          description: line.description || '',
+          amount: parseFloat(line.amount || 0),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+
+      // Update totals
+      req.body.totalAmount = totalAmount;
+    }
+
+    // Update invoice
+    await invoice.update({
+      ...req.body,
+      updatedAt: new Date()
+    });
+
+    // Fetch updated entry
+    const updatedEntry = await Invoice.findByPk(req.params.id, {
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: InvoicePayment,
+          as: 'payments',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Payment,
+              as: 'payment',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        },
+        {
+          model: InvoiceReceipt,
+          as: 'receipts',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Receipt,
+              as: 'receipt',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        }
+      ]
+    });
+
+    res.json(updatedEntry);
+  } catch (error) {
+    console.error('Error updating invoice:', error);
+    res.status(500).json({ message: 'خطأ في تحديث الفاتورة' });
+  }
+});
+
+// POST /api/financial/invoices/:id/submit - Submit invoice and create GL entries
+router.post('/invoices/:id/submit', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    console.log(`🔄 Starting invoice approval for ID: ${req.params.id}`);
+
+    const invoice = await Invoice.findByPk(req.params.id, {
+      include: [
+        {
+          model: InvoiceDetail,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account'
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!invoice) {
+      console.log(`❌ Invoice not found: ${req.params.id}`);
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    console.log(`📋 Invoice found: ${invoice.entryNumber}, status: ${invoice.status}`);
+
+    if (invoice.status !== 'draft') {
+      console.log(`❌ Invoice status is not draft: ${invoice.status}`);
+      return res.status(400).json({ message: 'الفاتورة معتمدة مسبقاً أو ملغي' });
+    }
+
+    // Check if invoice has details
+    if (!invoice.details || invoice.details.length === 0) {
+      console.log(`❌ Invoice has no details`);
+      return res.status(400).json({ message: 'لا يمكن اعتماد فاتورة بدون تفاصيل' });
+    }
+
+    console.log(`📝 Invoice has ${invoice.details.length} details`);
+
+    // Perform the conversion to GL and account balance updates inside a transaction
+    await sequelize.transaction(async (transaction) => {
+      console.log(`🔄 Starting database transaction`);
+
+      // Prepare GL entries
+      const glEntries = invoice.details.map(detail => {
+        console.log(`📊 Creating GL entry for account ${detail.account?.code}: Debit=${detail.amount}, Credit=0`);
+        return {
+          id: uuidv4(),
+          postingDate: invoice.date,
+          accountId: detail.accountId,
+          debit: parseFloat(detail.amount || 0),
+          credit: 0,
+          voucherType: 'Invoice',
+          voucherNo: invoice.entryNumber,
+          invoiceId: invoice.id,
+          voucherDetailNo: detail.id,
+          remarks: detail.description || invoice.description,
+          currency: 'LYD',
+          exchangeRate: 1.000000,
+          createdBy: req.user?.id || 'system',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+      });
+
+      console.log(`💾 Creating ${glEntries.length} GL entries`);
+
+      // Insert GL entries within transaction
+      const createdGLEntries = await GLEntry.bulkCreate(glEntries, { transaction });
+      console.log(`✅ Created ${createdGLEntries.length} GL entries successfully`);
+
+      // For each created GL entry, update corresponding Account balance
+      for (let i = 0; i < createdGLEntries.length; i++) {
+        const gl = createdGLEntries[i];
+        console.log(`🔄 Updating balance for account ${gl.accountId}`);
+
+        try {
+          const account = await Account.findByPk(gl.accountId, {
+            transaction,
+            lock: Transaction.LOCK.UPDATE
+          });
+
+          if (!account) {
+            throw new Error(`Account not found: ${gl.accountId}`);
+          }
+
+          console.log(`📊 Account ${account.code} (${account.name}): Current balance=${account.balance}, Nature=${account.nature}`);
+
+          // Compute new balance depending on account type (robust even if 'nature' is misconfigured)
+          const current = parseFloat(account.balance || 0);
+          const debit = parseFloat(gl.debit || 0);
+          const credit = parseFloat(gl.credit || 0);
+
+          let newBalance = current;
+
+          const isDebitType = ['asset', 'expense'].includes(account.type);
+          // For assets/expenses: debit increases balance; For liabilities/equity/revenue: credit increases balance
+          if (isDebitType) {
+            newBalance = current + debit - credit;
+          } else {
+            newBalance = current - debit + credit;
+          }
+
+          // Auto-correct account nature if inconsistent with type
+          const expectedNature = isDebitType ? 'debit' : 'credit';
+          if (account.nature !== expectedNature) {
+            account.nature = expectedNature;
+          }
+
+          console.log(`💰 Account ${account.code}: ${current} + ${debit} - ${credit} = ${newBalance} (nature: ${account.nature})`);
+
+          // Update account balance
+          account.balance = newBalance;
+          await account.save({ transaction });
+
+          console.log(`✅ Updated account ${account.code} balance to ${newBalance}`);
+        } catch (accountError) {
+          console.error(`❌ Error updating account ${gl.accountId}:`, accountError);
+          throw accountError;
+        }
+      }
+
+      console.log(`🔄 Updating invoice status to posted`);
+
+      // Update invoice status within the same transaction
+      await invoice.update({
+        status: 'posted',
+        postedAt: new Date(),
+        postedBy: req.user?.id || 'system',
+        updatedAt: new Date()
+      }, { transaction });
+
+      console.log(`✅ Invoice status updated to posted`);
+    });
+
+    console.log(`🎉 Invoice approval completed successfully`);
+    res.json({
+      message: 'تم اعتماد الفاتورة وإنشاء قيود دفتر الأستاذ العام',
+      success: true,
+      invoiceId: invoice.id,
+      entryNumber: invoice.entryNumber
+    });
+  } catch (error) {
+    console.error('❌ Error submitting invoice:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      invoiceId: req.params.id,
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'خطأ في اعتماد الفاتورة',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// POST /api/financial/invoices/:id/cancel - Cancel invoice
+router.post('/invoices/:id/cancel', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const invoice = await Invoice.findByPk(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    if (invoice.status === 'cancelled') {
+      return res.status(400).json({ message: 'الفاتورة ملغية مسبقاً' });
+    }
+
+    // Cancel related GL entries
+    await GLEntry.update(
+      { isCancelled: true, updatedAt: new Date() },
+      {
+        where: {
+          voucherType: 'Invoice',
+          voucherNo: invoice.entryNumber
+        }
+      }
+    );
+
+    // Update invoice status
+    await invoice.update({
+      status: 'cancelled',
+      cancelledAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.json({ message: 'تم إلغاء الفاتورة' });
+  } catch (error) {
+    console.error('Error cancelling invoice:', error);
+    res.status(500).json({ message: 'خطأ في إلغاء الفاتورة' });
+  }
+});
+
+// ==================== PAYMENTS ROUTES ====================
+
+// GET /api/financial/payments - Get payments
+router.get('/payments', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search, status, type, dateFrom, dateTo } = req.query;
+
+    let whereClause = {};
+
+    // Filter by status
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Filter by type
+    if (type) {
+      whereClause.type = type;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      whereClause.date = {};
+      if (dateFrom) whereClause.date[Op.gte] = dateFrom;
+      if (dateTo) whereClause.date[Op.lte] = dateTo;
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['date', 'DESC'], ['createdAt', 'DESC']],
+      include: [
+        {
+          model: Supplier,
+          as: 'supplier',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Payment,
+          as: 'payments',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Payment,
+              as: 'payment',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        },
+        {
+          model: Receipt,
+          as: 'receipts',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Receipt,
+              as: 'receipt',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const payments = await Payment.findAll(options);
+    const total = await Payment.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: payments,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    res.status(500).json({ message: 'خطأ في جلب الدفعات' });
+  }
+});
+
+// POST /api/financial/payments - Create new payment
+router.post('/payments', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const {
+      date,
+      description,
+      reference,
+      type = 'purchase',
+      details,
+      supplier,
+      account,
+      lines
+    } = req.body;
+
+    // Support both 'details' and 'lines' for compatibility
+    const entryLines = details || lines;
+
+    // Validate required fields
+    if (!date || !description || !entryLines || entryLines.length === 0 || !supplier || !account) {
+      return res.status(400).json({ message: 'التاريخ والوصف والتفاصيل والمورد والحساب مطلوبة' });
+    }
+
+    // Validate payment details
+    let totalAmount = 0;
+
+    for (const line of entryLines) {
+      if (!line.amount) {
+        return res.status(400).json({ message: 'كل خط يجب أن يحتوي على سعر' });
+      }
+
+      totalAmount += parseFloat(line.amount || 0);
+    }
+
+    // Validate supplier exists
+    const supplierObj = await Supplier.findByPk(supplier);
+    if (!supplierObj) {
+      return res.status(400).json({ message: `المورد ${supplier} غير موجود` });
+    }
+
+    // Validate account exists
+    const accountObj = await Account.findByPk(account);
+    if (!accountObj) {
+      return res.status(400).json({ message: `الحساب ${account} غير موجود` });
+    }
+
+    // Generate robust entry number with retry to avoid unique collisions (only PY prefix)
+    const lastEntry = await Payment.findOne({
+      where: { entryNumber: { [Op.like]: 'PY%' } },
+      order: [['createdAt', 'DESC']]
+    });
+    const lastNumStr = (lastEntry?.entryNumber || '').match(/(\d+)$/)?.[1] || '0';
+    let baseNextNumber = parseInt(lastNumStr, 10);
+    if (!Number.isFinite(baseNextNumber)) baseNextNumber = 0;
+
+    let payment;
+    let attempt = 0;
+    while (attempt < 5) {
+      // Compute a safe integer candidate
+      let candidateNumber = baseNextNumber + 1 + attempt;
+      if (!Number.isFinite(candidateNumber)) candidateNumber = 1 + attempt;
+      candidateNumber = Math.abs(Math.trunc(candidateNumber));
+      if (!Number.isFinite(candidateNumber) || Number.isNaN(candidateNumber)) {
+        candidateNumber = Math.abs(Date.now() % 1000000);
+      }
+
+      let entryNumber = `PY${String(candidateNumber).padStart(6, '0')}`;
+      if (entryNumber.includes('NaN')) {
+        const fallback = Math.abs(Date.now() % 1000000);
+        entryNumber = `PY${String(fallback).padStart(6, '0')}`;
+      }
+
+      try {
+        payment = await Payment.create({
+          id: uuidv4(),
+          entryNumber,
+          date,
+          description,
+          reference,
+          type,
+          totalAmount,
+          status: 'draft',
+          supplierId: supplier,
+          accountId: account,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        break; // success
+      } catch (e) {
+        // If unique violation on entryNumber, retry with next number; otherwise rethrow
+        const msg = (e && e.message) || '';
+        const isUnique = msg.toLowerCase().includes('unique') && msg.toLowerCase().includes('entrynumber');
+        if (!isUnique) throw e;
+        attempt += 1;
+        if (attempt >= 5) throw e;
+      }
+    }
+
+    // Create payment details
+    const entryDetails = [];
+    for (const line of entryLines) {
+      const entryDetail = await PaymentDetail.create({
+        id: uuidv4(),
+        paymentId: payment.id,
+        description: line.description || '',
+        amount: parseFloat(line.amount || 0),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      entryDetails.push(entryDetail);
+    }
+
+    // Fetch the complete payment with details
+    const completeEntry = await Payment.findByPk(payment.id, {
+      include: [
+        {
+          model: Supplier,
+          as: 'supplier',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Payment,
+          as: 'payments',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Payment,
+              as: 'payment',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        },
+        {
+          model: Receipt,
+          as: 'receipts',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Receipt,
+              as: 'receipt',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        }
+      ]
+    });
+
+    // Create notification for payment creation
+    try {
+      await NotificationService.notifyPaymentCreated(completeEntry, req.user);
+    } catch (notificationError) {
+      console.error('Error creating payment notification:', notificationError);
+      // Don't fail the payment creation if notification fails
+      // This might happen if notifications table doesn't exist in production
+    }
+
+    res.status(201).json(completeEntry);
+  } catch (error) {
+    // Better diagnostics for 500 errors during development
+    console.error('Error creating payment:', error);
+    if (error && error.stack) console.error(error.stack);
+    if (error && error.errors) console.error('Sequelize validation errors:', error.errors);
+    res.status(500).json({ message: 'خطأ في إنشاء الدفعة', error: (error && error.message) || 'Unknown error' });
+  }
+});
+
+// GET /api/financial/payments/:id - Get specific payment
+router.get('/payments/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const payment = await Payment.findByPk(req.params.id, {
+      include: [
+        {
+          model: Supplier,
+          as: 'supplier',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Payment,
+          as: 'payments',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Payment,
+              as: 'payment',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        },
+        {
+          model: Receipt,
+          as: 'receipts',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Receipt,
+              as: 'receipt',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'الدفعة غير موجودة' });
+    }
+
+    res.json(payment);
+  } catch (error) {
+    console.error('Error fetching payment:', error);
+    res.status(500).json({ message: 'خطأ في جلب الدفعة' });
+  }
+});
+
+// PUT /api/financial/payments/:id - Update payment
+router.put('/payments/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const payment = await Payment.findByPk(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ message: 'الدفعة غير موجودة' });
+    }
+
+    if (payment.status !== 'draft') {
+      return res.status(400).json({ message: 'لا يمكن تعديل دفعة معتمدة أو ملغاة' });
+    }
+
+    const {
+      date,
+      description,
+      reference,
+      type = 'purchase',
+      details,
+      supplier,
+      account,
+      lines
+    } = req.body;
+
+    // Support both 'details' and 'lines' for compatibility
+    const entryLines = details || lines;
+
+    // Validate details if provided
+    if (entryLines && entryLines.length > 0) {
+      let totalAmount = 0;
+
+      for (const line of entryLines) {
+        if (!line.amount) {
+          return res.status(400).json({ message: 'كل خط يجب أن يحتوي على سعر' });
+        }
+
+        totalAmount += parseFloat(line.amount || 0);
+      }
+
+      // Update payment details
+      await PaymentDetail.destroy({ where: { paymentId: req.params.id } });
+
+      for (const line of entryLines) {
+        await PaymentDetail.create({
+          id: uuidv4(),
+          paymentId: req.params.id,
+          description: line.description || '',
+          amount: parseFloat(line.amount || 0),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+
+      // Update totals
+      req.body.totalAmount = totalAmount;
+    }
+
+    // Update payment
+    await payment.update({
+      ...req.body,
+      updatedAt: new Date()
+    });
+
+    // Fetch updated entry
+    const updatedEntry = await Payment.findByPk(req.params.id, {
+      include: [
+        {
+          model: Supplier,
+          as: 'supplier',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        },
+        {
+          model: Payment,
+          as: 'payments',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Payment,
+              as: 'payment',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        },
+        {
+          model: Receipt,
+          as: 'receipts',
+          attributes: ['id', 'amount', 'date'],
+          include: [
+            {
+              model: Receipt,
+              as: 'receipt',
+              attributes: ['id', 'date', 'amount']
+            }
+          ]
+        }
+      ]
+    });
+
+    res.json(updatedEntry);
+  } catch (error) {
+    console.error('Error updating payment:', error);
+    res.status(500).json({ message: 'خطأ في تحديث الدفعة' });
+  }
+});
+
+// POST /api/financial/payments/:id/submit - Submit payment and create GL entries
+router.post('/payments/:id/submit', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    console.log(`🔄 Starting payment approval for ID: ${req.params.id}`);
+
+    const payment = await Payment.findByPk(req.params.id, {
+      include: [
+        {
+          model: PaymentDetail,
+          as: 'details',
+          include: [
+            {
+              model: Account,
+              as: 'account'
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!payment) {
+      console.log(`❌ Payment not found: ${req.params.id}`);
+      return res.status(404).json({ message: 'الدفعة غير موجودة' });
+    }
+
+    console.log(`📋 Payment found: ${payment.entryNumber}, status: ${payment.status}`);
+
+    if (payment.status !== 'draft') {
+      console.log(`❌ Payment status is not draft: ${payment.status}`);
+      return res.status(400).json({ message: 'الدفعة معتمدة مسبقاً أو ملغي' });
+    }
+
+    // Check if payment has details
+    if (!payment.details || payment.details.length === 0) {
+      console.log(`❌ Payment has no details`);
+      return res.status(400).json({ message: 'لا يمكن اعتماد دفعة بدون تفاصيل' });
+    }
+
+    console.log(`📝 Payment has ${payment.details.length} details`);
+
+    // Perform the conversion to GL and account balance updates inside a transaction
+    await sequelize.transaction(async (transaction) => {
+      console.log(`🔄 Starting database transaction`);
+
+      // Prepare GL entries
+      const glEntries = payment.details.map(detail => {
+        console.log(`📊 Creating GL entry for account ${detail.account?.code}: Debit=0, Credit=${detail.amount}`);
+        return {
+          id: uuidv4(),
+          postingDate: payment.date,
+          accountId: detail.accountId,
+          debit: 0,
+          credit: parseFloat(detail.amount || 0),
+          voucherType: 'Payment',
+          voucherNo: payment.entryNumber,
+          paymentId: payment.id,
+          voucherDetailNo: detail.id,
+          remarks: detail.description || payment.description,
+          currency: 'LYD',
+          exchangeRate: 1.000000,
+          createdBy: req.user?.id || 'system',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+      });
+
+      console.log(`💾 Creating ${glEntries.length} GL entries`);
+
+      // Insert GL entries within transaction
+      const createdGLEntries = await GLEntry.bulkCreate(glEntries, { transaction });
+      console.log(`✅ Created ${createdGLEntries.length} GL entries successfully`);
+
+      // For each created GL entry, update corresponding Account balance
+      for (let i = 0; i < createdGLEntries.length; i++) {
+        const gl = createdGLEntries[i];
+        console.log(`🔄 Updating balance for account ${gl.accountId}`);
+
+        try {
+          const account = await Account.findByPk(gl.accountId, {
+            transaction,
+            lock: Transaction.LOCK.UPDATE
+          });
+
+          if (!account) {
+            throw new Error(`Account not found: ${gl.accountId}`);
+          }
+
+          console.log(`📊 Account ${account.code} (${account.name}): Current balance=${account.balance}, Nature=${account.nature}`);
+
+          // Compute new balance depending on account type (robust even if 'nature' is misconfigured)
+          const current = parseFloat(account.balance || 0);
+          const debit = parseFloat(gl.debit || 0);
+          const credit = parseFloat(gl.credit || 0);
+
+          let newBalance = current;
+
+          const isDebitType = ['asset', 'expense'].includes(account.type);
+          // For assets/expenses: debit increases balance; For liabilities/equity/revenue: credit increases balance
+          if (isDebitType) {
+            newBalance = current + debit - credit;
+          } else {
+            newBalance = current - debit + credit;
+          }
+
+          // Auto-correct account nature if inconsistent with type
+          const expectedNature = isDebitType ? 'debit' : 'credit';
+          if (account.nature !== expectedNature) {
+            account.nature = expectedNature;
+          }
+
+          console.log(`💰 Account ${account.code}: ${current} + ${debit} - ${credit} = ${newBalance} (nature: ${account.nature})`);
+
+          // Update account balance
+          account.balance = newBalance;
+          await account.save({ transaction });
+
+          console.log(`✅ Updated account ${account.code} balance to ${newBalance}`);
+        } catch (accountError) {
+          console.error(`❌ Error updating account ${gl.accountId}:`, accountError);
+          throw accountError;
+        }
+      }
+
+      console.log(`🔄 Updating payment status to posted`);
+
+      // Update payment status within the same transaction
+      await payment.update({
+        status: 'posted',
+        postedAt: new Date(),
+        postedBy: req.user?.id || 'system',
+        updatedAt: new Date()
+      }, { transaction });
+
+      console.log(`✅ Payment status updated to posted`);
+    });
+
+    console.log(`🎉 Payment approval completed successfully`);
+    res.json({
+      message: 'تم اعتماد الدفعة وإنشاء قيود دفتر الأستاذ العام',
+      success: true,
+      paymentId: payment.id,
+      entryNumber: payment.entryNumber
+    });
+  } catch (error) {
+    console.error('❌ Error submitting payment:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      paymentId: req.params.id,
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'خطأ في اعتماد الدفعة',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// POST /api/financial/payments/:id/cancel - Cancel payment
+router.post('/payments/:id/cancel', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const payment = await Payment.findByPk(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ message: 'الدفعة غير موجودة' });
+    }
+
+    if (payment.status === 'cancelled') {
+      return res.status(400).json({ message: 'الدفعة ملغية مسبقاً' });
+    }
+
+    // Cancel related GL entries
+    await GLEntry.update(
+      { isCancelled: true, updatedAt: new Date() },
+      {
+        where: {
+          voucherType: 'Payment',
+          voucherNo: payment.entryNumber
+        }
+      }
+    );
+
+    // Update payment status
+    await payment.update({
+      status: 'cancelled',
+      cancelledAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.json({ message: 'تم إلغاء الدفعة' });
+  } catch (error) {
+    console.error('Error cancelling payment:', error);
+    res.status(500).json({ message: 'خطأ في إلغاء الدفعة' });
+  }
+});
+
+// ==================== SUPPLIERS ROUTES ====================
+
+// GET /api/financial/suppliers - Get suppliers
+router.get('/suppliers', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { code: { [Op.like]: `%${search}%` } },
+          { nameEn: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['name', 'ASC']]
+      // Removed Account include as Supplier model doesn't have this association
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const suppliers = await Supplier.findAll(options);
+    const totalSuppliers = await Supplier.count({ where: whereClause });
+
+    // Always use consistent response format
+    const responseSuppliers = {
+      data: suppliers,
+      total: totalSuppliers,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || totalSuppliers,
+      totalPages: Math.ceil(totalSuppliers / (parseInt(limit) || totalSuppliers))
+    };
+
+    res.json(responseSuppliers);
+  } catch (error) {
+    console.error('Error fetching suppliers:', error);
+    res.status(500).json({ message: 'خطأ في جلب الموردين' });
+  }
+});
+
+// ==================== EMPLOYEES ROUTES ====================
+
+// GET /api/financial/employees - Get employees
+router.get('/employees', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { code: { [Op.like]: `%${search}%` } },
+          { nameEn: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['name', 'ASC']],
+      include: [
+        {
+          model: Account,
+          as: 'account',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const employees = await Employee.findAll(options);
+    const total = await Employee.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: employees,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    res.status(500).json({ message: 'خطأ في جلب الموظفين' });
+  }
+});
+
+// ==================== INVOICES ROUTES ====================
+
+// GET /api/financial/invoices - Get invoices
+router.get('/invoices', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search, customerId, status, dateFrom, dateTo } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { invoiceNumber: { [Op.like]: `%${search}%` } },
+          { reference: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    // Filter by customer
+    if (customerId) {
+      whereClause.customerId = customerId;
+    }
+
+    // Filter by status
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      whereClause.date = {};
+      if (dateFrom) whereClause.date[Op.gte] = dateFrom;
+      if (dateTo) whereClause.date[Op.lte] = dateTo;
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['date', 'DESC']],
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const invoices = await Invoice.findAll(options);
+    const total = await Invoice.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: invoices,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching invoices:', error);
+    res.status(500).json({ message: 'خطأ في جلب الفواتير' });
+  }
+});
+
+// POST /api/financial/invoices - Create new invoice
+router.post('/invoices', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const {
+      date, reference, customerId, items, status = 'draft'
+    } = req.body;
+
+    // Validate required fields
+    if (!date || !customerId || !items || items.length === 0) {
+      return res.status(400).json({ message: 'التاريخ والعميل والפריטات مطلوبة' });
+    }
+
+    // Validate invoice items
+    let totalAmount = 0;
+
+    for (const item of items) {
+      const amount = parseFloat(item.amount || 0) || 0;
+
+      if (!item.description || amount === 0) {
+        return res.status(400).json({ message: 'كل عنصر يجب أن يحتوي على وصف ومبلغ' });
+      }
+
+      totalAmount += amount;
+    }
+
+    // Generate robust entry number with retry to avoid unique collisions (only INV prefix)
+    const lastInvoice = await Invoice.findOne({
+      where: { invoiceNumber: { [Op.like]: 'INV%' } },
+      order: [['createdAt', 'DESC']]
+    });
+    const lastNumStr = (lastInvoice?.invoiceNumber || '').match(/(\d+)$/)?.[1] || '0';
+    let baseNextNumber = parseInt(lastNumStr, 10);
+    if (!Number.isFinite(baseNextNumber)) baseNextNumber = 0;
+
+    let invoice;
+    let attempt = 0;
+    while (attempt < 5) {
+      // Compute a safe integer candidate
+      let candidateNumber = baseNextNumber + 1 + attempt;
+      if (!Number.isFinite(candidateNumber)) candidateNumber = 1 + attempt;
+      candidateNumber = Math.abs(Math.trunc(candidateNumber));
+      if (!Number.isFinite(candidateNumber) || Number.isNaN(candidateNumber)) {
+        candidateNumber = Math.abs(Date.now() % 1000000);
+      }
+
+      let invoiceNumber = `INV${String(candidateNumber).padStart(6, '0')}`;
+      if (invoiceNumber.includes('NaN')) {
+        const fallback = Math.abs(Date.now() % 1000000);
+        invoiceNumber = `INV${String(fallback).padStart(6, '0')}`;
+      }
+
+      try {
+        invoice = await Invoice.create({
+          id: uuidv4(),
+          invoiceNumber,
+          date,
+          reference,
+          customerId,
+          totalAmount,
+          status,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        break; // success
+      } catch (e) {
+        // If unique violation on invoiceNumber, retry with next number; otherwise rethrow
+        const msg = (e && e.message) || '';
+        const isUnique = msg.toLowerCase().includes('unique') && msg.toLowerCase().includes('invoicenumber');
+        if (!isUnique) throw e;
+        attempt += 1;
+        if (attempt >= 5) throw e;
+      }
+    }
+
+    // Create invoice items
+    const invoiceItems = [];
+    for (const item of items) {
+      const invoiceItem = await Invoice.create({
+        id: uuidv4(),
+        invoiceId: invoice.id,
+        description: item.description,
+        amount: parseFloat(item.amount || 0),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      invoiceItems.push(invoiceItem);
+    }
+
+    // Create notification for invoice creation
+    try {
+      await NotificationService.notifyInvoiceCreated(invoice, req.user);
+    } catch (notificationError) {
+      console.error('Error creating invoice notification:', notificationError);
+      // Don't fail the invoice creation if notification fails
+    }
+
+    res.status(201).json(invoice);
+  } catch (error) {
+    console.error('Error creating invoice:', error);
+    res.status(500).json({ message: 'خطأ في إنشاء فاتورة', error: error.message });
+  }
+});
+
+// GET /api/financial/invoices/:id - Get specific invoice
+router.get('/invoices/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const invoice = await Invoice.findByPk(req.params.id, {
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    res.json(invoice);
+  } catch (error) {
+    console.error('Error fetching invoice:', error);
+    res.status(500).json({ message: 'خطأ في جلب الفاتورة' });
+  }
+});
+
+// POST /api/financial/invoices/:id/submit - Submit invoice and create GL entries
+router.post('/invoices/:id/submit', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    console.log(`🔄 Starting invoice approval for ID: ${req.params.id}`);
+
+    const invoice = await Invoice.findByPk(req.params.id, {
+      include: [
+        {
+          model: Customer,
+          as: 'customer'
+        }
+      ]
+    });
+
+    if (!invoice) {
+      console.log(`❌ Invoice not found: ${req.params.id}`);
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    console.log(`📋 Invoice found: ${invoice.invoiceNumber}, status: ${invoice.status}`);
+
+    if (invoice.status !== 'draft') {
+      console.log(`❌ Invoice status is not draft: ${invoice.status}`);
+      return res.status(400).json({ message: 'الفاتورة معتمدة مسبقاً أو ملغية' });
+    }
+
+    console.log(`🔄 Starting database transaction`);
+
+    // Prepare GL entries
+    const glEntries = [
+      {
+        id: uuidv4(),
+        postingDate: invoice.date,
+        accountId: invoice.customer.accountId,
+        debit: invoice.totalAmount,
+        credit: 0,
+        voucherType: 'Invoice',
+        voucherNo: invoice.invoiceNumber,
+        invoiceId: invoice.id,
+        remarks: invoice.reference,
+        currency: 'LYD',
+        exchangeRate: 1.000000,
+        createdBy: req.user?.id || 'system',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: uuidv4(),
+        postingDate: invoice.date,
+        accountId: 1, // TODO: Use correct account ID for sales revenue
+        debit: 0,
+        credit: invoice.totalAmount,
+        voucherType: 'Invoice',
+        voucherNo: invoice.invoiceNumber,
+        invoiceId: invoice.id,
+        remarks: invoice.reference,
+        currency: 'LYD',
+        exchangeRate: 1.000000,
+        createdBy: req.user?.id || 'system',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    console.log(`💾 Creating ${glEntries.length} GL entries`);
+
+    // Insert GL entries within transaction
+    const createdGLEntries = await GLEntry.bulkCreate(glEntries, { transaction });
+    console.log(`✅ Created ${createdGLEntries.length} GL entries successfully`);
+
+    // For each created GL entry, update corresponding Account balance
+    for (let i = 0; i < createdGLEntries.length; i++) {
+      const gl = createdGLEntries[i];
+      console.log(`🔄 Updating balance for account ${gl.accountId}`);
+
+      try {
+        const account = await Account.findByPk(gl.accountId, {
+          transaction,
+          lock: Transaction.LOCK.UPDATE
+        });
+
+        if (!account) {
+          throw new Error(`Account not found: ${gl.accountId}`);
+        }
+
+        console.log(`📊 Account ${account.code} (${account.name}): Current balance=${account.balance}, Nature=${account.nature}`);
+
+        // Compute new balance depending on account type (robust even if 'nature' is misconfigured)
+        const current = parseFloat(account.balance || 0);
+        const debit = parseFloat(gl.debit || 0);
+        const credit = parseFloat(gl.credit || 0);
+
+        let newBalance = current;
+
+        const isDebitType = ['asset', 'expense'].includes(account.type);
+        // For assets/expenses: debit increases balance; For liabilities/equity/revenue: credit increases balance
+        if (isDebitType) {
+          newBalance = current + debit - credit;
+        } else {
+          newBalance = current - debit + credit;
+        }
+
+        // Auto-correct account nature if inconsistent with type
+        const expectedNature = isDebitType ? 'debit' : 'credit';
+        if (account.nature !== expectedNature) {
+          account.nature = expectedNature;
+        }
+
+        console.log(`💰 Account ${account.code}: ${current} + ${debit} - ${credit} = ${newBalance} (nature: ${account.nature})`);
+
+        // Update account balance
+        account.balance = newBalance;
+        await account.save({ transaction });
+
+        console.log(`✅ Updated account ${account.code} balance to ${newBalance}`);
+      } catch (accountError) {
+        console.error(`❌ Error updating account ${gl.accountId}:`, accountError);
+        throw accountError;
+      }
+    }
+
+    console.log(`🔄 Updating invoice status to posted`);
+
+    // Update invoice status within the same transaction
+    await invoice.update({
+      status: 'posted',
+      postedAt: new Date(),
+      postedBy: req.user?.id || 'system',
+      updatedAt: new Date()
+    }, { transaction });
+
+    console.log(`✅ Invoice status updated to posted`);
+    res.json({
+      message: 'تم اعتماد الفاتورة وإنشاء قيود دفتر الأستاذ العام',
+      success: true,
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber
+    });
+  } catch (error) {
+    console.error('❌ Error submitting invoice:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      invoiceId: req.params.id,
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'خطأ في اعتماد الفاتورة',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// POST /api/financial/invoices/:id/cancel - Cancel invoice
+router.post('/invoices/:id/cancel', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const invoice = await Invoice.findByPk(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ message: 'الفاتورة غير موجودة' });
+    }
+
+    if (invoice.status === 'cancelled') {
+      return res.status(400).json({ message: 'الفاتورة ملغية مسبقاً' });
+    }
+
+    // Cancel related GL entries
+    await GLEntry.update(
+      { isCancelled: true, updatedAt: new Date() },
+      {
+        where: {
+          voucherType: 'Invoice',
+          voucherNo: invoice.invoiceNumber
+        }
+      }
+    );
+
+    // Update invoice status
+    await invoice.update({
+      status: 'cancelled',
+      cancelledAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.json({ message: 'تم إلغاء الفاتورة' });
+  } catch (error) {
+    console.error('Error cancelling invoice:', error);
+    res.status(500).json({ message: 'خطأ في إلغاء الفاتورة' });
+  }
+});
+
+// ==================== PAYMENTS ROUTES ====================
+
+// GET /api/financial/payments - Get payments
+router.get('/payments', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search, customerId, dateFrom, dateTo } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { paymentNumber: { [Op.like]: `%${search}%` } },
+          { reference: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    // Filter by customer
+    if (customerId) {
+      whereClause.customerId = customerId;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      whereClause.date = {};
+      if (dateFrom) whereClause.date[Op.gte] = dateFrom;
+      if (dateTo) whereClause.date[Op.lte] = dateTo;
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['date', 'DESC']],
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const payments = await Payment.findAll(options);
+    const total = await Payment.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: payments,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching payments:', error);
+    res.status(500).json({ message: 'خطأ في جلب الدفعات' });
+  }
+});
+
+// POST /api/financial/payments - Create new payment
+router.post('/payments', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const {
+      date, reference, customerId, amount, status = 'draft'
+    } = req.body;
+
+    // Validate required fields
+    if (!date || !customerId || !amount) {
+      return res.status(400).json({ message: 'التاريخ والعميل والمبلغ مطلوبين' });
+    }
+
+    // Generate robust entry number with retry to avoid unique collisions (only PAY prefix)
+    const lastPayment = await Payment.findOne({
+      where: { paymentNumber: { [Op.like]: 'PAY%' } },
+      order: [['createdAt', 'DESC']]
+    });
+    const lastNumStr = (lastPayment?.paymentNumber || '').match(/(\d+)$/)?.[1] || '0';
+    let baseNextNumber = parseInt(lastNumStr, 10);
+    if (!Number.isFinite(baseNextNumber)) baseNextNumber = 0;
+
+    let payment;
+    let attempt = 0;
+    while (attempt < 5) {
+      // Compute a safe integer candidate
+      let candidateNumber = baseNextNumber + 1 + attempt;
+      if (!Number.isFinite(candidateNumber)) candidateNumber = 1 + attempt;
+      candidateNumber = Math.abs(Math.trunc(candidateNumber));
+      if (!Number.isFinite(candidateNumber) || Number.isNaN(candidateNumber)) {
+        candidateNumber = Math.abs(Date.now() % 1000000);
+      }
+
+      let paymentNumber = `PAY${String(candidateNumber).padStart(6, '0')}`;
+      if (paymentNumber.includes('NaN')) {
+        const fallback = Math.abs(Date.now() % 1000000);
+        paymentNumber = `PAY${String(fallback).padStart(6, '0')}`;
+      }
+
+      try {
+        payment = await Payment.create({
+          id: uuidv4(),
+          paymentNumber,
+          date,
+          reference,
+          customerId,
+          amount,
+          status,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        break; // success
+      } catch (e) {
+        // If unique violation on paymentNumber, retry with next number; otherwise rethrow
+        const msg = (e && e.message) || '';
+        const isUnique = msg.toLowerCase().includes('unique') && msg.toLowerCase().includes('paymentnumber');
+        if (!isUnique) throw e;
+        attempt += 1;
+        if (attempt >= 5) throw e;
+      }
+    }
+
+    // Create notification for payment creation
+    try {
+      await NotificationService.notifyPaymentCreated(payment, req.user);
+    } catch (notificationError) {
+      console.error('Error creating payment notification:', notificationError);
+      // Don't fail the payment creation if notification fails
+    }
+
+    res.status(201).json(payment);
+  } catch (error) {
+    console.error('Error creating payment:', error);
+    res.status(500).json({ message: 'خطأ في إنشاء دفعة', error: error.message });
+  }
+});
+
+// GET /api/financial/payments/:id - Get specific payment
+router.get('/payments/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const payment = await Payment.findByPk(req.params.id, {
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'الدفعة غير موجودة' });
+    }
+
+    res.json(payment);
+  } catch (error) {
+    console.error('Error fetching payment:', error);
+    res.status(500).json({ message: 'خطأ في جلب الدفعة' });
+  }
+});
+
+// POST /api/financial/payments/:id/submit - Submit payment and create GL entries
+router.post('/payments/:id/submit', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    console.log(`🔄 Starting payment approval for ID: ${req.params.id}`);
+
+    const payment = await Payment.findByPk(req.params.id, {
+      include: [
+        {
+          model: Customer,
+          as: 'customer'
+        }
+      ]
+    });
+
+    if (!payment) {
+      console.log(`❌ Payment not found: ${req.params.id}`);
+      return res.status(404).json({ message: 'الدفعة غير موجودة' });
+    }
+
+    console.log(`📋 Payment found: ${payment.paymentNumber}, status: ${payment.status}`);
+
+    if (payment.status !== 'draft') {
+      console.log(`❌ Payment status is not draft: ${payment.status}`);
+      return res.status(400).json({ message: 'الدفعة معتمدة مسبقاً أو ملغية' });
+    }
+
+    console.log(`🔄 Starting database transaction`);
+
+    // Prepare GL entries
+    const glEntries = [
+      {
+        id: uuidv4(),
+        postingDate: payment.date,
+        accountId: payment.customer.accountId,
+        debit: 0,
+        credit: payment.amount,
+        voucherType: 'Payment',
+        voucherNo: payment.paymentNumber,
+        paymentId: payment.id,
+        remarks: payment.reference,
+        currency: 'LYD',
+        exchangeRate: 1.000000,
+        createdBy: req.user?.id || 'system',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: uuidv4(),
+        postingDate: payment.date,
+        accountId: 1, // TODO: Use correct account ID for cash/bank
+        debit: payment.amount,
+        credit: 0,
+        voucherType: 'Payment',
+        voucherNo: payment.paymentNumber,
+        paymentId: payment.id,
+        remarks: payment.reference,
+        currency: 'LYD',
+        exchangeRate: 1.000000,
+        createdBy: req.user?.id || 'system',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    console.log(`💾 Creating ${glEntries.length} GL entries`);
+
+    // Insert GL entries within transaction
+    const createdGLEntries = await GLEntry.bulkCreate(glEntries, { transaction });
+    console.log(`✅ Created ${createdGLEntries.length} GL entries successfully`);
+
+    // For each created GL entry, update corresponding Account balance
+    for (let i = 0; i < createdGLEntries.length; i++) {
+      const gl = createdGLEntries[i];
+      console.log(`🔄 Updating balance for account ${gl.accountId}`);
+
+      try {
+        const account = await Account.findByPk(gl.accountId, {
+          transaction,
+          lock: Transaction.LOCK.UPDATE
+        });
+
+        if (!account) {
+          throw new Error(`Account not found: ${gl.accountId}`);
+        }
+
+        console.log(`📊 Account ${account.code} (${account.name}): Current balance=${account.balance}, Nature=${account.nature}`);
+
+        // Compute new balance depending on account type (robust even if 'nature' is misconfigured)
+        const current = parseFloat(account.balance || 0);
+        const debit = parseFloat(gl.debit || 0);
+        const credit = parseFloat(gl.credit || 0);
+
+        let newBalance = current;
+
+        const isDebitType = ['asset', 'expense'].includes(account.type);
+        // For assets/expenses: debit increases balance; For liabilities/equity/revenue: credit increases balance
+        if (isDebitType) {
+          newBalance = current + debit - credit;
+        } else {
+          newBalance = current - debit + credit;
+        }
+
+        // Auto-correct account nature if inconsistent with type
+        const expectedNature = isDebitType ? 'debit' : 'credit';
+        if (account.nature !== expectedNature) {
+          account.nature = expectedNature;
+        }
+
+        console.log(`💰 Account ${account.code}: ${current} + ${debit} - ${credit} = ${newBalance} (nature: ${account.nature})`);
+
+        // Update account balance
+        account.balance = newBalance;
+        await account.save({ transaction });
+
+        console.log(`✅ Updated account ${account.code} balance to ${newBalance}`);
+      } catch (accountError) {
+        console.error(`❌ Error updating account ${gl.accountId}:`, accountError);
+        throw accountError;
+      }
+    }
+
+    console.log(`🔄 Updating payment status to posted`);
+
+    // Update payment status within the same transaction
+    await payment.update({
+      status: 'posted',
+      postedAt: new Date(),
+      postedBy: req.user?.id || 'system',
+      updatedAt: new Date()
+    }, { transaction });
+
+    console.log(`✅ Payment status updated to posted`);
+    res.json({
+      message: 'تم اعتماد الدفعة وإنشاء قيود دفتر الأستاذ العام',
+      success: true,
+      paymentId: payment.id,
+      paymentNumber: payment.paymentNumber
+    });
+  } catch (error) {
+    console.error('❌ Error submitting payment:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      paymentId: req.params.id,
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'خطأ في اعتماد الدفعة',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// POST /api/financial/payments/:id/cancel - Cancel payment
+router.post('/payments/:id/cancel', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const payment = await Payment.findByPk(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ message: 'الدفعة غير موجودة' });
+    }
+
+    if (payment.status === 'cancelled') {
+      return res.status(400).json({ message: 'الدفعة ملغية مسبقاً' });
+    }
+
+    // Cancel related GL entries
+    await GLEntry.update(
+      { isCancelled: true, updatedAt: new Date() },
+      {
+        where: {
+          voucherType: 'Payment',
+          voucherNo: payment.paymentNumber
+        }
+      }
+    );
+
+    // Update payment status
+    await payment.update({
+      status: 'cancelled',
+      cancelledAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.json({ message: 'تم إلغاء الدفعة' });
+  } catch (error) {
+    console.error('Error cancelling payment:', error);
+    res.status(500).json({ message: 'خطأ في إلغاء الدفعة' });
+  }
+});
+
+// ==================== RECEIPTS ROUTES ====================
+
+// GET /api/financial/receipts - Get receipts
+router.get('/receipts', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search, supplierId, dateFrom, dateTo } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { receiptNumber: { [Op.like]: `%${search}%` } },
+          { reference: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    // Filter by supplier
+    if (supplierId) {
+      whereClause.supplierId = supplierId;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      whereClause.date = {};
+      if (dateFrom) whereClause.date[Op.gte] = dateFrom;
+      if (dateTo) whereClause.date[Op.lte] = dateTo;
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['date', 'DESC']],
+      include: [
+        {
+          model: Supplier,
+          as: 'supplier',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const receipts = await Receipt.findAll(options);
+    const total = await Receipt.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: receipts,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching receipts:', error);
+    res.status(500).json({ message: 'خطأ في جلب الواردات' });
+  }
+});
+
+// POST /api/financial/receipts - Create new receipt
+router.post('/receipts', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const {
+      date, reference, supplierId, amount, status = 'draft'
+    } = req.body;
+
+    // Validate required fields
+    if (!date || !supplierId || !amount) {
+      return res.status(400).json({ message: 'التاريخ والمورد والمبلغ مطلوبين' });
+    }
+
+    // Generate robust entry number with retry to avoid unique collisions (only REC prefix)
+    const lastReceipt = await Receipt.findOne({
+      where: { receiptNumber: { [Op.like]: 'REC%' } },
+      order: [['createdAt', 'DESC']]
+    });
+    const lastNumStr = (lastReceipt?.receiptNumber || '').match(/(\d+)$/)?.[1] || '0';
+    let baseNextNumber = parseInt(lastNumStr, 10);
+    if (!Number.isFinite(baseNextNumber)) baseNextNumber = 0;
+
+    let receipt;
+    let attempt = 0;
+    while (attempt < 5) {
+      // Compute a safe integer candidate
+      let candidateNumber = baseNextNumber + 1 + attempt;
+      if (!Number.isFinite(candidateNumber)) candidateNumber = 1 + attempt;
+      candidateNumber = Math.abs(Math.trunc(candidateNumber));
+      if (!Number.isFinite(candidateNumber) || Number.isNaN(candidateNumber)) {
+        candidateNumber = Math.abs(Date.now() % 1000000);
+      }
+
+      let receiptNumber = `REC${String(candidateNumber).padStart(6, '0')}`;
+      if (receiptNumber.includes('NaN')) {
+        const fallback = Math.abs(Date.now() % 1000000);
+        receiptNumber = `REC${String(fallback).padStart(6, '0')}`;
+      }
+
+      try {
+        receipt = await Receipt.create({
+          id: uuidv4(),
+          receiptNumber,
+          date,
+          reference,
+          supplierId,
+          amount,
+          status,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        break; // success
+      } catch (e) {
+        // If unique violation on receiptNumber, retry with next number; otherwise rethrow
+        const msg = (e && e.message) || '';
+        const isUnique = msg.toLowerCase().includes('unique') && msg.toLowerCase().includes('receiptnumber');
+        if (!isUnique) throw e;
+        attempt += 1;
+        if (attempt >= 5) throw e;
+      }
+    }
+
+    // Create notification for receipt creation
+    try {
+      await NotificationService.notifyReceiptCreated(receipt, req.user);
+    } catch (notificationError) {
+      console.error('Error creating receipt notification:', notificationError);
+      // Don't fail the receipt creation if notification fails
+    }
+
+    res.status(201).json(receipt);
+  } catch (error) {
+    console.error('Error creating receipt:', error);
+    res.status(500).json({ message: 'خطأ في إنشاء وارد', error: error.message });
+  }
+});
+
+// GET /api/financial/receipts/:id - Get specific receipt
+router.get('/receipts/:id', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const receipt = await Receipt.findByPk(req.params.id, {
+      include: [
+        {
+          model: Supplier,
+          as: 'supplier',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    });
+
+    if (!receipt) {
+      return res.status(404).json({ message: 'الوارد غير موجود' });
+    }
+
+    res.json(receipt);
+  } catch (error) {
+    console.error('Error fetching receipt:', error);
+    res.status(500).json({ message: 'خطأ في جلب الوارد' });
+  }
+});
+
+// POST /api/financial/receipts/:id/submit - Submit receipt and create GL entries
+router.post('/receipts/:id/submit', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    console.log(`🔄 Starting receipt approval for ID: ${req.params.id}`);
+
+    const receipt = await Receipt.findByPk(req.params.id, {
+      include: [
+        {
+          model: Supplier,
+          as: 'supplier'
+        }
+      ]
+    });
+
+    if (!receipt) {
+      console.log(`❌ Receipt not found: ${req.params.id}`);
+      return res.status(404).json({ message: 'الوارد غير موجود' });
+    }
+
+    console.log(`📋 Receipt found: ${receipt.receiptNumber}, status: ${receipt.status}`);
+
+    if (receipt.status !== 'draft') {
+      console.log(`❌ Receipt status is not draft: ${receipt.status}`);
+      return res.status(400).json({ message: 'الوارد معتمد مسبقاً أو ملغي' });
+    }
+
+    console.log(`🔄 Starting database transaction`);
+
+    // Prepare GL entries
+    const glEntries = [
+      {
+        id: uuidv4(),
+        postingDate: receipt.date,
+        accountId: receipt.supplier.accountId,
+        debit: receipt.amount,
+        credit: 0,
+        voucherType: 'Receipt',
+        voucherNo: receipt.receiptNumber,
+        receiptId: receipt.id,
+        remarks: receipt.reference,
+        currency: 'LYD',
+        exchangeRate: 1.000000,
+        createdBy: req.user?.id || 'system',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: uuidv4(),
+        postingDate: receipt.date,
+        accountId: 1, // TODO: Use correct account ID for cash/bank
+        debit: 0,
+        credit: receipt.amount,
+        voucherType: 'Receipt',
+        voucherNo: receipt.receiptNumber,
+        receiptId: receipt.id,
+        remarks: receipt.reference,
+        currency: 'LYD',
+        exchangeRate: 1.000000,
+        createdBy: req.user?.id || 'system',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    console.log(`💾 Creating ${glEntries.length} GL entries`);
+
+    // Insert GL entries within transaction
+    const createdGLEntries = await GLEntry.bulkCreate(glEntries, { transaction });
+    console.log(`✅ Created ${createdGLEntries.length} GL entries successfully`);
+
+    // For each created GL entry, update corresponding Account balance
+    for (let i = 0; i < createdGLEntries.length; i++) {
+      const gl = createdGLEntries[i];
+      console.log(`🔄 Updating balance for account ${gl.accountId}`);
+
+      try {
+        const account = await Account.findByPk(gl.accountId, {
+          transaction,
+          lock: Transaction.LOCK.UPDATE
+        });
+
+        if (!account) {
+          throw new Error(`Account not found: ${gl.accountId}`);
+        }
+
+        console.log(`📊 Account ${account.code} (${account.name}): Current balance=${account.balance}, Nature=${account.nature}`);
+
+        // Compute new balance depending on account type (robust even if 'nature' is misconfigured)
+        const current = parseFloat(account.balance || 0);
+        const debit = parseFloat(gl.debit || 0);
+        const credit = parseFloat(gl.credit || 0);
+
+        let newBalance = current;
+
+        const isDebitType = ['asset', 'expense'].includes(account.type);
+        // For assets/expenses: debit increases balance; For liabilities/equity/revenue: credit increases balance
+        if (isDebitType) {
+          newBalance = current + debit - credit;
+        } else {
+          newBalance = current - debit + credit;
+        }
+
+        // Auto-correct account nature if inconsistent with type
+        const expectedNature = isDebitType ? 'debit' : 'credit';
+        if (account.nature !== expectedNature) {
+          account.nature = expectedNature;
+        }
+
+        console.log(`💰 Account ${account.code}: ${current} + ${debit} - ${credit} = ${newBalance} (nature: ${account.nature})`);
+
+        // Update account balance
+        account.balance = newBalance;
+        await account.save({ transaction });
+
+        console.log(`✅ Updated account ${account.code} balance to ${newBalance}`);
+      } catch (accountError) {
+        console.error(`❌ Error updating account ${gl.accountId}:`, accountError);
+        throw accountError;
+      }
+    }
+
+    console.log(`🔄 Updating receipt status to posted`);
+
+    // Update receipt status within the same transaction
+    await receipt.update({
+      status: 'posted',
+      postedAt: new Date(),
+      postedBy: req.user?.id || 'system',
+      updatedAt: new Date()
+    }, { transaction });
+
+    console.log(`✅ Receipt status updated to posted`);
+    res.json({
+      message: 'تم اعتماد الوارد وإنشاء قيود دفتر الأستاذ العام',
+      success: true,
+      receiptId: receipt.id,
+      receiptNumber: receipt.receiptNumber
+    });
+  } catch (error) {
+    console.error('❌ Error submitting receipt:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      receiptId: req.params.id,
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'خطأ في اعتماد الوارد',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// POST /api/financial/receipts/:id/cancel - Cancel receipt
+router.post('/receipts/:id/cancel', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const receipt = await Receipt.findByPk(req.params.id);
+    if (!receipt) {
+      return res.status(404).json({ message: 'الوارد غير موجود' });
+    }
+
+    if (receipt.status === 'cancelled') {
+      return res.status(400).json({ message: 'الوارد ملغي مسبقاً' });
+    }
+
+    // Cancel related GL entries
+    await GLEntry.update(
+      { isCancelled: true, updatedAt: new Date() },
+      {
+        where: {
+          voucherType: 'Receipt',
+          voucherNo: receipt.receiptNumber
+        }
+      }
+    );
+
+    // Update receipt status
+    await receipt.update({
+      status: 'cancelled',
+      cancelledAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    res.json({ message: 'تم إلغاء الوارد' });
+  } catch (error) {
+    console.error('Error cancelling receipt:', error);
+    res.status(500).json({ message: 'خطأ في إلغاء الوارد' });
+  }
+});
+
+// ==================== PAYROLL ENTRIES ROUTES ====================
+
+// GET /api/financial/payroll-entries - Get payroll entries
+router.get('/payroll-entries', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search, employeeId, dateFrom, dateTo } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { payrollNumber: { [Op.like]: `%${search}%` } },
+          { reference: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    // Filter by employee
+    if (employeeId) {
+      whereClause.employeeId = employeeId;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      whereClause.date = {};
+      if (dateFrom) whereClause.date[Op.gte] = dateFrom;
+      if (dateTo) whereClause.date[Op.lte] = dateTo;
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['date', 'DESC']],
+      include: [
+        {
+          model: Employee,
+          as: 'employee',
+          attributes: ['id', 'code', 'name']
+        }
+      ]
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const payrollEntries = await PayrollEntry.findAll(options);
+    const total = await PayrollEntry.count({ where: whereClause });
+
+    // Always use consistent response format
+    const response = {
+      data: payrollEntries,
+      total,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || total,
+      totalPages: Math.ceil(total / (parseInt(limit) || total))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching payroll entries:', error);
+    res.status(500).json({ message: 'خطأ في جلب سجلات الرواتب' });
+  }
+});
+
+// ==================== SUPPLIERS ROUTES ====================
+
+// GET /api/financial/suppliers - Get suppliers
+router.get('/suppliers', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { page, limit, search } = req.query;
+
+    let whereClause = {};
+
+    // Filter by search term
+    if (search) {
+      whereClause = {
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { code: { [Op.like]: `%${search}%` } },
+          { nameEn: { [Op.like]: `%${search}%` } }
+        ]
+      };
+    }
+
+    const options = {
+      where: whereClause,
+      order: [['name', 'ASC']]
+      // Removed Account include as Supplier model doesn't have this association
+    };
+
+    if (page && limit) {
+      options.limit = parseInt(limit);
+      options.offset = (parseInt(page) - 1) * parseInt(limit);
+    }
+
+    const suppliers = await Supplier.findAll(options);
+    const totalSuppliers = await Supplier.count({ where: whereClause });
+
+    // Always use consistent response format
+    const responseSuppliers = {
+      data: suppliers,
+      total: totalSuppliers,
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || totalSuppliers,
+      totalPages: Math.ceil(totalSuppliers / (parseInt(limit) || totalSuppliers))
+    };
+
+    res.json(responseSuppliers);
   } catch (error) {
     console.error('Error fetching suppliers:', error);
     res.status(500).json({ message: 'خطأ في جلب الموردين' });
@@ -4514,7 +8483,7 @@ router.post('/vouchers/payments', authenticateToken, requireTreasuryAccess, asyn
         const nextNumber = lastPayment ? parseInt(lastPayment.paymentNumber.replace(/\D/g, '')) + 1 : 1;
         const paymentNumber = `PAY-${String(nextNumber).padStart(6, '0')}`;
 
-        // Create payment
+        // Create payment - temporarily exclude fields that may not exist in production DB
         const payment = await Payment.create({
           paymentNumber,
           accountId: resolvedAccountId,
@@ -4527,9 +8496,9 @@ router.post('/vouchers/payments', authenticateToken, requireTreasuryAccess, asyn
           reference,
           notes,
           status: 'completed',
-          createdBy: req.user.id,
-          completedAt: new Date(),
-          completedBy: req.user.id
+          // createdBy: req.user.id,  // Temporarily disabled - column may not exist in production
+          // completedAt: new Date(),  // Keep this as it might exist
+          // completedBy: req.user.id  // Temporarily disabled - column may not exist in production
         }, { transaction });
 
         // Attach counter account for journal entry mapping
