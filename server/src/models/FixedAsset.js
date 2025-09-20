@@ -19,42 +19,9 @@ export default (sequelize) => {
       type: DataTypes.STRING(200),
       allowNull: false
     },
-
-    categoryAccountId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: 'accounts',
-        key: 'id'
-      },
-      comment: 'Reference to the fixed asset category account from chart of accounts'
-    },
-    assetAccountId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'accounts',
-        key: 'id'
-      },
-      comment: 'Reference to the specific asset account created for this fixed asset'
-    },
-    depreciationExpenseAccountId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'accounts',
-        key: 'id'
-      },
-      comment: 'Reference to the depreciation expense account for this asset'
-    },
-    accumulatedDepreciationAccountId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'accounts',
-        key: 'id'
-      },
-      comment: 'Reference to the accumulated depreciation account for this asset'
+    category: {
+      type: DataTypes.ENUM('vehicles', 'equipment', 'furniture', 'machinery', 'other'),
+      defaultValue: 'other'
     },
     purchaseDate: {
       type: DataTypes.DATEONLY,
@@ -91,7 +58,6 @@ export default (sequelize) => {
       type: DataTypes.ENUM('straight_line', 'declining_balance', 'sum_of_years', 'units_of_production'),
       defaultValue: 'straight_line'
     },
-
     currentValue: {
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0.00,
@@ -108,13 +74,17 @@ export default (sequelize) => {
       type: DataTypes.STRING(200),
       allowNull: true
     },
-
     description: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-
-
+    categoryAccountId: {
+      type: DataTypes.UUID,
+      allowNull: true, // Made nullable to match database
+      comment: 'Reference to the fixed asset category account from chart of accounts'
+    }
+    // Removed the missing columns that don't exist in the database:
+    // assetAccountId, depreciationExpenseAccountId, accumulatedDepreciationAccountId
   }, {
     tableName: 'fixed_assets',
     timestamps: true,
@@ -124,13 +94,8 @@ export default (sequelize) => {
       {
         unique: true,
         fields: ['assetNumber']
-      },
-      {
-        fields: ['categoryAccountId']
-      },
-      {
-        fields: ['status']
       }
+      // Removed index on categoryAccountId since it's nullable
     ],
     hooks: {
       beforeCreate: async (asset) => {
@@ -231,13 +196,18 @@ export default (sequelize) => {
     });
   };
 
-  // Associations
+  // Associations - simplified to match actual database structure
   FixedAsset.associate = (models) => {
-    FixedAsset.belongsTo(models.Account, {
-      foreignKey: 'categoryAccountId',
-      as: 'categoryAccount',
-      onDelete: 'RESTRICT'
-    });
+    // Only keep the association that actually exists in the database
+    // The other associations (assetAccount, depreciationExpenseAccount, accumulatedDepreciationAccount) 
+    // don't exist in the actual database table
+    if (models.Account) {
+      FixedAsset.belongsTo(models.Account, {
+        foreignKey: 'categoryAccountId',
+        as: 'categoryAccount',
+        onDelete: 'SET NULL' // Changed from RESTRICT to SET NULL to match nullable column
+      });
+    }
   };
 
   return FixedAsset;

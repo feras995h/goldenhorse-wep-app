@@ -154,9 +154,12 @@ export default (sequelize) => {
       {
         fields: ['voucherType']
       },
+      // Temporarily comment out index on createdBy that may not exist in production DB
+      /*
       {
         fields: ['createdBy']
       },
+      */
       {
         fields: ['date']
       },
@@ -187,7 +190,8 @@ export default (sequelize) => {
 
   Payment.prototype.complete = function(completedBy) {
     this.status = 'completed';
-    this.completedBy = completedBy;
+    // Temporarily comment out completedBy that may not exist in production DB
+    // this.completedBy = completedBy;
     this.completedAt = new Date();
     return this.save();
   };
@@ -286,8 +290,9 @@ export default (sequelize) => {
         voucherNo: this.paymentNumber,
         journalEntryId: journalEntry.id,
         remarks: detail.description,
-        currency: this.currency,
-        exchangeRate: this.exchangeRate,
+        // Temporarily comment out currency fields that may not exist in production DB
+        // currency: this.currency,
+        // exchangeRate: this.exchangeRate,
         createdBy: userId
       }));
 

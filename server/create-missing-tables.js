@@ -11,13 +11,19 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 
 console.log('🔄 فحص وإنشاء الجداول المفقودة في PostgreSQL...');
 
-// الاتصال المباشر بـ PostgreSQL
-const databaseUrl = process.env.DATABASE_URL || process.env.DB_URL;
+// الاتصال المباشر بـ PostgreSQL مع استخدام عنوان URL الصحيح
+const databaseUrl = 'postgres://postgres:XIclgABy2kg3ZZ2Nyh7GOYexxcm206RTNsSAJavhbF4ukgMfDiNqXSOhy8SIALUP@72.60.92.146:5432/postgres';
 const sequelize = new Sequelize(databaseUrl, {
   dialect: 'postgres',
   logging: false,
   dialectOptions: {
     ssl: false
+  },
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
   }
 });
 
@@ -85,6 +91,33 @@ async function createMissingTables() {
           );
         `);
         console.log('✅ تم إنشاء جدول notifications');
+      }
+
+      // إنشاء جدول الأصول الثابتة إذا كان مفقود
+      if (missingTables.includes('fixed_assets')) {
+        await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS fixed_assets (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            "assetNumber" VARCHAR(50) NOT NULL UNIQUE,
+            name VARCHAR(200) NOT NULL,
+            "categoryAccountId" UUID NOT NULL REFERENCES accounts(id),
+            "assetAccountId" UUID REFERENCES accounts(id),
+            "depreciationExpenseAccountId" UUID REFERENCES accounts(id),
+            "accumulatedDepreciationAccountId" UUID REFERENCES accounts(id),
+            "purchaseDate" DATE NOT NULL,
+            "purchaseCost" DECIMAL(15,2) NOT NULL,
+            "salvageValue" DECIMAL(15,2) DEFAULT 0.00,
+            "usefulLife" INTEGER NOT NULL,
+            "depreciationMethod" VARCHAR(30) DEFAULT 'straight_line' CHECK ("depreciationMethod" IN ('straight_line', 'declining_balance', 'sum_of_years', 'units_of_production')),
+            "currentValue" DECIMAL(15,2) DEFAULT 0.00,
+            status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'disposed', 'sold', 'damaged', 'maintenance')),
+            location VARCHAR(200),
+            description TEXT,
+            "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+            "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+          );
+        `);
+        console.log('✅ تم إنشاء جدول fixed_assets');
       }
 
       console.log('✅ تم إنشاء الجداول المفقودة بنجاح');
