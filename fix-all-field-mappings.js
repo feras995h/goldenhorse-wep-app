@@ -64,3 +64,4 @@ modelFiles.forEach(filePath => {
 
 console.log('\n✅ تم إصلاح جميع أخطاء field mappings');
 console.log('🎯 الآن يمكن تشغيل الخادم بدون أخطاء');
+

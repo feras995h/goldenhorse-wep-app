@@ -144,3 +144,4 @@ fs.writeFileSync(filePath, content, 'utf8');
 
 console.log('\n✅ تم إصلاح جميع أخطاء syntax في نموذج Shipment');
 console.log('🎯 الآن يمكن تشغيل الخادم بدون أخطاء');
+

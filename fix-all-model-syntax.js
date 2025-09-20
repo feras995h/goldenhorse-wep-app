@@ -168,3 +168,4 @@ fs.writeFileSync(stockMovementPath, stockContent, 'utf8');
 
 console.log('\n✅ تم إصلاح جميع أخطاء syntax في نماذج الشحنات');
 console.log('🎯 الآن يمكن تشغيل الخادم بدون أخطاء');
+

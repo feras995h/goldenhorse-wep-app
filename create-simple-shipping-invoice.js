@@ -258,3 +258,4 @@ fs.writeFileSync('./server/src/models/ShippingInvoice.js', simpleShippingInvoice
 
 console.log('✅ تم إنشاء نموذج ShippingInvoice مبسط');
 console.log('🎯 الآن يمكن تشغيل الخادم بدون أخطاء');
+

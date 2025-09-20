@@ -196,3 +196,4 @@ fs.writeFileSync('./server/src/models/Shipment.js', simpleShipmentModel, 'utf8')
 
 console.log('✅ تم إنشاء نموذج Shipment مبسط');
 console.log('🎯 الآن يمكن تشغيل الخادم بدون أخطاء');
+

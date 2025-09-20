@@ -266,7 +266,7 @@ class AdvancedFixedAssetManager {
         totalDebit: fixedAsset.purchaseCost,
         totalCredit: fixedAsset.purchaseCost,
         status: 'posted',
-        postedBy: userId,
+        postedBy: userId, // This should be a valid user ID passed from the route
         postedAt: new Date()
       }, { transaction });
       
@@ -282,7 +282,7 @@ class AdvancedFixedAssetManager {
           voucherNo: entryNumber,
           journalEntryId: journalEntry.id,
           remarks: `شراء أصل ثابت - ${fixedAsset.name}`,
-          createdBy: userId,
+          createdBy: userId, // Use the same valid user ID
           currency: 'LYD',
           exchangeRate: 1.0
         },
@@ -296,7 +296,7 @@ class AdvancedFixedAssetManager {
           voucherNo: entryNumber,
           journalEntryId: journalEntry.id,
           remarks: `دفع ثمن أصل ثابت - ${fixedAsset.name}`,
-          createdBy: userId,
+          createdBy: userId, // Use the same valid user ID
           currency: 'LYD',
           exchangeRate: 1.0
         }

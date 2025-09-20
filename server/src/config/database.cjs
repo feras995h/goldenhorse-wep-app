@@ -57,10 +57,7 @@ module.exports = {
       idle: 10000
     },
     dialectOptions: {
-      ssl: process.env.DB_SSL === 'true' || (DATABASE_URL && DATABASE_URL.includes('postgresql://')) ? {
-        require: true,
-        rejectUnauthorized: false
-      } : false
+      ssl: false // Disable SSL for this PostgreSQL server
     }
   }
 };
