@@ -84,6 +84,8 @@ export default (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    // Temporarily comment out currency fields that may not exist in production DB
+    /*
     currency: {
       type: DataTypes.STRING(3),
       defaultValue: 'LYD',
@@ -99,6 +101,7 @@ export default (sequelize) => {
         max: 999999.999999
       }
     },
+    */
     createdBy: {
       type: DataTypes.UUID,
       allowNull: true, // Will be required in future migration

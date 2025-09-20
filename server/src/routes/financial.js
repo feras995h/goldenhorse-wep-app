@@ -4526,8 +4526,6 @@ router.post('/vouchers/payments', authenticateToken, requireTreasuryAccess, asyn
           paymentMethod,
           reference,
           notes,
-          currency,
-          exchangeRate,
           status: 'completed',
           createdBy: req.user.id,
           completedAt: new Date(),
