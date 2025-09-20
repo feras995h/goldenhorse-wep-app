@@ -60,7 +60,10 @@ class WebSocketService {
   connect(token: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const serverUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5001';
+        const serverUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 
+                         (window.location.protocol === 'https:' ? 
+                          `wss://${window.location.host}` : 
+                          'http://localhost:5001');
         
         this.socket = io(serverUrl, {
           auth: {

@@ -42,7 +42,7 @@ const {
 
 
 // Middleware to ensure financial role access
-const requireFinancialAccess = requireRole(['admin', 'financial']);
+const requireFinancialAccess = requireAccountingAccess;
 // Treasury vouchers can be used by sales as well (no direct chart editing required)
 const requireTreasuryAccess = requireRole(['admin', 'financial', 'sales']);
 
