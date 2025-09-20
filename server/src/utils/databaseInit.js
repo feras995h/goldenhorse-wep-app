@@ -68,31 +68,8 @@ class DatabaseInitializer {
         throw new Error(`Database connection failed: ${connectionTest.error}`);
       }
       
-      // Sync models (create tables)
-      console.log('📋 Creating/updating database tables...');
-      
-      try {
-        // For SQLite, we need to handle ENUM types which aren't natively supported
-        if (sequelize.getDialect() === 'sqlite') {
-          // Use force: false and alter: false to avoid UNIQUE column issues in SQLite
-          // Also handle ENUM type issues by using TEXT fallback
-          await sequelize.sync({ force: false, alter: false });
-        } else {
-          // For PostgreSQL, we can use normal sync
-          await sequelize.sync({ force: false, alter: false });
-        }
-        console.log('✅ Database tables synchronized');
-      } catch (syncError) {
-        if (syncError.message.includes('near "[]"') || syncError.message.includes('SQLITE_ERROR')) {
-          console.warn('⚠️  SQLite ENUM handling issue detected, attempting manual table creation...');
-          
-          // For SQLite ENUM issues, we'll skip automatic sync and let the system continue
-          // The models will still work, just without the ENUM constraints
-          console.log('✅ Continuing without automatic table sync (tables will be created on first use)');
-        } else {
-          throw syncError; // Re-throw other errors
-        }
-      }
+      // Skip automatic table synchronization since we've manually fixed the table structures
+      console.log('📋 Skipping automatic database table synchronization (tables already updated)');
       
       // Ensure default main accounts exist
       try {
