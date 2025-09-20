@@ -5487,9 +5487,6 @@ router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess
   }
 });
 
-// Import helper functions
-import { generateHierarchicalAssetNumber, createFixedAssetAccounts, formatCurrency, ensureFixedAssetsStructure } from '../utils/fixedAssetHelpers.js';
-
 // POST /api/financial/fixed-assets - Create new fixed asset (simplified version)
 router.post('/fixed-assets', authenticateToken, requireFinancialAccess, async (req, res) => {
   const transaction = await sequelize.transaction();
