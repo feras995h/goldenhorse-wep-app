@@ -1,0 +1,202 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useFinancialData } from '../contexts/FinancialDataContext';
+import FinancialSummary from '../components/Financial/FinancialSummary';
+import {
+  FileText,
+  Users,
+  Calculator,
+  Receipt,
+  UserCheck,
+  BarChart3,
+  ArrowUpRight,
+  Building,
+  RefreshCw,
+  AlertTriangle
+} from 'lucide-react';
+
+const FinancialDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const {
+    financialData,
+    financialLoading,
+    financialError,
+    refreshFinancialData
+  } = useFinancialData();
+
+  // Rename variables to match usage in the component
+  const loading = financialLoading;
+  const error = financialError;
+  const handleRefresh = refreshFinancialData;
+
+  const quickActions = [
+    {
+      title: 'دليل الحسابات',
+      description: 'دليل الحسابات والأرصدة',
+      icon: Calculator,
+      color: 'blue' as const,
+      href: '/financial/chart-of-accounts'
+    },
+    {
+      title: 'قيود اليومية',
+      description: 'إنشاء وإدارة القيود المحاسبية',
+      icon: FileText,
+      color: 'green' as const,
+      href: '/financial/journal'
+    },
+    {
+      title: 'كشف الحساب',
+      description: 'عرض حركة الحساب خلال فترة محددة',
+      icon: FileText,
+      color: 'orange' as const,
+      href: '/financial/account-statement'
+    },
+    {
+      title: 'الأصول الثابتة',
+      description: 'إدارة الأصول والاستهلاك',
+      icon: Building,
+      color: 'green' as const,
+      href: '/financial/fixed-assets'
+    },
+    {
+      title: 'القيد الافتتاحي',
+      description: 'إدارة الأرصدة الافتتاحية',
+      icon: BarChart3,
+      color: 'purple' as const,
+      href: '/financial/opening-balance'
+    },
+    {
+      title: 'مراقبة الحسابات',
+      description: 'مراقبة الحسابات الرئيسية',
+      icon: UserCheck,
+      color: 'red' as const,
+      href: '/financial/account-monitoring'
+    },
+    {
+      title: 'تقارير الفواتير',
+      description: 'تقارير الفواتير المسددة وغير المسددة',
+      icon: Receipt,
+      color: 'indigo' as const,
+      href: '/financial/invoice-reports'
+    },
+    {
+      title: 'التقارير الفورية',
+      description: 'تقارير فورية عن المقبوضات والمدفوعات والتدفق النقدي',
+      icon: BarChart3,
+      color: 'teal' as const,
+      href: '/financial/instant-reports'
+    },
+    {
+      title: 'العملاء',
+      description: 'إدارة بيانات العملاء والأرصدة',
+      icon: Users,
+      color: 'indigo' as const,
+      href: '/financial/customers'
+    },
+    {
+      title: 'إدارة الموظفين',
+      description: 'إدارة شاملة للموظفين والحسابات والرواتب',
+      icon: Users,
+      color: 'purple' as const,
+      href: '/financial/employees'
+    },
+    {
+      title: 'كشف حساب الموظفين',
+      description: 'عرض بيانات الموظفين ورواتبهم وسلفهم وعهودهم',
+      icon: UserCheck,
+      color: 'red' as const,
+      href: '/financial/employee-accounts'
+    },
+    {
+      title: 'التقارير المالية',
+      description: 'الميزانية وقائمة الدخل والتقارير',
+      icon: BarChart3,
+      color: 'blue' as const,
+      href: '/financial/reports'
+    }
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <RefreshCw className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-600">جاري تحميل البيانات المالية...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={handleRefresh}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 mx-auto"
+          >
+            <RefreshCw className="h-4 w-4" />
+            إعادة المحاولة
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">لوحة المدير المالي</h1>
+          <p className="text-gray-600 mt-2">إدارة شاملة للشؤون المالية والمحاسبية</p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+        >
+          <RefreshCw className="h-4 w-4" />
+          تحديث البيانات
+        </button>
+      </div>
+
+      {/* Financial Summary Component */}
+      <FinancialSummary
+        data={financialData}
+        loading={financialLoading}
+        error={financialError}
+        onRefresh={refreshFinancialData}
+      />
+
+      {/* Quick Actions Grid */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">الوظائف السريعة</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {quickActions.map((action, index) => {
+            const IconComponent = action.icon;
+            return (
+              <div
+                key={index}
+                onClick={() => navigate(action.href)}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-full bg-${action.color}-100 group-hover:bg-${action.color}-200 transition-colors`}>
+                    <IconComponent className={`h-6 w-6 text-${action.color}-600`} />
+                  </div>
+                  <ArrowUpRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2">{action.title}</h3>
+                <p className="text-sm text-gray-600">{action.description}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default FinancialDashboard;

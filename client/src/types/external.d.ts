@@ -1,0 +1,2 @@
+declare module '@loadable/component';
+

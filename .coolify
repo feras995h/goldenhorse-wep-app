@@ -1,0 +1,17 @@
+# Coolify Configuration
+# This file tells Coolify how to build and deploy the application
+
+# Build configuration
+BUILD_COMMAND="node build-production.js"
+
+# Start command
+START_COMMAND="cd server && npm start"
+
+# Port
+PORT=5001
+
+# Health check
+HEALTH_CHECK_PATH="/api/health"
+
+# Environment
+NODE_ENV=production

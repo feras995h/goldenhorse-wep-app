@@ -1,0 +1,320 @@
+/* Enhanced styles for Account Statement page */
+
+/* Print styles for professional formatting */
+@media print {
+  body {
+    font-family: 'Arial', sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .account-statement-table {
+    page-break-inside: avoid;
+  }
+
+  .account-statement-table th,
+  .account-statement-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: right;
+  }
+
+  .account-statement-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+  }
+
+  .number-cell {
+    text-align: left;
+    font-family: 'Courier New', monospace;
+  }
+
+  .positive-balance {
+    color: #28a745;
+  }
+
+  .negative-balance {
+    color: #dc3545;
+  }
+
+  .opening-balance-row {
+    background-color: #e3f2fd;
+    font-weight: bold;
+  }
+}
+
+/* Enhanced table styling */
+.account-statement-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.account-statement-table th {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.account-statement-table td {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
+}
+
+.account-statement-table tbody tr:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Clickable row styling */
+.clickable-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clickable-row:hover {
+  background-color: #e3f2fd !important;
+  border-left: 4px solid #2196f3;
+}
+
+/* Opening balance row styling */
+.opening-balance-row {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-left: 4px solid #2196f3;
+  font-weight: 600;
+}
+
+.opening-balance-row td {
+  border-bottom: 2px solid #2196f3;
+}
+
+/* Number formatting */
+.number-cell {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-weight: 600;
+  text-align: center;
+}
+
+.debit-amount {
+  color: #2e7d32;
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  min-width: 80px;
+}
+
+.credit-amount {
+  color: #c62828;
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  min-width: 80px;
+}
+
+.balance-amount {
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  min-width: 100px;
+}
+
+.positive-balance {
+  color: #1b5e20;
+  background: linear-gradient(135deg, #e8f5e8 0%, #a5d6a7 100%);
+}
+
+.negative-balance {
+  color: #b71c1c;
+  background: linear-gradient(135deg, #ffebee 0%, #ef9a9a 100%);
+}
+
+/* Export menu styling */
+.export-menu {
+  animation: slideDown 0.2s ease-out;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.export-menu button {
+  transition: all 0.2s ease;
+}
+
+.export-menu button:hover {
+  background-color: #f5f5f5;
+  transform: translateX(4px);
+}
+
+/* Date range styling */
+.date-range-container {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #dee2e6;
+}
+
+.date-input {
+  transition: all 0.2s ease;
+  border: 2px solid #e0e0e0;
+}
+
+.date-input:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Modal enhancements */
+.entry-modal {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.amount-card {
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.amount-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.amount-card.debit {
+  border-color: #4caf50;
+}
+
+.amount-card.credit {
+  border-color: #f44336;
+}
+
+.amount-card.balance {
+  border-color: #2196f3;
+}
+
+/* Action buttons */
+.action-button {
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.action-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.action-button.edit {
+  color: #1976d2;
+}
+
+.action-button.edit:hover {
+  background-color: #e3f2fd;
+}
+
+.action-button.external {
+  color: #616161;
+}
+
+.action-button.external:hover {
+  background-color: #f5f5f5;
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+  .account-statement-table {
+    font-size: 12px;
+  }
+  
+  .account-statement-table th,
+  .account-statement-table td {
+    padding: 8px 4px;
+  }
+  
+  .number-cell {
+    min-width: 60px;
+  }
+  
+  .debit-amount,
+  .credit-amount {
+    min-width: 60px;
+    font-size: 11px;
+  }
+  
+  .balance-amount {
+    min-width: 80px;
+    font-size: 12px;
+  }
+}
+
+/* Loading animation */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Enhanced hover effects */
+.hover-lift {
+  transition: all 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Badge styling */
+.opening-balance-badge {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: golden-horse-db
+    environment:
+      POSTGRES_DB: golden_horse_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Golden Horse Application
+  app:
+    build: .
+    container_name: golden-horse-app
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: production
+      PORT: 5001
+      
+      # Database
+      DB_DIALECT: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: golden_horse_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres123
+
+      # JWT
+      JWT_SECRET: GH2024_SecureJWT_Key_$7mK9pL3qR8vN2xC5bF1wE6tY4uI0oP9sA8dG7hJ6kL5mN4qR3tY2uI1oP0
+      JWT_REFRESH_SECRET: GH2024_RefreshJWT_Key_$9nM7kL5jH3gF1dS8aP6qW4eR2tY0uI9oP8sA7dG6hJ5kL4mN3qR2tY1uI0
+      JWT_EXPIRES_IN: 8h
+      JWT_REFRESH_EXPIRES_IN: 7d
+
+      # Security
+      TRUST_PROXY: 1
+      CORS_ORIGIN: "*"
+
+      # Logging
+      LOG_LEVEL: info
+      
+    volumes:
+      - uploads_data:/app/server/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "server/src/scripts/healthCheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+  uploads_data:
+
+networks:
+  default:
+    name: golden-horse-network
