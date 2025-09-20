@@ -102,6 +102,8 @@ export default (sequelize) => {
       }
     },
     */
+    // Temporarily comment out fields that may not exist in production DB
+    /*
     createdBy: {
       type: DataTypes.UUID,
       allowNull: true, // Will be required in future migration
@@ -110,10 +112,13 @@ export default (sequelize) => {
         key: 'id'
       }
     },
+    */
     completedAt: {
       type: DataTypes.DATE,
       allowNull: true
     },
+    // Temporarily comment out fields that may not exist in production DB
+    /*
     completedBy: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -122,6 +127,7 @@ export default (sequelize) => {
         key: 'id'
       }
     },
+    */
 
   }, {
     tableName: 'payments',
