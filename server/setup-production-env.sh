@@ -44,3 +44,4 @@ else
     echo "Please check your database configuration."
     exit 1
 fi
+

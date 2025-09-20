@@ -6,10 +6,10 @@ interface FixedAssetFormProps {
     assetNumber: string;
     name: string;
     nameEn?: string;
-    category: string;
+    categoryAccountId: string;
     branch: string;
     purchaseDate: string;
-    purchasePrice: number;
+    purchaseCost: number;
     currency: string;
     depreciationMethod: 'straight_line' | 'declining_balance';
     usefulLife: number;
@@ -22,15 +22,17 @@ interface FixedAssetFormProps {
   };
   onFormDataChange: (data: any) => void;
   errors: Record<string, string>;
+  categories?: Array<{ id: string; code: string; name: string; nameEn?: string }>;
 }
 
 const FixedAssetForm: React.FC<FixedAssetFormProps> = ({
   formData,
   onFormDataChange,
-  errors
+  errors,
+  categories = []
 }) => {
   // Calculate derived values
-  const bookValue = formData.purchasePrice - formData.salvageValue;
+  const bookValue = formData.purchaseCost - formData.salvageValue;
   const annualDepreciation = formData.depreciationMethod === 'straight_line' 
     ? bookValue / formData.usefulLife 
     : (bookValue * 2) / formData.usefulLife; // Double declining balance
@@ -44,7 +46,7 @@ const FixedAssetForm: React.FC<FixedAssetFormProps> = ({
     monthsSincePurchase * monthlyDepreciation,
     bookValue
   );
-  const currentBookValue = formData.purchasePrice - accumulatedDepreciation;
+  const currentBookValue = formData.purchaseCost - accumulatedDepreciation;
 
   const updateField = (field: string, value: any) => {
     onFormDataChange({
@@ -114,22 +116,20 @@ const FixedAssetForm: React.FC<FixedAssetFormProps> = ({
               الفئة <span className="text-red-500">*</span>
             </label>
             <select
-              value={formData.category}
-              onChange={(e) => updateField('category', e.target.value)}
+              value={formData.categoryAccountId}
+              onChange={(e) => updateField('categoryAccountId', e.target.value)}
               className={`w-full px-3 py-2 border rounded-md focus:ring-golden-500 focus:border-golden-500 ${
-                errors.category ? 'border-red-500' : 'border-gray-300'
+                errors.categoryAccountId ? 'border-red-500' : 'border-gray-300'
               }`}
             >
               <option value="">اختر الفئة</option>
-              <option value="buildings">مباني</option>
-              <option value="machinery">آلات ومعدات</option>
-              <option value="vehicles">مركبات</option>
-              <option value="furniture">أثاث ومفروشات</option>
-              <option value="computers">أجهزة حاسوب</option>
-              <option value="land">أراضي</option>
-              <option value="other">أخرى</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.code} - {category.name}
+                </option>
+              ))}
             </select>
-            {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
+            {errors.categoryAccountId && <p className="text-red-500 text-sm mt-1">{errors.categoryAccountId}</p>}
           </div>
 
           <div>
@@ -177,14 +177,14 @@ const FixedAssetForm: React.FC<FixedAssetFormProps> = ({
               type="number"
               step="0.01"
               min="0"
-              value={formData.purchasePrice}
-              onChange={(e) => updateField('purchasePrice', parseFloat(e.target.value) || 0)}
+              value={formData.purchaseCost}
+              onChange={(e) => updateField('purchaseCost', parseFloat(e.target.value) || 0)}
               className={`w-full px-3 py-2 border rounded-md focus:ring-golden-500 focus:border-golden-500 ${
-                errors.purchasePrice ? 'border-red-500' : 'border-gray-300'
+                errors.purchaseCost ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="0.00"
             />
-            {errors.purchasePrice && <p className="text-red-500 text-sm mt-1">{errors.purchasePrice}</p>}
+            {errors.purchaseCost && <p className="text-red-500 text-sm mt-1">{errors.purchaseCost}</p>}
           </div>
 
           <div>
@@ -376,7 +376,7 @@ const FixedAssetForm: React.FC<FixedAssetFormProps> = ({
         </div>
 
         {/* Validation */}
-        {formData.purchasePrice > 0 && formData.salvageValue >= formData.purchasePrice && (
+        {formData.purchaseCost > 0 && formData.salvageValue >= formData.purchaseCost && (
           <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
             <div className="flex">
               <AlertCircle className="h-5 w-5 text-red-400 ml-2" />

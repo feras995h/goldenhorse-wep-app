@@ -84,12 +84,18 @@ const FixedAssetsManagement: React.FC = () => {
 
   const loadCategories = async () => {
     try {
+      console.log('🔄 Loading fixed asset categories...');
       const resp = await financialAPI.getFixedAssetCategories();
+      console.log('📊 Categories response:', resp);
+      
       // Handle consistent response format
       const cats = resp?.data || resp || [];
-      setCategories(Array.isArray(cats) ? cats : []);
+      const categoriesArray = Array.isArray(cats) ? cats : [];
+      
+      console.log(`✅ Loaded ${categoriesArray.length} categories:`, categoriesArray.map(c => `${c.code} - ${c.name}`));
+      setCategories(categoriesArray);
     } catch (error) {
-      console.error('Error loading fixed asset categories:', error);
+      console.error('❌ Error loading fixed asset categories:', error);
       setCategories([]);
     }
   };
@@ -644,10 +650,10 @@ const FixedAssetsManagement: React.FC = () => {
               type="select"
               value={formData.categoryAccountId}
               onChange={(value) => handleCategoryChange(value as string)}
-              options={categories.map(cat => ({ value: cat.id, label: `${cat.code} - ${cat.name}` }))}
+              options={categories.length > 0 ? categories.map(cat => ({ value: cat.id, label: `${cat.code} - ${cat.name}` })) : [{ value: '', label: 'لا توجد فئات متاحة' }]}
               required
-              error={formErrors.categoryAccountId}
-              disabled={modalMode === 'view'}
+              error={formErrors.categoryAccountId || (categories.length === 0 ? 'لا توجد فئات أصول ثابتة متاحة. يرجى إضافة فئات أولاً.' : '')}
+              disabled={modalMode === 'view' || categories.length === 0}
             />
           </div>
 

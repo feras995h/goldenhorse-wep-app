@@ -43,3 +43,4 @@ if %errorlevel% equ 0 (
     echo Please check your database configuration.
     exit /b 1
 )
+
