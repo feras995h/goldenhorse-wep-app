@@ -17,6 +17,9 @@ import advancedFixedAssetManager from '../utils/advancedFixedAssetManager.js';
 import AccountingAuditService from '../services/AccountingAuditService.js';
 import { getAuditTrail, getUserAuditTrail, getFinancialAuditTrail } from '../middleware/auditTrail.js';
 
+// Import fixed asset helpers
+import { generateHierarchicalAssetNumber, createFixedAssetAccounts } from '../utils/fixedAssetHelpers.js';
+
 const router = express.Router();
 const {
   Account,
@@ -5519,8 +5522,10 @@ router.post('/fixed-assets', authenticateToken, requireFinancialAccess, async (r
     // Generate asset number if not provided
     let assetNumber = req.body.assetNumber;
     if (!assetNumber) {
-      const timestamp = Date.now();
-      assetNumber = `FA-${timestamp}`;
+      assetNumber = await generateHierarchicalAssetNumber(categoryAccountId);
+      if (!assetNumber) {
+        assetNumber = `FA-${uuidv4().substring(0, 8)}`;
+      }
     }
 
     // Check for duplicate asset number
@@ -5535,7 +5540,7 @@ router.post('/fixed-assets', authenticateToken, requireFinancialAccess, async (r
 
     // Prepare asset data
     const assetData = {
-      id: uuidv4(),  // ← الإصلاح الرئيسي
+      id: uuidv4(),
       assetNumber,
       name: name.trim(),
       category: req.body.category || 'other',
@@ -5558,11 +5563,75 @@ router.post('/fixed-assets', authenticateToken, requireFinancialAccess, async (r
 
     console.log('✅ Fixed asset created successfully');
 
-    // Skip complex account creation for now - just create the basic asset
-    // This can be enhanced later with proper account management
+    // Create the related accounts for the fixed asset
+    console.log('🔄 Creating related accounts for fixed asset');
+    const createdAccounts = await createFixedAssetAccounts(fixedAsset, categoryAccount, transaction);
+    
+    // Update the fixed asset with the asset account ID
+    if (createdAccounts.assetAccount) {
+      await fixedAsset.update({ assetAccountId: createdAccounts.assetAccount.id }, { transaction });
+    }
 
-    // Skip journal entry creation for now to avoid voucherType constraint issues
-    console.log('ℹ️  Skipping journal entry creation for simplified asset creation');
+    // Create journal entry for the asset purchase
+    console.log('📝 Creating journal entry for asset purchase');
+    const journalEntryData = {
+      id: uuidv4(),
+      entryNumber: `JE-${Date.now()}`,
+      date: purchaseDate,
+      description: `شراء أصل ثابت: ${name}`,
+      reference: `FA-${fixedAsset.id.substring(0, 8)}`,
+      totalDebit: parseFloat(purchaseCost),
+      totalCredit: parseFloat(purchaseCost),
+      status: 'posted',
+      type: 'fixed_asset_purchase',
+      postedBy: req.user?.id || 'system',
+      postedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const journalEntry = await JournalEntry.create(journalEntryData, { transaction });
+
+    // Create GL entries for the journal entry
+    const glEntries = [
+      {
+        id: uuidv4(),
+        journalEntryId: journalEntry.id,
+        accountId: createdAccounts.assetAccount.id,
+        description: `شراء أصل ثابت: ${name}`,
+        debit: parseFloat(purchaseCost),
+        credit: 0,
+        postingDate: purchaseDate,
+        voucherType: 'Fixed Asset Purchase',
+        voucherNo: journalEntry.entryNumber,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: uuidv4(),
+        journalEntryId: journalEntry.id,
+        accountId: categoryAccount.id, // Source of funds (e.g., bank account)
+        description: `شراء أصل ثابت: ${name}`,
+        debit: 0,
+        credit: parseFloat(purchaseCost),
+        postingDate: purchaseDate,
+        voucherType: 'Fixed Asset Purchase',
+        voucherNo: journalEntry.entryNumber,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+
+    await GLEntry.bulkCreate(glEntries, { transaction });
+
+    // Update account balances
+    await createdAccounts.assetAccount.update({
+      balance: parseFloat(createdAccounts.assetAccount.balance || 0) + parseFloat(purchaseCost)
+    }, { transaction });
+
+    await categoryAccount.update({
+      balance: parseFloat(categoryAccount.balance || 0) - parseFloat(purchaseCost)
+    }, { transaction });
 
     await transaction.commit();
 
@@ -5581,8 +5650,11 @@ router.post('/fixed-assets', authenticateToken, requireFinancialAccess, async (r
 
     res.status(201).json({
       success: true,
-      message: 'تم إنشاء الأصل الثابت بنجاح',
-      data: completeAsset
+      message: 'تم إنشاء الأصل الثابت والحسابات المرتبطة بنجاح',
+      data: {
+        asset: completeAsset,
+        accounts: createdAccounts
+      }
     });
 
   } catch (error) {
