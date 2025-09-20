@@ -18,7 +18,7 @@ import AccountingAuditService from '../services/AccountingAuditService.js';
 import { getAuditTrail, getUserAuditTrail, getFinancialAuditTrail } from '../middleware/auditTrail.js';
 
 // Import fixed asset helpers
-import { generateHierarchicalAssetNumber, createFixedAssetAccounts } from '../utils/fixedAssetHelpers.js';
+import { generateHierarchicalAssetNumber, createFixedAssetAccounts, ensureFixedAssetsStructure } from '../utils/fixedAssetHelpers.js';
 
 const router = express.Router();
 const {
