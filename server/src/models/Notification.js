@@ -181,9 +181,21 @@ export default (sequelize) => {
 
     const where = {
       isActive: true,
-      [sequelize.Sequelize.Op.or]: [
-        { userId: userId },
-        { userId: null } // System notifications
+      [sequelize.Sequelize.Op.and]: [
+        // User notifications condition
+        {
+          [sequelize.Sequelize.Op.or]: [
+            { userId: userId },
+            { userId: null } // System notifications
+          ]
+        },
+        // Expiration condition
+        {
+          [sequelize.Sequelize.Op.or]: [
+            { expiresAt: null },
+            { expiresAt: { [sequelize.Sequelize.Op.gt]: new Date() } }
+          ]
+        }
       ]
     };
 
@@ -198,12 +210,6 @@ export default (sequelize) => {
     if (type) {
       where.type = type;
     }
-
-    // Filter out expired notifications
-    where[sequelize.Sequelize.Op.or] = [
-      { expiresAt: null },
-      { expiresAt: { [sequelize.Sequelize.Op.gt]: new Date() } }
-    ];
 
     return await this.findAndCountAll({
       where,
@@ -246,15 +252,23 @@ export default (sequelize) => {
   Notification.getUnreadCount = async function(userId) {
     return await this.count({
       where: {
-        [sequelize.Sequelize.Op.or]: [
-          { userId: userId },
-          { userId: null }
-        ],
         read: false,
         isActive: true,
-        [sequelize.Sequelize.Op.or]: [
-          { expiresAt: null },
-          { expiresAt: { [sequelize.Sequelize.Op.gt]: new Date() } }
+        [sequelize.Sequelize.Op.and]: [
+          // User notifications condition
+          {
+            [sequelize.Sequelize.Op.or]: [
+              { userId: userId },
+              { userId: null }
+            ]
+          },
+          // Expiration condition
+          {
+            [sequelize.Sequelize.Op.or]: [
+              { expiresAt: null },
+              { expiresAt: { [sequelize.Sequelize.Op.gt]: new Date() } }
+            ]
+          }
         ]
       }
     });
