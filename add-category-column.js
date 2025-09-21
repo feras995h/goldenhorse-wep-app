@@ -1,9 +1,9 @@
-const { Sequelize } = require('sequelize');
+import { Sequelize } from 'sequelize';
 
 async function addCategoryColumn() {
   console.log('🔧 إضافة عمود category إلى جدول fixed_assets...');
 
-  const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  const sequelize = new Sequelize(process.env.DATABASE_URL || 'postgres://postgres:XIclgABy2kg3ZZ2Nyh7GOYexxcm206RTNsSAJavhbF4ukgMfDiNqXSOhy8SIALUP@72.60.92.146:5432/golden-horse-shipping', {
     dialect: 'postgres',
     logging: false
   });

@@ -93,6 +93,15 @@ export default (sequelize) => {
         max: 999999999999.99
       }
     },
+    outstandingAmount: {
+      type: DataTypes.DECIMAL(15, 2),
+      field: 'outstandingamount',
+      defaultValue: 0.00,
+      validate: {
+        min: 0,
+        max: 999999999999.99
+      }
+    },
     currency: {
       type: DataTypes.ENUM('LYD', 'USD', 'EUR', 'CNY'),
       defaultValue: 'LYD'
@@ -214,6 +223,9 @@ export default (sequelize) => {
       },
       {
         fields: ['salesPerson']
+      },
+      {
+        fields: ['outstandingAmount']
       }
     ],
     hooks: {
@@ -248,6 +260,11 @@ export default (sequelize) => {
 
         // Calculate total
         invoice.total = (invoice.subtotal || 0) - (invoice.discountAmount || 0) + (invoice.taxAmount || 0) + (invoice.deliveryFee || 0);
+        
+        // Calculate outstanding amount
+        const total = parseFloat(invoice.total || 0);
+        const paidAmount = parseFloat(invoice.paidAmount || 0);
+        invoice.outstandingAmount = Math.max(0, total - paidAmount);
       },
       beforeUpdate: (invoice) => {
         // Recalculate discount amount if percentage changed
@@ -286,6 +303,13 @@ export default (sequelize) => {
           } else {
             invoice.paymentStatus = 'overpaid';
           }
+        }
+
+        // Calculate outstanding amount
+        if (invoice.changed('total') || invoice.changed('paidAmount')) {
+          const total = parseFloat(invoice.total || 0);
+          const paidAmount = parseFloat(invoice.paidAmount || 0);
+          invoice.outstandingAmount = Math.max(0, total - paidAmount);
         }
       }
     }
