@@ -179,22 +179,23 @@ export default (sequelize) => {
       type = null
     } = options;
 
-    // إصلاح مشكلة UUID: التحقق من نوع userId
+    // إصلاح مشكلة UUID: التحقق من نوع userId والحصول على UUID صحيح
     let validUserId = userId;
     if (typeof userId === 'number' || (typeof userId === 'string' && /^\d+$/.test(userId))) {
-      // إذا كان userId integer، ابحث عن أول مستخدم admin نشط
-      const User = sequelize.models.User;
-      const adminUser = await User.findOne({
-        where: {
-          role: 'admin',
-          isActive: true
-        },
-        order: [['createdAt', 'ASC']]
-      });
+      // البحث عن مستخدم admin بـ UUID صحيح من قاعدة البيانات
+      const adminUsers = await sequelize.query(`
+        SELECT id, username, name, role, "isActive"
+        FROM users
+        WHERE role = 'admin' AND "isActive" = true
+        ORDER BY "createdAt" ASC
+        LIMIT 1
+      `, { type: sequelize.QueryTypes.SELECT });
 
-      if (adminUser) {
-        validUserId = adminUser.id;
-        console.log(`⚠️ تم تحويل userId من ${userId} إلى ${validUserId} في notifications`);
+      if (adminUsers.length > 0) {
+        validUserId = adminUsers[0].id;  // هذا سيكون UUID صحيح من قاعدة البيانات
+        console.log(`⚠️ تم تحويل userId من ${userId} إلى ${validUserId} في notifications (UUID صحيح)`);
+      } else {
+        console.log(`❌ لم يتم العثور على مستخدم admin صالح، استخدام userId الأصلي: ${userId}`);
       }
     }
 

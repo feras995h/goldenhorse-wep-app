@@ -1,20 +1,18 @@
-npm warn config production Use `--omit=dev` instead.
-
-> golden-horse-server@1.0.0 start
+golden-horse-server@1.0.0 start
 > node src/server.js
 
 🔍 Database Configuration Debug:
   - NODE_ENV: production
   - DB_URL present: true
-  - DATABASE_URL present: false
-  - Raw DATABASE_URL starts with: N/A
+  - DATABASE_URL present: true
+  - Raw DATABASE_URL starts with: postgres://post...
   - Cleaned DATABASE_URL present: true
   - Final DATABASE_URL length: 115
   - Final DATABASE_URL starts with: postgres://post...
 🔍 Environment: "production" (original: "production")
 🔗 Using database URL connection
 🔍 Database URL value: Set (hidden for security)
-🔍 URL source: DB_URL
+🔍 URL source: DATABASE_URL
 🔍 URL Debug Info:
   - URL length: 115
   - URL first 20 chars: postgres://postgres:
@@ -43,7 +41,7 @@ npm warn config production Use `--omit=dev` instead.
 ⏰ Periodic monitoring tasks started
 ✅ Monitoring system initialized
 ✅ Database connection successful
-✅ Database query test successful - Current time: Sun Sep 21 2025 10:55:32 GMT+0000 (Coordinated Universal Time)
+✅ Database query test successful - Current time: Sun Sep 21 2025 12:47:56 GMT+0000 (Coordinated Universal Time)
 📋 Skipping automatic database table synchronization (tables already updated)
 🔍 التحقق من وجود الحسابات الرئيسية الافتراضية...
 📊 الحسابات الرئيسية الموجودة: 1, 2, 3, 4, 5
@@ -64,81 +62,1378 @@ WebSocket service initialized
 🔌 WebSocket available at ws://localhost:5001
 🏥 Health check: http://localhost:5001/api/health
 📊 Database health: http://localhost:5001/api/health/database
-[INFO] GET /api/health - 200 - 7ms {
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 200 - 36ms {
   method: 'GET',
-  url: '/api/health',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 200,
+  responseTime: 36,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '17584589765248kfpwd8q8'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 15ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 15,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '175845917189807cwv352y'
+}
+[INFO] System metrics {
+  metrics: {
+    uptime: 300048,
+    requests: 2,
+    errors: 0,
+    errorRate: 0,
+    averageResponseTime: 26,
+    activeConnections: 0,
+    memory: {
+      rss: 97632256,
+      heapTotal: 31354880,
+      heapUsed: 29107624,
+      external: 3369761,
+      arrayBuffers: 68577
+    },
+    cpu: { user: 922844, system: 266992 },
+    system: {
+      platform: 'linux',
+      arch: 'x64',
+      nodeVersion: 'v18.20.5',
+      totalMemory: 8326750208,
+      freeMemory: 6907920384,
+      loadAverage: [Array],
+      uptime: 911461.98
+    }
+npm warn config production Use `--omit=dev` instead.
+npm warn config production Use `--omit=dev` instead.
+⚠️  تحذير: تعذر ضمان AccountMapping الافتراضي: column "salesTaxAccount" does not exist
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:49:36.544 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:49:36.544 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:49:36.544 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async Notification.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
+    at async Promise.all (index 1)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '618',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:52:51.908 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '618',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:52:51.908 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+    parameters: undefined
+  },
+  sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:52:51.908 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+  parameters: {}
+}
+  }
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 15ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 15,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459330791i4wx4qhg0'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 200 - 10ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 200,
+  responseTime: 10,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459453907tij8ssiv5'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 11ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 11,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459456614pixn7lxqs'
+}
+[INFO] System metrics {
+  metrics: {
+    uptime: 600048,
+    requests: 5,
+    errors: 0,
+    errorRate: 0,
+    averageResponseTime: 17,
+    activeConnections: 0,
+    memory: {
+      rss: 97411072,
+      heapTotal: 31879168,
+      heapUsed: 28669504,
+      external: 3376766,
+      arrayBuffers: 75582
+    },
+    cpu: { user: 1027049, system: 281608 },
+    system: {
+      platform: 'linux',
+      arch: 'x64',
+      nodeVersion: 'v18.20.5',
+      totalMemory: 8326750208,
+      freeMemory: 6909931520,
+      loadAverage: [Array],
+      uptime: 911761.98
+    }
+  }
+}
+[INFO] Database metrics {
+  database: {
+    connected: true,
+    connectionTime: 2,
+    pool: { size: 2, available: 2, using: 0, waiting: 0 }
+  }
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:55:30.802 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:55:30.802 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:55:30.802 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:57:33.913 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:57:33.913 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:57:33.913 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:57:36.619 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:57:36.619 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:57:36.619 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:58:06.922 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 200 - 7ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
   statusCode: 200,
   responseTime: 7,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452138759eggxs1qm3'
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '17584594869193jd12e4en'
 }
-[INFO] GET /api/financial/summary - 401 - 3ms {
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 8ms {
   method: 'GET',
-  url: '/api/financial/summary',
-  statusCode: 401,
-  responseTime: 3,
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 8,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '17584595188397pj1e4olt'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:58:06.922 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:58:06.922 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:58:38.844 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:58:38.844 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:58:38.844 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 200 - 10ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 200,
+  responseTime: 10,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459550345tp282pugh'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:59:10.350 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:59:10.350 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:59:10.350 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:59:40.491 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 6ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 6,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459580488ng8t3x7jg'
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:59:40.491 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 12:59:40.491 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 200 - 17ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 200,
+  responseTime: 17,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459610488ug0b7aigt'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async Notification.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
+    at async Promise.all (index 1)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '618',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:00:10.500 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '618',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:00:10.500 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+    parameters: undefined
+  },
+  sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:00:10.500 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async Notification.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
+    at async Promise.all (index 1)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '618',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:00:45.516 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '618',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:00:45.516 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+    parameters: undefined
+  },
+  sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:00:45.516 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+  parameters: {}
+}
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 12ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 12,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '17584596455092ceq2hgjw'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:01:45.587 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 200 - 7ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 200,
+  responseTime: 7,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '17584597055832f1h00hgj'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 200 - 5ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 200,
+  responseTime: 5,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459765477ydscp85ym'
+}
+[INFO] System metrics {
+  metrics: {
+    uptime: 900047,
+    requests: 13,
+    errors: 0,
+    errorRate: 0,
+    averageResponseTime: 12,
+    activeConnections: 0,
+    memory: {
+      rss: 98205696,
+      heapTotal: 32665600,
+      heapUsed: 29867472,
+      external: 3394537,
+      arrayBuffers: 93353
+    },
+    cpu: { user: 1156299, system: 311630 },
+    system: {
+      platform: 'linux',
+      arch: 'x64',
+      nodeVersion: 'v18.20.5',
+      totalMemory: 8326750208,
+      freeMemory: 6904266752,
+      loadAverage: [Array],
+      uptime: 912061.98
+    }
+  }
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:01:45.587 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:01:45.587 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:02:45.480 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:02:45.480 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:02:45.480 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 200 - 6ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 200,
+  responseTime: 6,
+  userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '17584598254804kc8dhk30'
+}
+[INFO] GET / - 200 - 17ms {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  responseTime: 17,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: undefined,
   username: undefined,
-  requestId: '1758452155497lv06ykg94'
+  requestId: '175845991168161flmkjij'
 }
 📁 Current logo request
 ✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452161841 - 200 - 7ms {
+[INFO] GET /api/settings/logo?t=1758459912178 - 200 - 12ms {
   method: 'GET',
-  url: '/api/settings/logo?t=1758452161841',
+  url: '/api/settings/logo?t=1758459912178',
   statusCode: 200,
-  responseTime: 7,
+  responseTime: 12,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: undefined,
   username: undefined,
-  requestId: '17584521612224kuujr8zv'
+  requestId: '1758459912047c47nwaq9k'
 }
-[INFO] GET /api/sales/summary - 401 - 1ms {
-  method: 'GET',
-  url: '/api/sales/summary',
-  statusCode: 401,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452161508p3w8nnoyo'
-}
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 401 - 1ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 401,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452176834b6ogdpmvm'
-}
-[INFO] POST /api/auth/login - 200 - 109ms {
+[INFO] POST /api/auth/login - 200 - 100ms {
   method: 'POST',
   url: '/api/auth/login',
   statusCode: 200,
-  responseTime: 109,
+  responseTime: 100,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: undefined,
   username: undefined,
-  requestId: '1758452188455gxh9zxugm'
+  requestId: '1758459922246p58hrq0mh'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-✅ تم العثور على مستخدم admin: admin (1)
-🔍 بدء حساب الملخص المالي الحقيقي...
-npm warn config production Use `--omit=dev` instead.
-⚠️  تحذير: تعذر ضمان AccountMapping الافتراضي: column "salesTaxAccount" does not exist
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:03:45.483 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:03:45.483 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:03:45.483 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
 Error fetching sales summary: Error
     at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
     at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
@@ -154,17 +1449,6 @@ Error fetching sales summary: Error
       at addChunk (node:internal/streams/readable:368:12)
       at readableAddChunk (node:internal/streams/readable:341:9)
       at Readable.push (node:internal/streams/readable:278:10)
-[INFO] GET /api/sales/summary - 500 - 13ms {
-  method: 'GET',
-  url: '/api/sales/summary',
-  statusCode: 500,
-  responseTime: 13,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452188690zrt16i8y7'
-}
       at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
     length: 173,
     severity: 'ERROR',
@@ -225,290 +1509,151 @@ Error fetching sales summary: Error
       '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
       '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
       '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-      '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-      '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-      '      FROM sales_invoices si\n' +
-      '      LEFT JOIN shipments s ON true\n' +
-      '      WHERE si."isActive" = true',
-    parameters: undefined
-  },
-  sql: 'SELECT\n' +
-    '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-    '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-    '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-    '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-    '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-    '      FROM sales_invoices si\n' +
-    '      LEFT JOIN shipments s ON true\n' +
-    '      WHERE si."isActive" = true',
-  parameters: {}
+✅ تم العثور على مستخدم admin: admin (1)
+🔍 بدء حساب الملخص المالي الحقيقي...
+[INFO] GET /api/sales/summary - 500 - 11ms {
+  method: 'GET',
+  url: '/api/sales/summary',
+  statusCode: 500,
+  responseTime: 11,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459922540prkyqlqc9'
 }
 ✅ تم حساب الملخص المالي الحقيقي بنجاح
 📊 إجمالي الأصول: 0 LYD
 📊 إجمالي الالتزامات: 0 LYD
 📊 صافي الربح: 0 LYD
-[INFO] GET /api/financial/summary - 200 - 29ms {
+[INFO] GET /api/financial/summary - 200 - 22ms {
   method: 'GET',
   url: '/api/financial/summary',
   statusCode: 200,
-  responseTime: 29,
+  responseTime: 22,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '17584521886930wgykbb14'
+  requestId: '1758459922545o8f6z5opu'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
 ✅ تم العثور على مستخدم admin: admin (1)
 ⚠️ تم تحويل userId من 1 إلى 1 في notifications
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 19ms {
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 200 - 10ms {
   method: 'GET',
   url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 19,
+  statusCode: 200,
+  responseTime: 10,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-Error fetching notifications: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
-    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
-    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
-    at async Promise.all (index 0)
-    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
-    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
-    at async file:///app/server/src/routes/notifications.js:42:20 {
-  name: 'SequelizeDatabaseError',
-  parent: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:56:28.742 +00:00')) AND "Notification"."isActive" = true;`,
-    parameters: undefined
-  },
-  original: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:56:28.742 +00:00')) AND "Notification"."isActive" = true;`,
-    parameters: undefined
-  },
-  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:56:28.742 +00:00')) AND "Notification"."isActive" = true;`,
-  parameters: {}
-}
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452188733qorrn30xy'
+  requestId: '1758459922585dn23w2g68'
 }
-[INFO] GET /api/settings - 200 - 14ms {
+[INFO] GET /api/settings - 200 - 13ms {
   method: 'GET',
   url: '/api/settings',
   statusCode: 200,
-  responseTime: 14,
+  responseTime: 13,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452188739adywfiw11'
+  requestId: '1758459922585vaj3an1kx'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
-✅ تم العثور على مستخدم admin: admin (1)
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/admin/roles - 304 - 13ms {
+[INFO] GET /api/admin/roles - 304 - 15ms {
   method: 'GET',
   url: '/api/admin/roles',
   statusCode: 304,
-  responseTime: 13,
+  responseTime: 15,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452188786z1c5f4a2a'
-}
-[INFO] GET /api/admin/users - 304 - 16ms {
-  method: 'GET',
-  url: '/api/admin/users',
-  statusCode: 304,
-  responseTime: 16,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452188784vfliq0jhp'
+  requestId: '1758459922634mei342zb7'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-[INFO] GET /api/admin/system-stats - 200 - 16ms {
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+✅ تم العثور على مستخدم admin: admin (1)
+[INFO] GET /api/admin/system-stats - 200 - 13ms {
   method: 'GET',
   url: '/api/admin/system-stats',
   statusCode: 200,
-  responseTime: 16,
+  responseTime: 13,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452188787lvl2s7wfi'
+  requestId: '17584599226698z6cbayqy'
 }
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/admin/overview - 200 - 27ms {
+[INFO] GET /api/admin/users - 304 - 20ms {
+  method: 'GET',
+  url: '/api/admin/users',
+  statusCode: 304,
+  responseTime: 20,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459922665pdqm13k26'
+}
+[INFO] GET /api/admin/overview - 200 - 30ms {
   method: 'GET',
   url: '/api/admin/overview',
   statusCode: 200,
-  responseTime: 27,
+  responseTime: 30,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452188806uv85utv3q'
+  requestId: '175845992266642r3cteow'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-📁 Current logo request
 ✅ تم العثور على مستخدم admin: admin (1)
+📁 Current logo request
 ✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452189484 - 200 - 6ms {
+[INFO] GET /api/settings/logo?t=1758459922838 - 200 - 8ms {
   method: 'GET',
-  url: '/api/settings/logo?t=1758452189484',
+  url: '/api/settings/logo?t=1758459922838',
   statusCode: 200,
-  responseTime: 6,
+  responseTime: 8,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: undefined,
   username: undefined,
-  requestId: '17584521888700ajvy6ug7'
+  requestId: '1758459922707szheoepec'
 }
-[INFO] GET /api/settings - 200 - 14ms {
+[INFO] GET /api/settings - 200 - 20ms {
   method: 'GET',
   url: '/api/settings',
   statusCode: 200,
-  responseTime: 14,
+  responseTime: 20,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '17584521888659ws1bh1rj'
+  requestId: '175845992270002poldzmr'
 }
 📁 Current logo request
 ✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452189629 - 200 - 3ms {
+[INFO] GET /api/settings/logo?t=1758459923002 - 200 - 5ms {
   method: 'GET',
-  url: '/api/settings/logo?t=1758452189629',
+  url: '/api/settings/logo?t=1758459923002',
   statusCode: 200,
-  responseTime: 3,
+  responseTime: 5,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: undefined,
   username: undefined,
-  requestId: '1758452189021x9aguga41'
-}
-[INFO] GET /assets/index-DbXQBNN4.css - 200 - 3ms {
-  method: 'GET',
-  url: '/assets/index-DbXQBNN4.css',
-  statusCode: 200,
-  responseTime: 3,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.190',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452191498bznf3oyze'
-}
-[INFO] GET /api/financial/summary - 401 - 1ms {
-  method: 'GET',
-  url: '/api/financial/summary',
-  statusCode: 401,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '17584521989410sjzvy7m3'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/sales/summary - 500 - 9ms {
-  method: 'GET',
-  url: '/api/sales/summary',
-  statusCode: 500,
-  responseTime: 9,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452205842m81fswexn'
-}
-[INFO] GET /api/sales/customers?limit=10 - 304 - 17ms {
-  method: 'GET',
-  url: '/api/sales/customers?limit=10',
-  statusCode: 304,
-  responseTime: 17,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452205845mn7jnsi2m'
-}
-[INFO] GET /sales/invoice-management - 200 - 3ms {
-  method: 'GET',
-  url: '/sales/invoice-management',
-  statusCode: 200,
-  responseTime: 3,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452209903oyry2tbg7'
+  requestId: '1758459922902kpxf7uk7s'
 }
 [INFO] GET /assets/index-DbXQBNN4.css - 200 - 2ms {
   method: 'GET',
@@ -519,127 +1664,10 @@ Error fetching notifications: Error
   ip: '172.69.211.190',
   userId: undefined,
   username: undefined,
-  requestId: '1758452210032d90e4dxwp'
+  requestId: '1758459925231b788tqlbm'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/auth/verify - 304 - 3ms {
-  method: 'GET',
-  url: '/api/auth/verify',
-  statusCode: 304,
-  responseTime: 3,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452210268d6uz210z6'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/settings - 200 - 5ms {
-  method: 'GET',
-  url: '/api/settings',
-  statusCode: 200,
-  responseTime: 5,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452210403rs25kjyri'
-}
-⚠️ تم تحويل userId من 1 إلى 1 في notifications
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 8ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 8,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '17584522104065wgborr54'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-🔍 بدء حساب الملخص المالي الحقيقي...
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-Error fetching sales summary: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async file:///app/server/src/routes/sales.js:1325:20 {
-  name: 'SequelizeDatabaseError',
-  parent: error: column s.totalAmount does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 173,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "si.totalAmount".',
-    position: '286',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT\n' +
-      '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-      '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-      '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-      '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-      '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-      '      FROM sales_invoices si\n' +
-      '      LEFT JOIN shipments s ON true\n' +
-      '      WHERE si."isActive" = true',
-    parameters: undefined
-  },
-  original: error: column s.totalAmount does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 173,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "si.totalAmount".',
-    position: '286',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT\n' +
-      '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-      '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-      '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
       '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
       '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
       '      FROM sales_invoices si\n' +
@@ -662,10 +1690,9 @@ Error fetching notifications: Error
     at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
     at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
-    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
-    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
-    at async Promise.all (index 0)
+    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async Notification.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
+    at async Promise.all (index 1)
     at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
     at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
     at async file:///app/server/src/routes/notifications.js:42:20 {
@@ -685,7 +1712,7 @@ Error fetching notifications: Error
     code: '42883',
     detail: undefined,
     hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
+    position: '618',
     internalPosition: undefined,
     internalQuery: undefined,
     where: undefined,
@@ -697,7 +1724,7 @@ Error fetching notifications: Error
     file: 'parse_oper.c',
     line: '635',
     routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:56:50.410 +00:00')) AND "Notification"."isActive" = true;`,
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:05:22.589 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
     parameters: undefined
   },
   original: error: operator does not exist: uuid = integer
@@ -715,7 +1742,7 @@ Error fetching notifications: Error
     code: '42883',
     detail: undefined,
     hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
+    position: '618',
     internalPosition: undefined,
     internalQuery: undefined,
     where: undefined,
@@ -727,10 +1754,10 @@ Error fetching notifications: Error
     file: 'parse_oper.c',
     line: '635',
     routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:56:50.410 +00:00')) AND "Notification"."isActive" = true;`,
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:05:22.589 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
     parameters: undefined
   },
-  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:56:50.410 +00:00')) AND "Notification"."isActive" = true;`,
+  sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:05:22.589 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
   parameters: {}
 }
 Error fetching sales summary: Error
@@ -806,1259 +1833,87 @@ Error fetching sales summary: Error
     routine: 'errorMissingColumn',
     sql: 'SELECT\n' +
       '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/sales/summary - 500 - 2ms {
-  method: 'GET',
-  url: '/api/sales/summary',
-  statusCode: 500,
-  responseTime: 2,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
       '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
       '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
       '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
       '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-      '      FROM sales_invoices si\n' +
-      '      LEFT JOIN shipments s ON true\n' +
-      '      WHERE si."isActive" = true',
-    parameters: undefined
-  },
-  sql: 'SELECT\n' +
-    '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-    '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-    '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-    '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-    '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-    '      FROM sales_invoices si\n' +
-    '      LEFT JOIN shipments s ON true\n' +
-    '      WHERE si."isActive" = true',
-  parameters: {}
-}
-  requestId: '1758452210421e2wco2n3c'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-✅ تم حساب الملخص المالي الحقيقي بنجاح
-📊 إجمالي الأصول: 0 LYD
-📊 إجمالي الالتزامات: 0 LYD
-📊 صافي الربح: 0 LYD
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/financial/summary - 200 - 27ms {
+[INFO] GET /api/sales/summary - 500 - 11ms {
   method: 'GET',
-  url: '/api/financial/summary',
-  statusCode: 200,
-  responseTime: 27,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452210418ubla98oyi'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-[INFO] GET /api/sales/invoices?page=1&limit=10 - 500 - 7ms {
-  method: 'GET',
-  url: '/api/sales/invoices?page=1&limit=10',
+  url: '/api/sales/summary',
   statusCode: 500,
-  responseTime: 7,
+  responseTime: 11,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452210440bidmhhdua'
+  requestId: '17584599316364cq1fsclm'
 }
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/sales/shipping-invoices?page=1&limit=10 - 500 - 9ms {
+[INFO] GET /api/sales/customers?limit=10 - 304 - 11ms {
   method: 'GET',
-  url: '/api/sales/shipping-invoices?page=1&limit=10',
-  statusCode: 500,
-  responseTime: 9,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452210444v9kn9lvtu'
-}
-[INFO] GET /api/sales/customers?page=1&limit=100 - 304 - 11ms {
-  method: 'GET',
-  url: '/api/sales/customers?page=1&limit=100',
+  url: '/api/sales/customers?limit=10',
   statusCode: 304,
   responseTime: 11,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452210451hkyymdbnw'
+  requestId: '1758459931649tkfgt50jd'
 }
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-📁 Current logo request
-✅ Current logo found: logo-1758303047268-17121842.PNG
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/settings/logo?t=1758452211117 - 200 - 3ms {
-  method: 'GET',
-  url: '/api/settings/logo?t=1758452211117',
-  statusCode: 200,
-  responseTime: 3,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '17584522105040bnsmak0v'
-}
-[INFO] GET /api/settings - 200 - 14ms {
-  method: 'GET',
-  url: '/api/settings',
-  statusCode: 200,
-  responseTime: 14,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452210498mq17y1gur'
-}
-📁 Current logo request
-✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452211220 - 200 - 3ms {
-  method: 'GET',
-  url: '/api/settings/logo?t=1758452211220',
-  statusCode: 200,
-  responseTime: 3,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '17584522106069gikx16ge'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ تم تحويل userId من 1 إلى 1 في notifications
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 6ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 6,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452240808hkx47c9wc'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ تم تحويل userId من 1 إلى 1 في notifications
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 7ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 7,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452254230p07m6dcxk'
-}
-[INFO] GET /sales/inventory - 200 - 1ms {
-  method: 'GET',
-  url: '/sales/inventory',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '17584522563451td6hx13q'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/auth/verify - 304 - 3ms {
-  method: 'GET',
-  url: '/api/auth/verify',
-  statusCode: 304,
-  responseTime: 3,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452256554z90csxl5p'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/settings - 200 - 5ms {
-  method: 'GET',
-  url: '/api/settings',
-  statusCode: 200,
-  responseTime: 5,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452256710d2jwr5boc'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-⚠️ تم تحويل userId من 1 إلى 1 في notifications
-✅ تم العثور على مستخدم admin: admin (1)
-🔍 بدء حساب الملخص المالي الحقيقي...
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 9ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 9,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '17584522567182al3uztnh'
-}
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/sales/summary - 500 - 9ms {
-  method: 'GET',
-  url: '/api/sales/summary',
-  statusCode: 500,
-  responseTime: 9,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452256728nd0u0qvhe'
-}
-✅ تم حساب الملخص المالي الحقيقي بنجاح
-📊 إجمالي الأصول: 0 LYD
-📊 إجمالي الالتزامات: 0 LYD
-📊 صافي الربح: 0 LYD
-[INFO] GET /api/financial/summary - 200 - 32ms {
-  method: 'GET',
-  url: '/api/financial/summary',
-  statusCode: 200,
-  responseTime: 32,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452256720x4vmsmiem'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/sales/shipments?page=1&limit=10 - 304 - 13ms {
-  method: 'GET',
-  url: '/api/sales/shipments?page=1&limit=10',
-  statusCode: 304,
-  responseTime: 13,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '17584522567651io5yxgau'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/settings - 200 - 8ms {
-  method: 'GET',
-  url: '/api/settings',
-  statusCode: 200,
-  responseTime: 8,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '17584522568252gm9hfcgy'
-}
-📁 Current logo request
-✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452257451 - 200 - 2ms {
-  method: 'GET',
-  url: '/api/settings/logo?t=1758452257451',
-  statusCode: 200,
-  responseTime: 2,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452256854ayhtwutcl'
-}
-📁 Current logo request
-✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452257551 - 200 - 2ms {
-  method: 'GET',
-  url: '/api/settings/logo?t=1758452257551',
-  statusCode: 200,
-  responseTime: 2,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452256936t0umlodwb'
-}
-[INFO] GET /sales/warehouse-release-orders - 200 - 1ms {
-  method: 'GET',
-  url: '/sales/warehouse-release-orders',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452261887l9axvrumm'
-}
-Error fetching invoices: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
-    at async Invoice.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
-    at async file:///app/server/src/routes/sales.js:554:22 {
-  name: 'SequelizeDatabaseError',
-  parent: error: column Invoice.dueDate does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 172,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "Invoice.date".',
-    position: '93',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT "Invoice"."id", "Invoice"."invoiceNumber", "Invoice"."customerId", "Invoice"."date", "Invoice"."dueDate", "Invoice"."subtotal", "Invoice"."taxAmount", "Invoice"."total", "Invoice"."paidAmount", "Invoice"."status", "Invoice"."outstandingAmount", "Invoice"."accountId", "Invoice"."currency", "Invoice"."exchangeRate", "Invoice"."createdBy", "Invoice"."notes", "Invoice"."createdAt", "Invoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."type" AS "customer.type" FROM "invoices" AS "Invoice" LEFT OUTER JOIN "customers" AS "customer" ON "Invoice"."customerId" = "customer"."id" ORDER BY "Invoice"."date" DESC LIMIT 10 OFFSET 0;',
-    parameters: undefined
-  },
-  original: error: column Invoice.dueDate does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 172,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "Invoice.date".',
-    position: '93',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT "Invoice"."id", "Invoice"."invoiceNumber", "Invoice"."customerId", "Invoice"."date", "Invoice"."dueDate", "Invoice"."subtotal", "Invoice"."taxAmount", "Invoice"."total", "Invoice"."paidAmount", "Invoice"."status", "Invoice"."outstandingAmount", "Invoice"."accountId", "Invoice"."currency", "Invoice"."exchangeRate", "Invoice"."createdBy", "Invoice"."notes", "Invoice"."createdAt", "Invoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."type" AS "customer.type" FROM "invoices" AS "Invoice" LEFT OUTER JOIN "customers" AS "customer" ON "Invoice"."customerId" = "customer"."id" ORDER BY "Invoice"."date" DESC LIMIT 10 OFFSET 0;',
-    parameters: undefined
-  },
-  sql: 'SELECT "Invoice"."id", "Invoice"."invoiceNumber", "Invoice"."customerId", "Invoice"."date", "Invoice"."dueDate", "Invoice"."subtotal", "Invoice"."taxAmount", "Invoice"."total", "Invoice"."paidAmount", "Invoice"."status", "Invoice"."outstandingAmount", "Invoice"."accountId", "Invoice"."currency", "Invoice"."exchangeRate", "Invoice"."createdBy", "Invoice"."notes", "Invoice"."createdAt", "Invoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."type" AS "customer.type" FROM "invoices" AS "Invoice" LEFT OUTER JOIN "customers" AS "customer" ON "Invoice"."customerId" = "customer"."id" ORDER BY "Invoice"."date" DESC LIMIT 10 OFFSET 0;',
-  parameters: {}
-}
-Error fetching shipping invoices: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
-    at async ShippingInvoice.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
-    at async Promise.all (index 1)
-    at async ShippingInvoice.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
-    at async file:///app/server/src/routes/sales.js:2646:39 {
-  name: 'SequelizeDatabaseError',
-  parent: error: column ShippingInvoice.customerId does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "ShippingInvoice.customer_id".',
-    position: '1683',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT "ShippingInvoice"."id", "ShippingInvoice"."invoiceNumber", "ShippingInvoice"."customerId", "ShippingInvoice"."shipmentId", "ShippingInvoice"."trackingNumber", "ShippingInvoice"."date", "ShippingInvoice"."dueDate", "ShippingInvoice"."shippingCost", "ShippingInvoice"."handlingFee", "ShippingInvoice"."storageFee", "ShippingInvoice"."customsClearanceFee", "ShippingInvoice"."insuranceFee", "ShippingInvoice"."additionalFees", "ShippingInvoice"."discountAmount", "ShippingInvoice"."subtotal", "ShippingInvoice"."taxAmount", "ShippingInvoice"."total", "ShippingInvoice"."paidAmount", "ShippingInvoice"."currency", "ShippingInvoice"."exchangeRate", "ShippingInvoice"."status", "ShippingInvoice"."paymentStatus", "ShippingInvoice"."paymentMethod", "ShippingInvoice"."paymentReference", "ShippingInvoice"."itemDescription", "ShippingInvoice"."itemDescriptionEn", "ShippingInvoice"."quantity", "ShippingInvoice"."weight", "ShippingInvoice"."volume", "ShippingInvoice"."originLocation", "ShippingInvoice"."destinationLocation", "ShippingInvoice"."notes", "ShippingInvoice"."internalNotes", "ShippingInvoice"."terms", "ShippingInvoice"."createdBy", "ShippingInvoice"."createdAt", "ShippingInvoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."phone" AS "customer.phone", "customer"."email" AS "customer.email", "shipment"."id" AS "shipment.id", "shipment"."trackingNumber" AS "shipment.trackingNumber", "shipment"."status" AS "shipment.status", "shipment"."itemDescription" AS "shipment.itemDescription" FROM "shipping_invoices" AS "ShippingInvoice" LEFT OUTER JOIN "customers" AS "customer" ON "ShippingInvoice"."customerId" = "customer"."id" LEFT OUTER JOIN "shipments" AS "shipment" ON "ShippingInvoice"."shipmentId" = "shipment"."id" ORDER BY "ShippingInvoice"."date" DESC LIMIT 10 OFFSET 0;',
-    parameters: undefined
-  },
-  original: error: column ShippingInvoice.customerId does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "ShippingInvoice.customer_id".',
-    position: '1683',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT "ShippingInvoice"."id", "ShippingInvoice"."invoiceNumber", "ShippingInvoice"."customerId", "ShippingInvoice"."shipmentId", "ShippingInvoice"."trackingNumber", "ShippingInvoice"."date", "ShippingInvoice"."dueDate", "ShippingInvoice"."shippingCost", "ShippingInvoice"."handlingFee", "ShippingInvoice"."storageFee", "ShippingInvoice"."customsClearanceFee", "ShippingInvoice"."insuranceFee", "ShippingInvoice"."additionalFees", "ShippingInvoice"."discountAmount", "ShippingInvoice"."subtotal", "ShippingInvoice"."taxAmount", "ShippingInvoice"."total", "ShippingInvoice"."paidAmount", "ShippingInvoice"."currency", "ShippingInvoice"."exchangeRate", "ShippingInvoice"."status", "ShippingInvoice"."paymentStatus", "ShippingInvoice"."paymentMethod", "ShippingInvoice"."paymentReference", "ShippingInvoice"."itemDescription", "ShippingInvoice"."itemDescriptionEn", "ShippingInvoice"."quantity", "ShippingInvoice"."weight", "ShippingInvoice"."volume", "ShippingInvoice"."originLocation", "ShippingInvoice"."destinationLocation", "ShippingInvoice"."notes", "ShippingInvoice"."internalNotes", "ShippingInvoice"."terms", "ShippingInvoice"."createdBy", "ShippingInvoice"."createdAt", "ShippingInvoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."phone" AS "customer.phone", "customer"."email" AS "customer.email", "shipment"."id" AS "shipment.id", "shipment"."trackingNumber" AS "shipment.trackingNumber", "shipment"."status" AS "shipment.status", "shipment"."itemDescription" AS "shipment.itemDescription" FROM "shipping_invoices" AS "ShippingInvoice" LEFT OUTER JOIN "customers" AS "customer" ON "ShippingInvoice"."customerId" = "customer"."id" LEFT OUTER JOIN "shipments" AS "shipment" ON "ShippingInvoice"."shipmentId" = "shipment"."id" ORDER BY "ShippingInvoice"."date" DESC LIMIT 10 OFFSET 0;',
-    parameters: undefined
-  },
-  sql: 'SELECT "ShippingInvoice"."id", "ShippingInvoice"."invoiceNumber", "ShippingInvoice"."customerId", "ShippingInvoice"."shipmentId", "ShippingInvoice"."trackingNumber", "ShippingInvoice"."date", "ShippingInvoice"."dueDate", "ShippingInvoice"."shippingCost", "ShippingInvoice"."handlingFee", "ShippingInvoice"."storageFee", "ShippingInvoice"."customsClearanceFee", "ShippingInvoice"."insuranceFee", "ShippingInvoice"."additionalFees", "ShippingInvoice"."discountAmount", "ShippingInvoice"."subtotal", "ShippingInvoice"."taxAmount", "ShippingInvoice"."total", "ShippingInvoice"."paidAmount", "ShippingInvoice"."currency", "ShippingInvoice"."exchangeRate", "ShippingInvoice"."status", "ShippingInvoice"."paymentStatus", "ShippingInvoice"."paymentMethod", "ShippingInvoice"."paymentReference", "ShippingInvoice"."itemDescription", "ShippingInvoice"."itemDescriptionEn", "ShippingInvoice"."quantity", "ShippingInvoice"."weight", "ShippingInvoice"."volume", "ShippingInvoice"."originLocation", "ShippingInvoice"."destinationLocation", "ShippingInvoice"."notes", "ShippingInvoice"."internalNotes", "ShippingInvoice"."terms", "ShippingInvoice"."createdBy", "ShippingInvoice"."createdAt", "ShippingInvoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."phone" AS "customer.phone", "customer"."email" AS "customer.email", "shipment"."id" AS "shipment.id", "shipment"."trackingNumber" AS "shipment.trackingNumber", "shipment"."status" AS "shipment.status", "shipment"."itemDescription" AS "shipment.itemDescription" FROM "shipping_invoices" AS "ShippingInvoice" LEFT OUTER JOIN "customers" AS "customer" ON "ShippingInvoice"."customerId" = "customer"."id" LEFT OUTER JOIN "shipments" AS "shipment" ON "ShippingInvoice"."shipmentId" = "shipment"."id" ORDER BY "ShippingInvoice"."date" DESC LIMIT 10 OFFSET 0;',
-  parameters: {}
-}
-Error fetching notifications: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
-    at async Notification.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
-    at async Promise.all (index 1)
-    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
-    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
-    at async file:///app/server/src/routes/notifications.js:42:20 {
-  name: 'SequelizeDatabaseError',
-  parent: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '618',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:20.811 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
-    parameters: undefined
-  },
-  original: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '618',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:20.811 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
-    parameters: undefined
-  },
-  sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:20.811 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
-  parameters: {}
-}
-Error fetching notifications: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
-    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
-    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
-    at async Promise.all (index 0)
-    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
-    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
-    at async file:///app/server/src/routes/notifications.js:42:20 {
-  name: 'SequelizeDatabaseError',
-  parent: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:34.234 +00:00')) AND "Notification"."isActive" = true;`,
-    parameters: undefined
-  },
-  original: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:34.234 +00:00')) AND "Notification"."isActive" = true;`,
-    parameters: undefined
-  },
-  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:34.234 +00:00')) AND "Notification"."isActive" = true;`,
-  parameters: {}
-}
-Error fetching notifications: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
-    at async Notification.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
-    at async Promise.all (index 1)
-    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
-    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
-    at async file:///app/server/src/routes/notifications.js:42:20 {
-  name: 'SequelizeDatabaseError',
-  parent: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '618',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:36.722 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
-    parameters: undefined
-  },
-  original: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '618',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:36.722 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
-    parameters: undefined
-  },
-  sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:36.722 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
-  parameters: {}
-}
-Error fetching sales summary: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async file:///app/server/src/routes/sales.js:1325:20 {
-  name: 'SequelizeDatabaseError',
-  parent: error: column s.totalAmount does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 173,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "si.totalAmount".',
-    position: '286',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT\n' +
-      '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-      '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-      '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-      '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-      '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-      '      FROM sales_invoices si\n' +
-      '      LEFT JOIN shipments s ON true\n' +
-      '      WHERE si."isActive" = true',
-    parameters: undefined
-  },
-  original: error: column s.totalAmount does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 173,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "si.totalAmount".',
-    position: '286',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT\n' +
-      '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-      '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-      '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-      '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-      '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-      '      FROM sales_invoices si\n' +
-      '      LEFT JOIN shipments s ON true\n' +
-      '      WHERE si."isActive" = true',
-    parameters: undefined
-  },
-  sql: 'SELECT\n' +
-    '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-    '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-    '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-    '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-    '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-    '      FROM sales_invoices si\n' +
-    '      LEFT JOIN shipments s ON true\n' +
-    '      WHERE si."isActive" = true',
-  parameters: {}
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/auth/verify - 304 - 4ms {
-  method: 'GET',
-  url: '/api/auth/verify',
-  statusCode: 304,
-  responseTime: 4,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452262084azmriwui8'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ تم تحويل userId من 1 إلى 1 في notifications
-[INFO] GET /api/settings - 200 - 6ms {
-  method: 'GET',
-  url: '/api/settings',
-  statusCode: 200,
-  responseTime: 6,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452262233yh41eiu6v'
-}
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 7ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 7,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452262236fwtbgg9xz'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-🔍 بدء حساب الملخص المالي الحقيقي...
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/sales/summary - 500 - 8ms {
-  method: 'GET',
-  url: '/api/sales/summary',
-  statusCode: 500,
-  responseTime: 8,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-Error fetching notifications: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
-    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
-    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
-    at async Promise.all (index 0)
-    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
-    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
-    at async file:///app/server/src/routes/notifications.js:42:20 {
-  name: 'SequelizeDatabaseError',
-  parent: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:42.240 +00:00')) AND "Notification"."isActive" = true;`,
-    parameters: undefined
-  },
-  original: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:42.240 +00:00')) AND "Notification"."isActive" = true;`,
-    parameters: undefined
-  },
-  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:42.240 +00:00')) AND "Notification"."isActive" = true;`,
-  parameters: {}
-}
-Error fetching sales summary: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async file:///app/server/src/routes/sales.js:1325:20 {
-  name: 'SequelizeDatabaseError',
-  parent: error: column s.totalAmount does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 173,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "si.totalAmount".',
-    position: '286',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT\n' +
-      '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-      '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-      '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-      '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-      '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-      '      FROM sales_invoices si\n' +
-      '      LEFT JOIN shipments s ON true\n' +
-      '      WHERE si."isActive" = true',
-    parameters: undefined
-  },
-  original: error: column s.totalAmount does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 173,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "si.totalAmount".',
-    position: '286',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT\n' +
-      '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-      '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-      '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-      '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-      '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-      '      FROM sales_invoices si\n' +
-      '      LEFT JOIN shipments s ON true\n' +
-      '      WHERE si."isActive" = true',
-    parameters: undefined
-  },
-  sql: 'SELECT\n' +
-    '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-    '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
-    '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
-    '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
-    '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
-    '      FROM sales_invoices si\n' +
-    '      LEFT JOIN shipments s ON true\n' +
-    '      WHERE si."isActive" = true',
-  parameters: {}
-}
-  requestId: '1758452262254n8kjw3jru'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-✅ تم حساب الملخص المالي الحقيقي بنجاح
-📊 إجمالي الأصول: 0 LYD
-📊 إجمالي الالتزامات: 0 LYD
-📊 صافي الربح: 0 LYD
-[INFO] GET /api/financial/summary - 200 - 23ms {
-  method: 'GET',
-  url: '/api/financial/summary',
-  statusCode: 200,
-  responseTime: 23,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452262244l7jn3zwht'
-}
-Error fetching receipt vouchers: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async file:///app/server/src/routes/financial.js:8272:25 {
-  name: 'SequelizeDatabaseError',
-  parent: error: column r.isActive does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 108,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: undefined,
-    position: '60',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3716',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT COUNT(*) as count\n' +
-      '      FROM receipts r\n' +
-      '      WHERE r."isActive" = true',
-    parameters: []
-  },
-  original: error: column r.isActive does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 108,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: undefined,
-    position: '60',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-[INFO] GET /api/financial/vouchers/receipts?limit=50 - 500 - 5ms {
-  method: 'GET',
-  url: '/api/financial/vouchers/receipts?limit=50',
-  statusCode: 500,
-  responseTime: 5,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452262264tf6j7nvyo'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/settings - 200 - 3ms {
-  method: 'GET',
-  url: '/api/settings',
-  statusCode: 200,
-  responseTime: 3,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '17584522623339u8o8r163'
-}
-📁 Current logo request
-✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452262954 - 200 - 3ms {
-  method: 'GET',
-  url: '/api/settings/logo?t=1758452262954',
-  statusCode: 200,
-  responseTime: 3,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452262342u0i494q12'
-}
-📁 Current logo request
-✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452263045 - 200 - 2ms {
-  method: 'GET',
-  url: '/api/settings/logo?t=1758452263045',
-  statusCode: 200,
-  responseTime: 2,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452262428p7r2ij64o'
-}
-[INFO] GET /sales/invoice-management - 304 - 1ms {
+[INFO] GET /sales/invoice-management - 200 - 2ms {
   method: 'GET',
   url: '/sales/invoice-management',
+  statusCode: 200,
+  responseTime: 2,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: undefined,
+  username: undefined,
+  requestId: '17584599367651ffcq5tuj'
+}
+[INFO] GET /assets/index-DbXQBNN4.css - 304 - 1ms {
+  method: 'GET',
+  url: '/assets/index-DbXQBNN4.css',
   statusCode: 304,
   responseTime: 1,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.190',
   userId: undefined,
   username: undefined,
-  requestId: '1758452266426i6np42yeq'
+  requestId: '1758459936951wwazrrutb'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/auth/verify - 304 - 2ms {
+[INFO] GET /api/auth/verify - 200 - 3ms {
   method: 'GET',
   url: '/api/auth/verify',
-  statusCode: 304,
-  responseTime: 2,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452266650titmjbdb6'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/settings - 200 - 4ms {
-  method: 'GET',
-  url: '/api/settings',
   statusCode: 200,
-  responseTime: 4,
+  responseTime: 3,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452266780zfkxac6mp'
+  requestId: '1758459937164q6ltwko08'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
-⚠️ تم تحويل userId من 1 إلى 1 في notifications
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3716',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT COUNT(*) as count\n' +
-      '      FROM receipts r\n' +
-      '      WHERE r."isActive" = true',
-    parameters: []
-  },
-  sql: 'SELECT COUNT(*) as count\n' +
-    '      FROM receipts r\n' +
-    '      WHERE r."isActive" = true',
-  parameters: []
-}
-Error fetching notifications: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
-    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
-    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
-    at async Promise.all (index 0)
-    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
-    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
-    at async file:///app/server/src/routes/notifications.js:42:20 {
-  name: 'SequelizeDatabaseError',
-  parent: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
-    internalPosition: undefined,
-    internalQuery: undefined,
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 6ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 6,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '17584522667945nj7ig8dj'
-}
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-🔍 بدء حساب الملخص المالي الحقيقي...
-✅ تم العثور على مستخدم admin: admin (1)
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:46.797 +00:00')) AND "Notification"."isActive" = true;`,
+      '      FROM sales_invoices si\n' +
+      '      LEFT JOIN shipments s ON true\n' +
+      '      WHERE si."isActive" = true',
     parameters: undefined
   },
-  original: error: operator does not exist: uuid = integer
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 200,
-    severity: 'ERROR',
-    code: '42883',
-    detail: undefined,
-    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
-    position: '146',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_oper.c',
-    line: '635',
-    routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:46.797 +00:00')) AND "Notification"."isActive" = true;`,
-    parameters: undefined
-  },
-  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:46.797 +00:00')) AND "Notification"."isActive" = true;`,
+  sql: 'SELECT\n' +
+    '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
+    '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
+    '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
+    '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
+    '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
+    '      FROM sales_invoices si\n' +
+    '      LEFT JOIN shipments s ON true\n' +
+    '      WHERE si."isActive" = true',
   parameters: {}
 }
 Error fetching sales summary: Error
@@ -2145,19 +2000,8 @@ Error fetching sales summary: Error
   },
   sql: 'SELECT\n' +
     '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
-[INFO] GET /api/sales/summary - 500 - 6ms {
-  method: 'GET',
-  url: '/api/sales/summary',
-  statusCode: 500,
-  responseTime: 6,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452266802c6p684qnm'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
     '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
     '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
     '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
@@ -2167,206 +2011,158 @@ Error fetching sales summary: Error
     '      WHERE si."isActive" = true',
   parameters: {}
 }
-Error fetching invoices: Error
-    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
-    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
-    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
-    at async Invoice.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
-    at async file:///app/server/src/routes/sales.js:554:22 {
-  name: 'SequelizeDatabaseError',
-  parent: error: column Invoice.dueDate does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:517:28)
-      at addChunk (node:internal/streams/readable:368:12)
-      at readableAddChunk (node:internal/streams/readable:341:9)
-      at Readable.push (node:internal/streams/readable:278:10)
-      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 172,
-    severity: 'ERROR',
-    code: '42703',
-    detail: undefined,
-    hint: 'Perhaps you meant to reference the column "Invoice.date".',
-    position: '93',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT "Invoice"."id", "Invoice"."invoiceNumber", "Invoice"."customerId", "Invoice"."date", "Invoice"."dueDate", "Invoice"."subtotal", "Invoice"."taxAmount", "Invoice"."total", "Invoice"."paidAmount", "Invoice"."status", "Invoice"."outstandingAmount", "Invoice"."accountId", "Invoice"."currency", "Invoice"."exchangeRate", "Invoice"."createdBy", "Invoice"."notes", "Invoice"."createdAt", "Invoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."type" AS "customer.type" FROM "invoices" AS "Invoice" LEFT OUTER JOIN "customers" AS "customer" ON "Invoice"."customerId" = "customer"."id" ORDER BY "Invoice"."date" DESC LIMIT 10 OFFSET 0;',
-    parameters: undefined
-  },
-  original: error: column Invoice.dueDate does not exist
-      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
-      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم حساب الملخص المالي الحقيقي بنجاح
-📊 إجمالي الأصول: 0 LYD
-📊 إجمالي الالتزامات: 0 LYD
-📊 صافي الربح: 0 LYD
 ✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/sales/invoices?page=1&limit=10 - 500 - 5ms {
+✅ تم العثور على مستخدم admin: admin (1)
+🔍 بدء حساب الملخص المالي الحقيقي...
+[INFO] GET /api/sales/summary - 500 - 25ms {
   method: 'GET',
-  url: '/api/sales/invoices?page=1&limit=10',
+  url: '/api/sales/summary',
   statusCode: 500,
-  responseTime: 5,
+  responseTime: 25,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452266812yn7u3ob5n'
+  requestId: '1758459937329tzi9g9l31'
 }
-[INFO] GET /api/financial/summary - 200 - 18ms {
-  method: 'GET',
-  url: '/api/financial/summary',
-  statusCode: 200,
-  responseTime: 18,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452266802o6kdtpke9'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-[INFO] GET /api/sales/shipping-invoices?page=1&limit=10 - 500 - 7ms {
-  method: 'GET',
-  url: '/api/sales/shipping-invoices?page=1&limit=10',
-  statusCode: 500,
-  responseTime: 7,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452266818g73ywx0bf'
-}
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/sales/customers?page=1&limit=100 - 304 - 13ms {
-  method: 'GET',
-  url: '/api/sales/customers?page=1&limit=100',
-  statusCode: 304,
-  responseTime: 13,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452266823am8q2fdfk'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-📁 Current logo request
-✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452267502 - 200 - 3ms {
-  method: 'GET',
-  url: '/api/settings/logo?t=1758452267502',
-  statusCode: 200,
-  responseTime: 3,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452266885x70sss345'
-}
-[INFO] GET /api/settings - 200 - 9ms {
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/settings - 200 - 35ms {
   method: 'GET',
   url: '/api/settings',
   statusCode: 200,
-  responseTime: 9,
+  responseTime: 35,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452266883netg7logq'
+  requestId: '17584599373359zjmhxsww'
 }
-📁 Current logo request
-✅ Current logo found: logo-1758303047268-17121842.PNG
-[INFO] GET /api/settings/logo?t=1758452267645 - 200 - 3ms {
+[INFO] GET /assets/SearchFilter-C3mbLl48.js - 304 - 1ms {
   method: 'GET',
-  url: '/api/settings/logo?t=1758452267645',
-  statusCode: 200,
-  responseTime: 3,
+  url: '/assets/SearchFilter-C3mbLl48.js',
+  statusCode: 304,
+  responseTime: 1,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.196',
   userId: undefined,
   username: undefined,
-  requestId: '1758452267027j0my447o5'
+  requestId: '1758459937375bksf5ho39'
 }
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/admin/users - 304 - 7ms {
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 51ms {
   method: 'GET',
-  url: '/api/admin/users',
+  url: '/api/notifications?limit=20&unreadOnly=false',
   statusCode: 304,
-  responseTime: 7,
+  responseTime: 51,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '17584522734866ao6dzjb2'
+  requestId: '17584599373345dthkgb59'
 }
-[INFO] GET /api/admin/roles - 304 - 15ms {
+[INFO] GET /assets/FormField-pzWz9qi8.js - 304 - 5ms {
   method: 'GET',
-  url: '/api/admin/roles',
+  url: '/assets/FormField-pzWz9qi8.js',
   statusCode: 304,
-  responseTime: 15,
+  responseTime: 5,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452273486gz337fpgn'
+  ip: '172.69.211.198',
+  userId: undefined,
+  username: undefined,
+  requestId: '1758459937392ushvxb618'
 }
-[INFO] GET /api/admin/system-stats - 200 - 15ms {
+[INFO] GET /assets/chevron-right-B-S2z0UR.js - 304 - 2ms {
   method: 'GET',
-  url: '/api/admin/system-stats',
-  statusCode: 200,
-  responseTime: 15,
+  url: '/assets/chevron-right-B-S2z0UR.js',
+  statusCode: 304,
+  responseTime: 2,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452273489rnhoun4nv'
+  ip: '172.69.211.195',
+  userId: undefined,
+  username: undefined,
+  requestId: '1758459937400kcn0jdwh0'
 }
-[INFO] GET /api/admin/overview - 200 - 30ms {
+[INFO] GET /assets/Modal-DCaS_Iw8.js - 304 - 3ms {
   method: 'GET',
-  url: '/api/admin/overview',
-  statusCode: 200,
-  responseTime: 30,
+  url: '/assets/Modal-DCaS_Iw8.js',
+  statusCode: 304,
+  responseTime: 3,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452273490et5rwhfq0'
+  ip: '172.69.211.135',
+  userId: undefined,
+  username: undefined,
+  requestId: '175845993740197hm5mb63'
 }
-[INFO] GET /assets/FinancialDashboard-OLKO1EjD.js - 200 - 1ms {
+[INFO] GET /assets/chevrons-right-B6IigW8S.js - 304 - 1ms {
   method: 'GET',
-  url: '/assets/FinancialDashboard-OLKO1EjD.js',
-  statusCode: 200,
+  url: '/assets/chevrons-right-B6IigW8S.js',
+  statusCode: 304,
   responseTime: 1,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
   ip: '172.69.211.180',
   userId: undefined,
   username: undefined,
-  requestId: '1758452275846s1dcwqv4d'
+  requestId: '1758459937412ysgdz9ilo'
 }
-[INFO] GET /assets/arrow-up-right-DNjMo-FG.js - 200 - 1ms {
+✅ تم حساب الملخص المالي الحقيقي بنجاح
+📊 إجمالي الأصول: 0 LYD
+📊 إجمالي الالتزامات: 0 LYD
+📊 صافي الربح: 0 LYD
+[INFO] GET /api/financial/summary - 200 - 71ms {
   method: 'GET',
-  url: '/assets/arrow-up-right-DNjMo-FG.js',
+  url: '/api/financial/summary',
   statusCode: 200,
-  responseTime: 1,
+  responseTime: 71,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459937351jx8ozwk2k'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+[INFO] GET /api/settings - 200 - 12ms {
+  method: 'GET',
+  url: '/api/settings',
+  statusCode: 200,
+  responseTime: 12,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459937472axftp55rm'
+}
+📁 Current logo request
+✅ Current logo found: logo-1758303047268-17121842.PNG
+[INFO] GET /api/settings/logo?t=1758459937609 - 200 - 2ms {
+  method: 'GET',
+  url: '/api/settings/logo?t=1758459937609',
+  statusCode: 200,
+  responseTime: 2,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: undefined,
+  username: undefined,
+  requestId: '1758459937501h5xut81wo'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+✅ تم العثور على مستخدم admin: admin (1)
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
       at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
       at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
       at Socket.emit (node:events:517:28)
@@ -2374,12 +2170,12 @@ Error fetching invoices: Error
       at readableAddChunk (node:internal/streams/readable:341:9)
       at Readable.push (node:internal/streams/readable:278:10)
       at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
-    length: 172,
+    length: 200,
     severity: 'ERROR',
-    code: '42703',
+    code: '42883',
     detail: undefined,
-    hint: 'Perhaps you meant to reference the column "Invoice.date".',
-    position: '93',
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
     internalPosition: undefined,
     internalQuery: undefined,
     where: undefined,
@@ -2388,13 +2184,43 @@ Error fetching invoices: Error
     column: undefined,
     dataType: undefined,
     constraint: undefined,
-    file: 'parse_relation.c',
-    line: '3723',
-    routine: 'errorMissingColumn',
-    sql: 'SELECT "Invoice"."id", "Invoice"."invoiceNumber", "Invoice"."customerId", "Invoice"."date", "Invoice"."dueDate", "Invoice"."subtotal", "Invoice"."taxAmount", "Invoice"."total", "Invoice"."paidAmount", "Invoice"."status", "Invoice"."outstandingAmount", "Invoice"."accountId", "Invoice"."currency", "Invoice"."exchangeRate", "Invoice"."createdBy", "Invoice"."notes", "Invoice"."createdAt", "Invoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."type" AS "customer.type" FROM "invoices" AS "Invoice" LEFT OUTER JOIN "customers" AS "customer" ON "Invoice"."customerId" = "customer"."id" ORDER BY "Invoice"."date" DESC LIMIT 10 OFFSET 0;',
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:05:37.365 +00:00')) AND "Notification"."isActive" = true;`,
     parameters: undefined
   },
-  sql: 'SELECT "Invoice"."id", "Invoice"."invoiceNumber", "Invoice"."customerId", "Invoice"."date", "Invoice"."dueDate", "Invoice"."subtotal", "Invoice"."taxAmount", "Invoice"."total", "Invoice"."paidAmount", "Invoice"."status", "Invoice"."outstandingAmount", "Invoice"."accountId", "Invoice"."currency", "Invoice"."exchangeRate", "Invoice"."createdBy", "Invoice"."notes", "Invoice"."createdAt", "Invoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."type" AS "customer.type" FROM "invoices" AS "Invoice" LEFT OUTER JOIN "customers" AS "customer" ON "Invoice"."customerId" = "customer"."id" ORDER BY "Invoice"."date" DESC LIMIT 10 OFFSET 0;',
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:05:37.365 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:05:37.365 +00:00')) AND "Notification"."isActive" = true;`,
   parameters: {}
 }
 Error fetching shipping invoices: Error
@@ -2470,16 +2296,286 @@ Error fetching shipping invoices: Error
   },
   sql: 'SELECT count("ShippingInvoice"."id") AS "count" FROM "shipping_invoices" AS "ShippingInvoice" LEFT OUTER JOIN "customers" AS "customer" ON "ShippingInvoice"."customerId" = "customer"."id" LEFT OUTER JOIN "shipments" AS "shipment" ON "ShippingInvoice"."shipmentId" = "shipment"."id";',
   parameters: {}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+📁 Current logo request
+[INFO] GET /api/sales/shipping-invoices?page=1&limit=10 - 500 - 10ms {
 }
+  method: 'GET',
+  url: '/api/sales/shipping-invoices?page=1&limit=10',
+  statusCode: 500,
+  responseTime: 10,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.186',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459937644qwbhq5uw9'
+}
+Error fetching invoices: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.select (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+    at async Invoice.findAll (/app/server/node_modules/sequelize/lib/model.js:1140:21)
+    at async file:///app/server/src/routes/sales.js:554:22 {
+[INFO] GET /api/sales/invoices?page=1&limit=10 - 500 - 15ms {
+  method: 'GET',
+  url: '/api/sales/invoices?page=1&limit=10',
+  statusCode: 500,
+  responseTime: 15,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459937644m7e5kc8em'
+}
+✅ Current logo found: logo-1758303047268-17121842.PNG
+[INFO] GET /api/settings/logo?t=1758459937771 - 200 - 7ms {
+  method: 'GET',
+  url: '/api/settings/logo?t=1758459937771',
+  statusCode: 200,
+  responseTime: 7,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: undefined,
+  name: 'SequelizeDatabaseError',
+  parent: error: column Invoice.dueDate does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 172,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: 'Perhaps you meant to reference the column "Invoice.date".',
+    position: '93',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '3723',
+    routine: 'errorMissingColumn',
+    sql: 'SELECT "Invoice"."id", "Invoice"."invoiceNumber", "Invoice"."customerId", "Invoice"."date", "Invoice"."dueDate", "Invoice"."subtotal", "Invoice"."taxAmount", "Invoice"."total", "Invoice"."paidAmount", "Invoice"."status", "Invoice"."outstandingAmount", "Invoice"."accountId", "Invoice"."currency", "Invoice"."exchangeRate", "Invoice"."createdBy", "Invoice"."notes", "Invoice"."createdAt", "Invoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."type" AS "customer.type" FROM "invoices" AS "Invoice" LEFT OUTER JOIN "customers" AS "customer" ON "Invoice"."customerId" = "customer"."id" ORDER BY "Invoice"."date" DESC LIMIT 10 OFFSET 0;',
+    parameters: undefined
+  },
+  original: error: column Invoice.dueDate does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 172,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: 'Perhaps you meant to reference the column "Invoice.date".',
+    position: '93',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '3723',
+    routine: 'errorMissingColumn',
+    sql: 'SELECT "Invoice"."id", "Invoice"."invoiceNumber", "Invoice"."customerId", "Invoice"."date", "Invoice"."dueDate", "Invoice"."subtotal", "Invoice"."taxAmount", "Invoice"."total", "Invoice"."paidAmount", "Invoice"."status", "Invoice"."outstandingAmount", "Invoice"."accountId", "Invoice"."currency", "Invoice"."exchangeRate", "Invoice"."createdBy", "Invoice"."notes", "Invoice"."createdAt", "Invoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."type" AS "customer.type" FROM "invoices" AS "Invoice" LEFT OUTER JOIN "customers" AS "customer" ON "Invoice"."customerId" = "customer"."id" ORDER BY "Invoice"."date" DESC LIMIT 10 OFFSET 0;',
+    parameters: undefined
+  },
+  sql: 'SELECT "Invoice"."id", "Invoice"."invoiceNumber", "Invoice"."customerId", "Invoice"."date", "Invoice"."dueDate", "Invoice"."subtotal", "Invoice"."taxAmount", "Invoice"."total", "Invoice"."paidAmount", "Invoice"."status", "Invoice"."outstandingAmount", "Invoice"."accountId", "Invoice"."currency", "Invoice"."exchangeRate", "Invoice"."createdBy", "Invoice"."notes", "Invoice"."createdAt", "Invoice"."updatedAt", "customer"."id" AS "customer.id", "customer"."code" AS "customer.code", "customer"."name" AS "customer.name", "customer"."type" AS "customer.type" FROM "invoices" AS "Invoice" LEFT OUTER JOIN "customers" AS "customer" ON "Invoice"."customerId" = "customer"."id" ORDER BY "Invoice"."date" DESC LIMIT 10 OFFSET 0;',
+  parameters: {}
+}
+  username: undefined,
+  requestId: '1758459937657xnvhl8gin'
+}
+[INFO] GET /api/sales/customers?page=1&limit=100 - 304 - 18ms {
+  method: 'GET',
+  url: '/api/sales/customers?page=1&limit=100',
+  statusCode: 304,
+  responseTime: 18,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459937647pvifxso1a'
+}
+[INFO] GET /sales/reports - 200 - 2ms {
+  method: 'GET',
+  url: '/sales/reports',
+  statusCode: 200,
+  responseTime: 2,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
   userId: undefined,
   username: undefined,
-  requestId: '1758452275876wgxd3z1rs'
+  requestId: '1758459943253exfrmwku1'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
+[INFO] GET /api/auth/verify - 304 - 3ms {
+  method: 'GET',
+  url: '/api/auth/verify',
+  statusCode: 304,
+  responseTime: 3,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '17584599436221rkp8j8c1'
+}
+[INFO] GET /assets/SalesReports-BoCoMw7F.js - 200 - 2ms {
+  method: 'GET',
+  url: '/assets/SalesReports-BoCoMw7F.js',
+  statusCode: 200,
+  responseTime: 2,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.190',
+  userId: undefined,
+  username: undefined,
+  requestId: '1758459943754h7xnecpyr'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+[INFO] GET /api/settings - 200 - 5ms {
+  method: 'GET',
+  url: '/api/settings',
+  statusCode: 200,
+  responseTime: 5,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459943773iohu70prk'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+🔍 بدء حساب الملخص المالي الحقيقي...
+[INFO] GET /api/sales/summary - 500 - 8ms {
+  method: 'GET',
+  url: '/api/sales/summary',
+  statusCode: 500,
+  responseTime: 8,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '17584599437837x9fj4646'
+}
+✅ تم العثور على مستخدم admin: admin (1)
 ⚠️ تم تحويل userId من 1 إلى 1 في notifications
+Error fetching sales summary: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/server/src/routes/sales.js:1325:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: column s.totalAmount does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 173,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: 'Perhaps you meant to reference the column "si.totalAmount".',
+    position: '286',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '3723',
+    routine: 'errorMissingColumn',
+    sql: 'SELECT\n' +
+      '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
+      '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
+      '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
+      '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
+      '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
+      '      FROM sales_invoices si\n' +
+      '      LEFT JOIN shipments s ON true\n' +
+      '      WHERE si."isActive" = true',
+    parameters: undefined
+  },
+  original: error: column s.totalAmount does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 173,
+    severity: 'ERROR',
+    code: '42703',
+    detail: undefined,
+    hint: 'Perhaps you meant to reference the column "si.totalAmount".',
+    position: '286',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '3723',
+    routine: 'errorMissingColumn',
+    sql: 'SELECT\n' +
+      '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
+      '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
+      '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
+      '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
+      '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
+      '      FROM sales_invoices si\n' +
+      '      LEFT JOIN shipments s ON true\n' +
+      '      WHERE si."isActive" = true',
+    parameters: undefined
+  },
+  sql: 'SELECT\n' +
+    '        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,\n' +
+    '        COALESCE(SUM(si."totalAmount"), 0) as total_sales,\n' +
+    '        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,\n' +
+    '        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,\n' +
+    '        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue\n' +
+    '      FROM sales_invoices si\n' +
+    '      LEFT JOIN shipments s ON true\n' +
+    '      WHERE si."isActive" = true',
+  parameters: {}
+}
 Error fetching notifications: Error
     at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
     at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
@@ -2519,53 +2615,13 @@ Error fetching notifications: Error
     file: 'parse_oper.c',
     line: '635',
     routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:58.732 +00:00')) AND "Notification"."isActive" = true;`,
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:05:43.798 +00:00')) AND "Notification"."isActive" = true;`,
     parameters: undefined
   },
   original: error: operator does not exist: uuid = integer
       at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
       at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
       at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 15ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 15,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452278723bpzlbm1li'
-}
-[INFO] GET /assets/ChartOfAccounts-BnwPhz_s.js - 200 - 2ms {
-  method: 'GET',
-  url: '/assets/ChartOfAccounts-BnwPhz_s.js',
-  statusCode: 200,
-  responseTime: 2,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.192',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452279064568rju4g0'
-}
-[INFO] GET /assets/Modal-CImnq1c6.js - 200 - 2ms {
-  method: 'GET',
-  url: '/assets/Modal-CImnq1c6.js',
-  statusCode: 200,
-  responseTime: 2,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.137',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452279076e4qf8vg4b'
-}
-[INFO] GET /assets/SearchFilter-K4jV2oxM.js - 200 - 2ms {
-  method: 'GET',
-  url: '/assets/SearchFilter-K4jV2oxM.js',
-  statusCode: 200,
-  responseTime: 2,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.156',
       at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
       at Socket.emit (node:events:517:28)
       at addChunk (node:internal/streams/readable:368:12)
@@ -2589,195 +2645,421 @@ Error fetching notifications: Error
     file: 'parse_oper.c',
     line: '635',
     routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:58.732 +00:00')) AND "Notification"."isActive" = true;`,
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:05:43.798 +00:00')) AND "Notification"."isActive" = true;`,
     parameters: undefined
   },
-  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:57:58.732 +00:00')) AND "Notification"."isActive" = true;`,
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 17ms {
+  method: 'GET',
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:05:43.798 +00:00')) AND "Notification"."isActive" = true;`,
   parameters: {}
 }
-  userId: undefined,
-  username: undefined,
-  requestId: '17584522790778qnfu00ha'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/financial/accounts?limit=1000 - 200 - 19ms {
-  method: 'GET',
-  url: '/api/financial/accounts?limit=1000',
-  statusCode: 200,
-  responseTime: 19,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452279217iddd44kdo'
-}
-[INFO] GET /assets/save-By_GsION.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/save-By_GsION.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.180',
-  userId: undefined,
-  username: undefined,
-  requestId: '17584522948482jrva9r3c'
-}
-[INFO] GET /assets/JournalEntries-DVFUCp2l.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/JournalEntries-DVFUCp2l.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.194',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452294927mojyf3ro6'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/financial/accounts - 200 - 17ms {
-  method: 'GET',
-  url: '/api/financial/accounts',
-  statusCode: 200,
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
   responseTime: 17,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '17584522950772id2kdp7d'
+  requestId: '1758459943785hbst6koyh'
 }
-[INFO] GET /api/financial/journal-entries?page=1&limit=10 - 304 - 35ms {
+✅ تم حساب الملخص المالي الحقيقي بنجاح
+📊 إجمالي الأصول: 0 LYD
+📊 إجمالي الالتزامات: 0 LYD
+📊 صافي الربح: 0 LYD
+[INFO] GET /api/financial/summary - 200 - 30ms {
   method: 'GET',
-  url: '/api/financial/journal-entries?page=1&limit=10',
-  statusCode: 304,
-  responseTime: 35,
+  url: '/api/financial/summary',
+  statusCode: 200,
+  responseTime: 30,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452295074u73z5157m'
-}
-[INFO] GET /assets/AccountStatement-Zz0Im7v8.css - 200 - 2ms {
-  method: 'GET',
-  url: '/assets/AccountStatement-Zz0Im7v8.css',
-  statusCode: 200,
-  responseTime: 2,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.134',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452299228d3y5kxlsb'
-}
-[INFO] GET /assets/AccountStatement-DeCuaXM_.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/AccountStatement-DeCuaXM_.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.200',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452299233otfkcp8us'
-}
-[INFO] GET /assets/printer-DQyN7YFf.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/printer-DQyN7YFf.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.148',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452299244b2sl20ytz'
+  requestId: '17584599437863a7snzj4v'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/financial/accounts?limit=1000 - 304 - 9ms {
+[INFO] GET /api/settings - 200 - 5ms {
   method: 'GET',
-  url: '/api/financial/accounts?limit=1000',
-  statusCode: 304,
+  url: '/api/settings',
+  statusCode: 200,
+  responseTime: 5,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459943871lurxg1eol'
+}
+📁 Current logo request
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ Current logo found: logo-1758303047268-17121842.PNG
+✅ تم العثور على مستخدم admin: admin (1)
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+[INFO] GET /api/settings/logo?t=1758459944035 - 200 - 5ms {
+  method: 'GET',
+  url: '/api/settings/logo?t=1758459944035',
+  statusCode: 200,
+  responseTime: 5,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: undefined,
+  username: undefined,
+  requestId: '1758459943912a0kk7rkhu'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+✅ تم العثور على مستخدم admin: admin (1)
+[INFO] GET /api/sales/reports?dateFrom=2025-08-31&dateTo=2025-09-21&reportType=detailed - 500 - 9ms {
+  method: 'GET',
+  url: '/api/sales/reports?dateFrom=2025-08-31&dateTo=2025-09-21&reportType=detailed',
+  statusCode: 500,
   responseTime: 9,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '17584522994643ifbdnx1p'
+  requestId: '1758459943913fpwrrx5gy'
 }
-WebSocket: User not found, allowing connection without auth
-User Anonymous connected (h0vFKpqWXaBPD_6SAAAB)
-User Anonymous disconnected (h0vFKpqWXaBPD_6SAAAB)
-[INFO] GET /assets/formatters-wItpbXXQ.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/formatters-wItpbXXQ.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.179',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452304261ckemi96p8'
-}
-[INFO] GET /assets/FixedAssetsManagement-BlONBRXk.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/FixedAssetsManagement-BlONBRXk.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.199',
-  userId: undefined,
-  username: undefined,
-  requestId: '17584523042722fkc24tjv'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
-🔍 Fetching fixed asset categories...
-🔧 Ensuring fixed assets structure...
-🔧 ensureFixedAssetsStructure: Starting...
-🔍 Looking for Fixed Assets parent account...
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-🔍 Fixed Assets parent search result: الأصول الثابتة 1.2
-✅ Found existing Fixed Assets parent: الأصول الثابتة 1.2
-🔧 Ensuring default categories...
-🔍 Ensuring category: سيارات (Vehicles)
-✅ Found existing category: وسائل نقل (1.2.4)
-🔍 Ensuring category: معدات وآلات (Equipment and Machinery)
-✅ Found existing category: معدات وآلات (1.2.6)
-🔍 Ensuring category: أثاث (Furniture)
-✅ Found existing category: أثاث ومفروشات (1.2.3)
-✅ All categories ensured
-✅ Fixed assets structure ensured, parent: الأصول الثابتة 1.2
-🔍 Finding categories under parent ID: ff17325f-5c98-450e-af3a-b0d7b4e27484
-🔍 Found 4 sub-groups under Fixed Assets
-✅ Found 8 fixed asset categories (under Fixed Assets)
-[INFO] GET /api/financial/fixed-assets/categories - 304 - 12ms {
+[INFO] GET /api/sales/reports?dateFrom=2025-08-31&dateTo=2025-09-21&reportType=product - 500 - 5ms {
+Error generating sales reports: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/server/src/routes/sales.js:3499:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: function get_sales_reports(unknown, unknown, unknown) does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 236,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+    position: '8',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_func.c',
+    line: '629',
+    routine: 'ParseFuncOrColumn',
+    sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+    parameters: [ 'detailed', '2025-08-31', '2025-09-21' ]
+  },
+  original: error: function get_sales_reports(unknown, unknown, unknown) does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 236,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+    position: '8',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_func.c',
+    line: '629',
+    routine: 'ParseFuncOrColumn',
+    sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+    parameters: [ 'detailed', '2025-08-31', '2025-09-21' ]
+  },
+  sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+  parameters: [ 'detailed', '2025-08-31', '2025-09-21' ]
+}
+Error generating sales reports: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/server/src/routes/sales.js:3499:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: function get_sales_reports(unknown, unknown, unknown) does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 236,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+    position: '8',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_func.c',
+    line: '629',
+    routine: 'ParseFuncOrColumn',
+    sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+    parameters: [ 'product', '2025-08-31', '2025-09-21' ]
+  },
+  original: error: function get_sales_reports(unknown, unknown, unknown) does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 236,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+    position: '8',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_func.c',
+    line: '629',
+    routine: 'ParseFuncOrColumn',
+    sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+    parameters: [ 'product', '2025-08-31', '2025-09-21' ]
+  },
+  sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+  parameters: [ 'product', '2025-08-31', '2025-09-21' ]
+}
+Error generating sales reports: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/server/src/routes/sales.js:3499:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: function get_sales_reports(unknown, unknown, unknown) does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 236,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+    position: '8',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_func.c',
+    line: '629',
+    routine: 'ParseFuncOrColumn',
+    sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+    parameters: [ 'summary', '2025-08-31', '2025-09-21' ]
+  },
+  original: error: function get_sales_reports(unknown, unknown, unknown) does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 236,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+    position: '8',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_func.c',
+    line: '629',
+    routine: 'ParseFuncOrColumn',
+    sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+    parameters: [ 'summary', '2025-08-31', '2025-09-21' ]
+  },
+  sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+  parameters: [ 'summary', '2025-08-31', '2025-09-21' ]
+}
   method: 'GET',
-  url: '/api/financial/fixed-assets/categories',
-  statusCode: 304,
-  responseTime: 12,
+  url: '/api/sales/reports?dateFrom=2025-08-31&dateTo=2025-09-21&reportType=product',
+  statusCode: 500,
+  responseTime: 5,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452304408i3f3yecmz'
+  requestId: '17584599439221b3zpdf38'
 }
-[INFO] GET /api/financial/fixed-assets?page=1&limit=10 - 304 - 14ms {
+Error generating sales reports: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/server/src/routes/sales.js:3499:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: function get_sales_reports(unknown, unknown, unknown) does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+[INFO] GET /api/sales/reports?dateFrom=2025-08-31&dateTo=2025-09-21&reportType=summary - 500 - 13ms {
   method: 'GET',
-  url: '/api/financial/fixed-assets?page=1&limit=10',
+  url: '/api/sales/reports?dateFrom=2025-08-31&dateTo=2025-09-21&reportType=summary',
+  statusCode: 500,
+  responseTime: 13,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459943919brcfd95an'
+}
+[INFO] GET /api/sales/customers?limit=1000 - 304 - 22ms {
+  method: 'GET',
+  url: '/api/sales/customers?limit=1000',
   statusCode: 304,
+  responseTime: 22,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758459943912zxcrcz2dq'
+}
+[INFO] GET /api/sales/reports?dateFrom=2025-08-31&dateTo=2025-09-21&reportType=customer - 500 - 14ms {
+  method: 'GET',
+  url: '/api/sales/reports?dateFrom=2025-08-31&dateTo=2025-09-21&reportType=customer',
+  statusCode: 500,
   responseTime: 14,
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
+  ip: '172.69.211.183',
   userId: 1,
   username: 'admin',
-  requestId: '1758452304411lczo26862'
+  requestId: '175845994392268scgy8yy'
+}
+📁 Current logo request
+✅ Current logo found: logo-1758303047268-17121842.PNG
+[INFO] GET /api/settings/logo?t=1758459944115 - 200 - 4ms {
+  method: 'GET',
+  url: '/api/settings/logo?t=1758459944115',
+  statusCode: 200,
+  responseTime: 4,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '172.69.211.183',
+  userId: undefined,
+  username: undefined,
+  requestId: '1758459943982be70a80dd'
 }
 ⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
 ✅ تم العثور على مستخدم admin: admin (1)
 ⚠️ تم تحويل userId من 1 إلى 1 في notifications
+    length: 236,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+    position: '8',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_func.c',
+    line: '629',
+    routine: 'ParseFuncOrColumn',
+    sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+    parameters: [ 'customer', '2025-08-31', '2025-09-21' ]
+  },
+  original: error: function get_sales_reports(unknown, unknown, unknown) does not exist
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 236,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No function matches the given name and argument types. You might need to add explicit type casts.',
+    position: '8',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_func.c',
+    line: '629',
+    routine: 'ParseFuncOrColumn',
+    sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+    parameters: [ 'customer', '2025-08-31', '2025-09-21' ]
+  },
+  sql: 'SELECT get_sales_reports($1, $2, $3) as report',
+  parameters: [ 'customer', '2025-08-31', '2025-09-21' ]
+}
 Error fetching notifications: Error
     at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
     at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
@@ -2816,7 +3098,7 @@ Error fetching notifications: Error
     file: 'parse_oper.c',
     line: '635',
     routine: 'op_error',
-    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:58:28.729 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:06:17.944 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
     parameters: undefined
   },
   original: error: operator does not exist: uuid = integer
@@ -2840,194 +3122,31 @@ Error fetching notifications: Error
     where: undefined,
     schema: undefined,
     table: undefined,
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 7ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 7,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '162.158.116.46',
+  userId: 1,
+  username: 'admin',
+  requestId: '17584599779412ib0xs3x4'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
     column: undefined,
     dataType: undefined,
     constraint: undefined,
     file: 'parse_oper.c',
     line: '635',
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 6ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 6,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452308726rt6l7zx6j'
-}
-[INFO] GET /assets/CustomersManagement-D09jDToj.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/CustomersManagement-D09jDToj.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.199',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452312725yump23xq1'
     routine: 'op_error',
-    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:58:28.729 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+    sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:06:17.944 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
     parameters: undefined
   },
-  sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:58:28.729 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
+  sql: `SELECT "Notification"."id", "Notification"."title", "Notification"."message", "Notification"."type", "Notification"."priority", "Notification"."category", "Notification"."userId", "Notification"."read", "Notification"."readAt", "Notification"."actionUrl", "Notification"."actionLabel", "Notification"."metadata", "Notification"."expiresAt", "Notification"."isActive", "Notification"."createdAt", "Notification"."updatedAt", "user"."id" AS "user.id", "user"."username" AS "user.username", "user"."name" AS "user.name" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:06:17.944 +00:00')) AND "Notification"."isActive" = true ORDER BY "Notification"."read" ASC, "Notification"."priority" DESC, "Notification"."createdAt" DESC LIMIT 20 OFFSET 0;`,
   parameters: {}
-}
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/financial/customers?page=1&limit=10 - 200 - 17ms {
-  method: 'GET',
-  url: '/api/financial/customers?page=1&limit=10',
-  statusCode: 200,
-  responseTime: 17,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452312836jtssbw4oh'
-}
-[INFO] GET /assets/FormField-BAhJiHpH.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/FormField-BAhJiHpH.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.190',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452316750j9zx0wx3y'
-}
-[INFO] GET /assets/EmployeeManagement-CWh6m1S5.js - 200 - 0ms {
-  method: 'GET',
-  url: '/assets/EmployeeManagement-CWh6m1S5.js',
-  statusCode: 200,
-  responseTime: 0,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.186',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452316766pecngzuqq'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/financial/employees?search=&department=&position= - 304 - 8ms {
-  method: 'GET',
-  url: '/api/financial/employees?search=&department=&position=',
-  statusCode: 304,
-  responseTime: 8,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '17584523168904s5o9sxgq'
-}
-[INFO] GET /assets/EmployeeAccountStatementNew-Dq6wNRsl.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/EmployeeAccountStatementNew-Dq6wNRsl.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.199',
-  userId: undefined,
-  username: undefined,
-  requestId: '175845231950288r3i8355'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-[INFO] GET /api/financial/employees?search=&department= - 304 - 4ms {
-  method: 'GET',
-  url: '/api/financial/employees?search=&department=',
-  statusCode: 304,
-  responseTime: 4,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452319617cn6memrk0'
-}
-[INFO] GET /assets/FinancialReports-DEI5ctD4.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/FinancialReports-DEI5ctD4.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.179',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452322022x69neh9zi'
-}
-[INFO] GET /assets/pie-chart-Ca830x-U.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/pie-chart-Ca830x-U.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.179',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452322054capeallu7'
-}
-[INFO] GET /assets/calendar-DMLPJzdc.js - 200 - 0ms {
-  method: 'GET',
-  url: '/assets/calendar-DMLPJzdc.js',
-  statusCode: 200,
-  responseTime: 0,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.192',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452322056l65qaw6nb'
-}
-[INFO] GET /assets/book-open-CQvGTjGd.js - 200 - 1ms {
-  method: 'GET',
-  url: '/assets/book-open-CQvGTjGd.js',
-  statusCode: 200,
-  responseTime: 1,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.199',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452322062kigywnpl5'
-}
-🔍 جلب ميزان المراجعة الافتتاحي...
-📅 كما في تاريخ: 2025-09-21
-[INFO] GET /api/financial/reports/opening-trial-balance?asOfDate=2025-09-21&currency=LYD - 200 - 15ms {
-  method: 'GET',
-  url: '/api/financial/reports/opening-trial-balance?asOfDate=2025-09-21&currency=LYD',
-  statusCode: 200,
-  responseTime: 15,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '17584523221895pkl4lb7i'
-}
-🔍 جلب ميزان المراجعة من 2024-12-31 إلى 2025-09-21
-[INFO] GET /api/financial/reports/trial-balance?dateFrom=2024-12-31&dateTo=2025-09-21&currency=LYD - 200 - 9ms {
-  method: 'GET',
-  url: '/api/financial/reports/trial-balance?dateFrom=2024-12-31&dateTo=2025-09-21&currency=LYD',
-  statusCode: 200,
-  responseTime: 9,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: undefined,
-  username: undefined,
-  requestId: '1758452324639gs1hwlupr'
-}
-⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
-✅ تم العثور على مستخدم admin: admin (1)
-⚠️ تم تحويل userId من 1 إلى 1 في notifications
-[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 5ms {
-  method: 'GET',
-  url: '/api/notifications?limit=20&unreadOnly=false',
-  statusCode: 304,
-  responseTime: 5,
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
-  ip: '172.69.211.182',
-  userId: 1,
-  username: 'admin',
-  requestId: '1758452339247iyop9rnf2'
 }
 Error fetching notifications: Error
     at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
@@ -3068,7 +3187,158 @@ Error fetching notifications: Error
     file: 'parse_oper.c',
     line: '635',
     routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:58:59.250 +00:00')) AND "Notification"."isActive" = true;`,
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:06:44.706 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 6ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 6,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '162.158.116.46',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758460004703w5cr6oxwv'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 5ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 5,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '162.158.116.46',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758460064937q8lj7i03g'
+}
+[INFO] System metrics {
+  metrics: {
+    uptime: 1200049,
+    requests: 67,
+    errors: 0,
+    errorRate: 0,
+    averageResponseTime: 14,
+    activeConnections: 0,
+    memory: {
+      rss: 102879232,
+      heapTotal: 36073472,
+      heapUsed: 33555352,
+      external: 3815536,
+      arrayBuffers: 501934
+    },
+    cpu: { user: 1646783, system: 394919 },
+    system: {
+      platform: 'linux',
+      arch: 'x64',
+      nodeVersion: 'v18.20.5',
+      totalMemory: 8326750208,
+      freeMemory: 6868758528,
+      loadAverage: [Array],
+      uptime: 912361.98
+    }
+  }
+}
+[INFO] Database metrics {
+  database: {
+    connected: true,
+    connectionTime: 1,
+    pool: { size: 2, available: 2, using: 0, waiting: 0 }
+  }
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 7ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 7,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '162.158.116.46',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758460099945c7lldrpd9'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:06:44.706 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:06:44.706 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:07:44.940 +00:00')) AND "Notification"."isActive" = true;`,
     parameters: undefined
   },
   original: error: operator does not exist: uuid = integer
@@ -3098,9 +3368,286 @@ Error fetching notifications: Error
     file: 'parse_oper.c',
     line: '635',
     routine: 'op_error',
-    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:58:59.250 +00:00')) AND "Notification"."isActive" = true;`,
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:07:44.940 +00:00')) AND "Notification"."isActive" = true;`,
     parameters: undefined
   },
-  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 10:58:59.250 +00:00')) AND "Notification"."isActive" = true;`,
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:07:44.940 +00:00')) AND "Notification"."isActive" = true;`,
   parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:08:19.949 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:08:19.949 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:08:19.949 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:09:38.655 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 6ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 6,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '162.158.116.46',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758460178652r7684bq7t'
+}
+⚠️ JWT token يحتوي على userId integer: 1, البحث عن مستخدم admin افتراضي...
+✅ تم العثور على مستخدم admin: admin (1)
+⚠️ تم تحويل userId من 1 إلى 1 في notifications
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:09:38.655 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:09:38.655 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+Error fetching notifications: Error
+    at Query.run (/app/server/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /app/server/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PostgresQueryInterface.rawSelect (/app/server/node_modules/sequelize/lib/dialects/abstract/query-interface.js:434:18)
+    at async Notification.aggregate (/app/server/node_modules/sequelize/lib/model.js:1277:19)
+    at async Notification.count (/app/server/node_modules/sequelize/lib/model.js:1306:20)
+    at async Promise.all (index 0)
+    at async Notification.findAndCountAll (/app/server/node_modules/sequelize/lib/model.js:1322:27)
+    at async Notification.getUserNotifications (file:///app/server/src/models/Notification.js:233:12)
+    at async file:///app/server/src/routes/notifications.js:42:20 {
+  name: 'SequelizeDatabaseError',
+  parent: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:09:53.603 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+  original: error: operator does not exist: uuid = integer
+      at Parser.parseErrorMessage (/app/server/node_modules/pg-protocol/dist/parser.js:285:98)
+      at Parser.handlePacket (/app/server/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/app/server/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/app/server/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:517:28)
+      at addChunk (node:internal/streams/readable:368:12)
+      at readableAddChunk (node:internal/streams/readable:341:9)
+      at Readable.push (node:internal/streams/readable:278:10)
+      at TCP.onStreamRead (node:internal/stream_base_commons:190:23) {
+    length: 200,
+    severity: 'ERROR',
+    code: '42883',
+    detail: undefined,
+    hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.',
+    position: '146',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_oper.c',
+    line: '635',
+    routine: 'op_error',
+    sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:09:53.603 +00:00')) AND "Notification"."isActive" = true;`,
+    parameters: undefined
+  },
+[INFO] GET /api/notifications?limit=20&unreadOnly=false - 304 - 5ms {
+  method: 'GET',
+  url: '/api/notifications?limit=20&unreadOnly=false',
+  statusCode: 304,
+  responseTime: 5,
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+  ip: '162.158.116.46',
+  userId: 1,
+  username: 'admin',
+  requestId: '1758460193600v0w5nin88'
+}
+[INFO] System metrics {
+  metrics: {
+    uptime: 1500049,
+    requests: 70,
+    errors: 0,
+  sql: `SELECT count("Notification"."id") AS "count" FROM "notifications" AS "Notification" LEFT OUTER JOIN "users" AS "user" ON "Notification"."userId" = "user"."id" WHERE (("Notification"."userId" = 1 OR "Notification"."userId" IS NULL) AND ("Notification"."expiresAt" IS NULL OR "Notification"."expiresAt" > '2025-09-21 13:09:53.603 +00:00')) AND "Notification"."isActive" = true;`,
+  parameters: {}
+}
+    errorRate: 0,
+    averageResponseTime: 13,
+    activeConnections: 0,
+    memory: {
+      rss: 103059456,
+      heapTotal: 36073472,
+      heapUsed: 33800456,
+      external: 3807551,
+      arrayBuffers: 493949
+    },
+    cpu: { user: 1713429, system: 410620 },
+    system: {
+      platform: 'linux',
+      arch: 'x64',
+      nodeVersion: 'v18.20.5',
+      totalMemory: 8326750208,
+      freeMemory: 6896140288,
+      loadAverage: [Array],
+      uptime: 912661.99
+    }
+  }
 }
