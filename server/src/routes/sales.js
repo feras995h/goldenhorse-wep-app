@@ -177,22 +177,73 @@ router.get('/customers', authenticateToken, requireSalesAccess, async (req, res)
   try {
     const { page = 1, limit = 10, search, type, customerType, status } = req.query;
 
-    // Use the database function for customers
-    const customersQuery = `
-      SELECT get_customers_list_final($1, $2, $3, $4) as result
+    // إصلاح مؤقت: استخدام SQL مباشر بدلاً من stored function
+    let whereConditions = ['c."isActive" = true'];
+    let queryParams = [];
+    let paramIndex = 1;
+
+    if (search) {
+      whereConditions.push(`(c.name ILIKE $${paramIndex} OR c.code ILIKE $${paramIndex + 1} OR c.email ILIKE $${paramIndex + 2})`);
+      queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      paramIndex += 3;
+    }
+
+    if (type) {
+      whereConditions.push(`c.type = $${paramIndex}`);
+      queryParams.push(type);
+      paramIndex++;
+    }
+
+    const whereClause = whereConditions.join(' AND ');
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as count
+      FROM customers c
+      WHERE ${whereClause}
     `;
 
-    const result = await db.query(customersQuery, {
-      bind: [
-        parseInt(page),
-        parseInt(limit),
-        search || null,
-        type || null
-      ],
+    const countResult = await db.query(countQuery, {
+      bind: queryParams,
       type: db.QueryTypes.SELECT
     });
 
-    const customersData = result[0].result;
+    const total = parseInt(countResult[0].count);
+
+    // Get paginated data
+    const customersQuery = `
+      SELECT
+        c.id,
+        c.code,
+        c.name,
+        c.email,
+        c.phone,
+        c.address,
+        c.type,
+        c."isActive",
+        c."createdAt",
+        c."updatedAt"
+      FROM customers c
+      WHERE ${whereClause}
+      ORDER BY c.name ASC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    queryParams.push(parseInt(limit), offset);
+
+    const result = await db.query(customersQuery, {
+      bind: queryParams,
+      type: db.QueryTypes.SELECT
+    });
+
+    const customersData = {
+      data: result,
+      total: total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(total / parseInt(limit))
+    };
 
     // Apply additional filters if needed
     let filteredData = customersData.data || [];
@@ -1256,17 +1307,26 @@ router.get('/summary', authenticateToken, requireSalesAccess, async (req, res) =
   try {
     const { dateFrom, dateTo } = req.query;
 
-    // Use the database function for sales summary
+    // إصلاح مؤقت: استخدام SQL مباشر بدلاً من stored function
     const summaryQuery = `
-      SELECT get_sales_summary($1, $2) as summary
+      SELECT
+        COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,
+        COALESCE(SUM(si."totalAmount"), 0) as total_sales,
+        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,
+        COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,
+        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue
+      FROM sales_invoices si
+      LEFT JOIN shipments s ON true
+      WHERE si."isActive" = true
+      ${dateFrom ? `AND si."invoiceDate" >= '${dateFrom}'` : ''}
+      ${dateTo ? `AND si."invoiceDate" <= '${dateTo}'` : ''}
     `;
 
     const result = await db.query(summaryQuery, {
-      bind: [dateFrom || null, dateTo || null],
       type: db.QueryTypes.SELECT
     });
 
-    const summaryData = result[0].summary;
+    const summaryData = result[0];
 
     // Calculate monthly growth separately
     const now = new Date();

@@ -179,13 +179,32 @@ export default (sequelize) => {
       type = null
     } = options;
 
+    // إصلاح مشكلة UUID: التحقق من نوع userId
+    let validUserId = userId;
+    if (typeof userId === 'number' || (typeof userId === 'string' && /^\d+$/.test(userId))) {
+      // إذا كان userId integer، ابحث عن أول مستخدم admin نشط
+      const User = sequelize.models.User;
+      const adminUser = await User.findOne({
+        where: {
+          role: 'admin',
+          isActive: true
+        },
+        order: [['createdAt', 'ASC']]
+      });
+
+      if (adminUser) {
+        validUserId = adminUser.id;
+        console.log(`⚠️ تم تحويل userId من ${userId} إلى ${validUserId} في notifications`);
+      }
+    }
+
     const where = {
       isActive: true,
       [sequelize.Sequelize.Op.and]: [
         // User notifications condition
         {
           [sequelize.Sequelize.Op.or]: [
-            { userId: userId },
+            { userId: validUserId },
             { userId: null } // System notifications
           ]
         },
