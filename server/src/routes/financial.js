@@ -5455,6 +5455,7 @@ router.get('/fixed-assets', authenticateToken, requireFinancialAccess, async (re
 
     // Always use consistent response format
     const response = {
+      success: true,
       data: fixedAssets,
       total,
       page: parseInt(page) || 1,
@@ -5465,7 +5466,11 @@ router.get('/fixed-assets', authenticateToken, requireFinancialAccess, async (re
     res.json(response);
   } catch (error) {
     console.error('Error fetching fixed assets:', error);
-    res.status(500).json({ message: 'خطأ في جلب الأصول الثابتة' });
+    res.status(500).json({ 
+      success: false,
+      message: 'خطأ في جلب الأصول الثابتة',
+      error: error.message
+    });
   }
 });
 
@@ -8537,9 +8542,9 @@ router.post('/vouchers/receipts', authenticateToken, requireTreasuryAccess, asyn
         // Attach non-persistent counter account id for journal entry method
         receipt.set('counterAccountId', resolvedCounterAccountId);
 
-
-        // Create journal entry
-        await receipt.createJournalEntry(validUserId, { transaction });
+        // Create journal entry using Receipt model
+        const receiptModel = await Receipt.findByPk(receipt.id, { transaction });
+        await receiptModel.createJournalEntry(validUserId, { transaction });
 
         // Handle invoice allocations if provided
         if (invoiceAllocations && invoiceAllocations.length > 0) {
@@ -8893,8 +8898,9 @@ router.post('/vouchers/payments', authenticateToken, requireTreasuryAccess, asyn
         // Attach counter account for journal entry mapping
         payment.set('counterAccountId', resolvedCounterAccountId);
 
-        // Create journal entry
-        await payment.createJournalEntry(validUserId, { transaction });
+        // Create journal entry using Payment model
+        const paymentModel = await Payment.findByPk(payment.id, { transaction });
+        await paymentModel.createJournalEntry(validUserId, { transaction });
 
         // Handle invoice allocations if provided
         if (invoiceAllocations && invoiceAllocations.length > 0) {
@@ -9108,7 +9114,7 @@ router.get('/invoices/outstanding', authenticateToken, requireFinancialAccess, a
     if (customerId) whereClause.customerId = customerId;
     if (accountId) whereClause.accountId = accountId;
 
-    const invoices = await Invoice.findAll({
+    const invoices = await SalesInvoice.findAll({
       where: whereClause,
       include: [
         { model: Customer, as: 'customer', attributes: ['id', 'name'] },
@@ -9926,7 +9932,7 @@ router.post('/audit/full', authenticateToken, requireRole(['admin', 'financial']
       if (dateFrom) invWhere.date[Op.gte] = dateFrom;
       if (dateTo) invWhere.date[Op.lte] = dateTo;
     }
-    const invoices = await Invoice.findAll({ attributes: ['id', 'invoiceNumber', 'total', 'paidAmount', 'outstandingAmount', 'status', 'date'], where: invWhere });
+    const invoices = await SalesInvoice.findAll({ attributes: ['id', 'invoiceNumber', 'total', 'paidAmount', 'outstandingAmount', 'status', 'date'], where: invWhere });
     let invoicesChecked = 0;
     let invoicesUpdated = 0;
     const invoiceIssues = [];

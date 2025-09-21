@@ -7,12 +7,6 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "dev:simple": "nodemon src/server-simple.js",
-    "start:simple": "node src/server-simple.js",
-    "dev:no-redis": "nodemon src/server-no-redis.js",
-    "start:no-redis": "node src/server-no-redis.js",
-    "dev:fixed": "nodemon src/server-fixed.js",
-    "start:fixed": "node src/server-fixed.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all",
     "db:reset": "sequelize-cli db:drop && sequelize-cli db:create && sequelize-cli db:migrate && sequelize-cli db:seed:all",
