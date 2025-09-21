@@ -5417,8 +5417,7 @@ router.get('/fixed-assets', authenticateToken, requireFinancialAccess, async (re
       whereClause = {
         [Op.or]: [
           { name: { [Op.like]: `%${search}%` } },
-          { code: { [Op.like]: `%${search}%` } },
-          { nameEn: { [Op.like]: `%${search}%` } }
+          { assetNumber: { [Op.like]: `%${search}%` } }
         ]
       };
     }
@@ -8539,11 +8538,9 @@ router.post('/vouchers/receipts', authenticateToken, requireTreasuryAccess, asyn
 
         const receipt = receiptResult[0][0];
 
-        // Attach non-persistent counter account id for journal entry method
-        receipt.set('counterAccountId', resolvedCounterAccountId);
-
         // Create journal entry using Receipt model
         const receiptModel = await Receipt.findByPk(receipt.id, { transaction });
+        receiptModel.set('counterAccountId', resolvedCounterAccountId);
         await receiptModel.createJournalEntry(validUserId, { transaction });
 
         // Handle invoice allocations if provided
@@ -8895,11 +8892,9 @@ router.post('/vouchers/payments', authenticateToken, requireTreasuryAccess, asyn
 
         const payment = paymentResult[0][0];
 
-        // Attach counter account for journal entry mapping
-        payment.set('counterAccountId', resolvedCounterAccountId);
-
         // Create journal entry using Payment model
         const paymentModel = await Payment.findByPk(payment.id, { transaction });
+        paymentModel.set('counterAccountId', resolvedCounterAccountId);
         await paymentModel.createJournalEntry(validUserId, { transaction });
 
         // Handle invoice allocations if provided
