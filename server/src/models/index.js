@@ -214,7 +214,6 @@ const AuditLog = AuditLogModel(sequelize);
 const AccountingPeriod = AccountingPeriodModel(sequelize);
 
 const CompanyLogo = CompanyLogoModel(sequelize);
-const PurchaseInvoice = PurchaseInvoiceModel(sequelize);
 const PurchaseInvoicePayment = PurchaseInvoicePaymentModel(sequelize);
 const AccountProvision = AccountProvisionModel(sequelize);
 const AccountMapping = AccountMappingModel(sequelize);

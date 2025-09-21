@@ -1,6 +1,7 @@
 import express from 'express';
-import { authenticateToken, requireFinancialAccess } from '../middleware/auth.js';
-import { ReceiptVoucher, PaymentVoucher, Customer, Supplier, Account } from '../models/index.js';
+import { authenticateToken, requireAccountingAccess } from '../middleware/auth.js';
+import models from '../models/index.js';
+const { ReceiptVoucher, PaymentVoucher, Customer, Supplier, Account } = models;
 import { sequelize } from '../models/index.js';
 
 const router = express.Router();
@@ -8,7 +9,7 @@ const router = express.Router();
 // ===== RECEIPT VOUCHERS =====
 
 // GET /api/vouchers/receipts - Get receipt vouchers
-router.get('/receipts', authenticateToken, requireFinancialAccess, async (req, res) => {
+router.get('/receipts', authenticateToken, requireAccountingAccess, async (req, res) => {
   try {
     const {
       page = 1,
@@ -98,7 +99,7 @@ router.get('/receipts', authenticateToken, requireFinancialAccess, async (req, r
 });
 
 // POST /api/vouchers/receipts - Create receipt voucher
-router.post('/receipts', authenticateToken, requireFinancialAccess, async (req, res) => {
+router.post('/receipts', authenticateToken, requireAccountingAccess, async (req, res) => {
   try {
     const {
       customerId,
@@ -222,7 +223,7 @@ router.post('/receipts', authenticateToken, requireFinancialAccess, async (req, 
 // ===== PAYMENT VOUCHERS =====
 
 // GET /api/vouchers/payments - Get payment vouchers
-router.get('/payments', authenticateToken, requireFinancialAccess, async (req, res) => {
+router.get('/payments', authenticateToken, requireAccountingAccess, async (req, res) => {
   try {
     const {
       page = 1,
@@ -312,7 +313,7 @@ router.get('/payments', authenticateToken, requireFinancialAccess, async (req, r
 });
 
 // POST /api/vouchers/payments - Create payment voucher
-router.post('/payments', authenticateToken, requireFinancialAccess, async (req, res) => {
+router.post('/payments', authenticateToken, requireAccountingAccess, async (req, res) => {
   try {
     const {
       beneficiaryId,
