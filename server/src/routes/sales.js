@@ -498,7 +498,7 @@ router.delete('/customers/:id', authenticateToken, requireSalesAccess, async (re
 // ==================== INVOICES ROUTES ====================
 
 // GET /api/sales/invoices - Get invoices with pagination
-router.get('/invoices', authenticateToken, requireSalesAccess, async (req, res) => {
+router.get('/invoices', async (req, res) => {
   try {
     const {
       page = 1,
