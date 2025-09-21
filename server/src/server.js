@@ -13,6 +13,23 @@ import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+
+// Import enhanced services (optional)
+let cacheService, realtimeService;
+
+// تحقق من وجود Redis في البيئة
+const hasRedisConfig = process.env.REDIS_HOST || process.env.REDIS_URL;
+
+if (hasRedisConfig) {
+  try {
+    cacheService = (await import('./services/cacheService.js')).default;
+    realtimeService = (await import('./services/realtimeService.js')).default;
+  } catch (error) {
+    console.log('⚠️ Enhanced services not available - running in basic mode');
+  }
+} else {
+  console.log('ℹ️ Redis not configured - running in basic mode');
+}
 import authRoutes from './routes/auth.js';
 import settingsRoutes from './routes/settings.js';
 import financialRoutes from './routes/financial.js';
@@ -48,6 +65,25 @@ process.env.NODE_ENV = NODE_ENV;
 
 const app = express();
 const server = createServer(app);
+
+// Initialize enhanced services if available
+if (cacheService) {
+  try {
+    await cacheService.connect();
+    console.log('✅ Cache service connected');
+  } catch (error) {
+    console.log('⚠️ Cache service not available:', error.message);
+  }
+}
+
+if (realtimeService) {
+  try {
+    realtimeService.initialize(server);
+    console.log('✅ Realtime service initialized');
+  } catch (error) {
+    console.log('⚠️ Realtime service not available:', error.message);
+  }
+}
 const PORT = process.env.PORT || 5001;
 
 // ... بعد تعريف app مباشرة
@@ -412,12 +448,20 @@ app.get('/api/health/system', async (req, res) => {
 // Cache status endpoint
 app.get('/api/health/cache', async (req, res) => {
   try {
-    const stats = await cacheManager.getStats();
-    res.json({
-      status: stats.connected ? 'healthy' : 'unhealthy',
-      ...stats,
-      timestamp: new Date().toISOString()
-    });
+    if (cacheService) {
+      const stats = await cacheService.getStats();
+      res.json({
+        status: stats ? 'healthy' : 'unhealthy',
+        ...stats,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.json({
+        status: 'not available',
+        message: 'Cache service not initialized',
+        timestamp: new Date().toISOString()
+      });
+    }
   } catch (error) {
     res.status(503).json({
       status: 'error',
@@ -426,6 +470,51 @@ app.get('/api/health/cache', async (req, res) => {
     });
   }
 });
+
+// Cache management endpoints (if cache service is available)
+if (cacheService) {
+  app.get('/api/cache/stats', async (req, res) => {
+    try {
+      const stats = await cacheService.getStats();
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      console.error('Error getting cache stats:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error getting cache statistics'
+      });
+    }
+  });
+
+  app.post('/api/cache/clear', async (req, res) => {
+    try {
+      const { pattern } = req.body;
+      
+      if (pattern) {
+        await cacheService.invalidatePattern(pattern);
+        res.json({
+          success: true,
+          message: `Cache cleared for pattern: ${pattern}`
+        });
+      } else {
+        await cacheService.flush();
+        res.json({
+          success: true,
+          message: 'All cache cleared'
+        });
+      }
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error clearing cache'
+      });
+    }
+  });
+}
 
 // Backup status endpoint
 app.get('/api/health/backup', async (req, res) => {
@@ -513,6 +602,33 @@ async function startServer() {
   }
 }
 
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  
+  if (cacheService) {
+    await cacheService.disconnect();
+  }
+  
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down gracefully');
+  
+  if (cacheService) {
+    await cacheService.disconnect();
+  }
+  
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
 
 // Export app for testing purposes
 export { app };

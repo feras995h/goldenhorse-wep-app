@@ -216,8 +216,8 @@ class RealtimeService {
   }
 
   // Get room subscribers count
-  getRoomSubscribersCount(room) {
-    const room = this.io.sockets.adapter.rooms.get(room);
+  getRoomSubscribersCount(roomName) {
+    const room = this.io.sockets.adapter.rooms.get(roomName);
     return room ? room.size : 0;
   }
 
