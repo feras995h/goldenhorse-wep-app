@@ -333,6 +333,52 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Debug endpoint لفحص متغيرات البيئة (مؤقت)
+app.get('/api/debug-env', async (req, res) => {
+  try {
+    // استيراد db من models
+    const { sequelize } = await import('./models/index.js');
+
+    // فحص متغيرات البيئة المتعلقة بقاعدة البيانات
+    const envInfo = {
+      NODE_ENV: process.env.NODE_ENV,
+      DB_URL: process.env.DB_URL ? process.env.DB_URL.replace(/:[^:@]*@/, ':***@') : 'غير محدد',
+      DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:@]*@/, ':***@') : 'غير محدد',
+      PORT: process.env.PORT,
+      timestamp: new Date().toISOString()
+    };
+
+    // فحص اتصال قاعدة البيانات الحالي
+    const dbConfig = sequelize.config;
+    const dbInfo = {
+      host: dbConfig.host,
+      port: dbConfig.port,
+      database: dbConfig.database,
+      username: dbConfig.username,
+      dialect: dbConfig.dialect
+    };
+
+    // اختبار استعلام بسيط لمعرفة قاعدة البيانات الحالية
+    const dbTest = await sequelize.query('SELECT current_database() as current_db, version() as version', {
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    res.json({
+      message: 'Debug Environment Information',
+      environment: envInfo,
+      database_config: dbInfo,
+      database_test: dbTest[0],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Debug failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Database health endpoint
 app.get('/api/health/database', async (req, res) => {
   try {
