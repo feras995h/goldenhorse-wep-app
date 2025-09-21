@@ -13,6 +13,9 @@ import NotificationService from '../services/NotificationService.js';
 import EmployeeAccountService from '../services/EmployeeAccountService.js';
 import balanceUpdateService from '../services/balanceUpdateService.js';
 import advancedFixedAssetManager from '../utils/advancedFixedAssetManager.js';
+import cacheService from '../services/cacheService.js';
+import realtimeService from '../services/realtimeService.js';
+import { cache, invalidateCache } from '../middleware/cacheMiddleware.js';
 
 import AccountingAuditService from '../services/AccountingAuditService.js';
 import { getAuditTrail, getUserAuditTrail, getFinancialAuditTrail } from '../middleware/auditTrail.js';
@@ -5881,6 +5884,15 @@ router.post('/fixed-assets/:id/post-depreciation', authenticateToken, requireFin
       ]
     });
 
+    // Notify real-time updates
+    await realtimeService.notifyFinancialUpdate('depreciation_created', {
+      id: journalEntry.id,
+      entryNumber: journalEntry.entryNumber,
+      totalDebit: journalEntry.totalDebit,
+      totalCredit: journalEntry.totalCredit,
+      date: journalEntry.date
+    });
+
     res.json({
       success: true,
       message: 'تم ترحيل قيد الإهلاك بنجاح',
@@ -6061,7 +6073,11 @@ router.post('/fixed-assets/:id/depreciation', authenticateToken, requireFinancia
 const reportsController = new FinancialReportsController();
 
 // GET /api/financial/summary - Get financial summary
-router.get('/summary', authenticateToken, requireFinancialAccess, async (req, res) => {
+router.get('/summary', 
+  authenticateToken, 
+  requireFinancialAccess,
+  cache(300, (req) => `financial:summary:${req.query.dateFrom || 'all'}:${req.query.dateTo || 'all'}`),
+  async (req, res) => {
   try {
     console.log('🔍 بدء حساب الملخص المالي الحقيقي...');
 

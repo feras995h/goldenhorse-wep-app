@@ -11,6 +11,9 @@ import { v4 as uuidv4 } from 'uuid';
 import models, { sequelize as db } from '../models/index.js';
 import { Op } from 'sequelize';
 import NotificationService from '../services/NotificationService.js';
+import cacheService from '../services/cacheService.js';
+import realtimeService from '../services/realtimeService.js';
+import { cache, invalidateCache } from '../middleware/cacheMiddleware.js';
 
 const router = express.Router();
 const {
@@ -1362,7 +1365,11 @@ router.post('/payments',
 // ==================== SALES ANALYTICS ROUTES ====================
 
 // GET /api/sales/summary - Get sales summary
-router.get('/summary', authenticateToken, requireSalesAccess, async (req, res) => {
+router.get('/summary', 
+  authenticateToken, 
+  requireSalesAccess,
+  cache(300, (req) => `sales:summary:${req.query.dateFrom || 'all'}:${req.query.dateTo || 'all'}`),
+  async (req, res) => {
   try {
     const { dateFrom, dateTo } = req.query;
 
@@ -3323,6 +3330,15 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
       }
 
       await transaction.commit();
+
+      // Notify real-time updates
+      await realtimeService.notifySalesUpdate('sales_invoice_created', {
+        id: newInvoice.id,
+        invoiceNumber: newInvoice.invoiceNumber,
+        total: newInvoice.total,
+        customerId: newInvoice.customerId,
+        date: newInvoice.date
+      });
 
       // Fetch the created invoice with all details
       const invoiceWithDetails = await SalesInvoice.findByPk(newInvoice.id, {
