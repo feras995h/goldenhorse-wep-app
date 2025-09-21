@@ -1269,59 +1269,87 @@ router.get('/summary', authenticateToken, requireSalesAccess, async (req, res) =
   try {
     const { dateFrom, dateTo } = req.query;
 
-    const where = {};
+    // Build date filter for SQL query
+    let dateFilter = '';
+    const params = [];
+    let paramIndex = 1;
+
     if (dateFrom || dateTo) {
-      where.date = {};
-      if (dateFrom) where.date[Op.gte] = dateFrom;
-      if (dateTo) where.date[Op.lte] = dateTo;
+      dateFilter = 'AND ';
+      if (dateFrom && dateTo) {
+        dateFilter += `"invoiceDate" BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
+        params.push(dateFrom, dateTo);
+        paramIndex += 2;
+      } else if (dateFrom) {
+        dateFilter += `"invoiceDate" >= $${paramIndex}`;
+        params.push(dateFrom);
+        paramIndex += 1;
+      } else if (dateTo) {
+        dateFilter += `"invoiceDate" <= $${paramIndex}`;
+        params.push(dateTo);
+        paramIndex += 1;
+      }
     }
-    where.status = { [Op.ne]: 'cancelled' };
 
-    const [totalSales, totalInvoices, totalPayments, activeCustomersDistinct] = await Promise.all([
-      SalesInvoice.sum('total', { where }),
-      SalesInvoice.count({ where }),
-      Payment.sum('amount', {
-        where: {
-          ...(dateFrom || dateTo ? { date: { ...(dateFrom ? { [Op.gte]: dateFrom } : {}), ...(dateTo ? { [Op.lte]: dateTo } : {}) } } : {})
-        }
-      }),
-      SalesInvoice.count({ where, distinct: true, col: 'customerId' })
-    ]);
+    // Main summary query using direct SQL
+    const summaryQuery = `
+      SELECT
+        COUNT(*) as total_invoices,
+        COALESCE(SUM("totalAmount"), 0) as total_sales,
+        COUNT(DISTINCT "customerId") as active_customers,
+        AVG("totalAmount") as average_order_value
+      FROM sales_invoices
+      WHERE "isActive" = true AND status != 'cancelled' ${dateFilter}
+    `;
 
-    const total = parseFloat(totalSales || 0);
-    const invCount = parseInt(totalInvoices || 0);
-    const avgOrder = invCount > 0 ? total / invCount : 0;
+    const summary = await db.query(summaryQuery, {
+      bind: params,
+      type: db.QueryTypes.SELECT
+    });
 
-    // Monthly growth: compare current month vs previous month totals
+    const total = parseFloat(summary[0].total_sales || 0);
+    const invCount = parseInt(summary[0].total_invoices || 0);
+    const avgOrder = parseFloat(summary[0].average_order_value || 0);
+    const activeCustomers = parseInt(summary[0].active_customers || 0);
+
+    // Monthly growth calculation
     const now = new Date();
-    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
 
-    const [thisMonthTotal, prevMonthTotal] = await Promise.all([
-      SalesInvoice.sum('total', { where: { date: { [Op.gte]: startOfThisMonth }, status: { [Op.ne]: 'cancelled' } } }),
-      SalesInvoice.sum('total', { where: { date: { [Op.gte]: startOfPrevMonth, [Op.lt]: startOfThisMonth }, status: { [Op.ne]: 'cancelled' } } })
-    ]);
+    const growthQuery = `
+      SELECT
+        COALESCE(SUM(CASE WHEN "invoiceDate" >= $1 THEN "totalAmount" ELSE 0 END), 0) as this_month,
+        COALESCE(SUM(CASE WHEN "invoiceDate" >= $2 AND "invoiceDate" < $1 THEN "totalAmount" ELSE 0 END), 0) as prev_month
+      FROM sales_invoices
+      WHERE "isActive" = true AND status != 'cancelled'
+    `;
 
-    const thisTotal = parseFloat(thisMonthTotal || 0);
-    const lastTotal = parseFloat(prevMonthTotal || 0);
-    const growth = lastTotal === 0 ? (thisTotal > 0 ? 100 : 0) : ((thisTotal - lastTotal) / lastTotal) * 100;
+    const growth = await db.query(growthQuery, {
+      bind: [startOfThisMonth, startOfPrevMonth],
+      type: db.QueryTypes.SELECT
+    });
 
-    const summary = {
+    const thisTotal = parseFloat(growth[0].this_month || 0);
+    const lastTotal = parseFloat(growth[0].prev_month || 0);
+    const monthlyGrowth = lastTotal === 0 ? (thisTotal > 0 ? 100 : 0) : ((thisTotal - lastTotal) / lastTotal) * 100;
+
+    const result = {
       totalSales: total,
       totalOrders: invCount,
-      activeCustomers: parseInt(activeCustomersDistinct || 0),
+      activeCustomers: activeCustomers,
       averageOrderValue: parseFloat(avgOrder.toFixed(2)),
-      monthlyGrowth: parseFloat(growth.toFixed(2)),
+      monthlyGrowth: parseFloat(monthlyGrowth.toFixed(2)),
       totalInvoices: invCount,
-      totalPayments: parseFloat(totalPayments || 0),
+      totalPayments: 0, // Will be calculated separately if needed
       lowStockItems: 0, // يتطلب تكامل المخزون الحقيقي
       generatedAt: new Date().toISOString()
     };
 
-    res.json(summary);
+    res.json(result);
   } catch (error) {
     console.error('Error fetching sales summary:', error);
-    res.status(500).json({ message: 'خطأ في جلب ملخص المبيعات' });
+    res.status(500).json({ message: 'خطأ في جلب ملخص المبيعات', error: error.message });
   }
 });
 
@@ -2802,77 +2830,127 @@ router.get('/sales-invoices', authenticateToken, requireSalesAccess, async (req,
     } = req.query;
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
-    const whereClause = {};
+
+    // Build WHERE clause for SQL query
+    let whereClause = 'WHERE si."isActive" = true';
+    const params = [];
+    let paramIndex = 1;
 
     // Search filter
     if (search) {
-      whereClause[Op.or] = [
-        { invoiceNumber: { [Op.iLike]: `%${search}%` } },
-        { notes: { [Op.iLike]: `%${search}%` } }
-      ];
+      whereClause += ` AND (si."invoiceNumber" ILIKE $${paramIndex} OR si.notes ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
     }
 
     // Status filters
     if (status) {
-      whereClause.status = status;
+      whereClause += ` AND si.status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
     }
 
     if (paymentStatus) {
-      whereClause.paymentStatus = paymentStatus;
+      whereClause += ` AND si."paymentStatus" = $${paramIndex}`;
+      params.push(paymentStatus);
+      paramIndex++;
     }
 
     // Customer filter
     if (customerId) {
-      whereClause.customerId = customerId;
+      whereClause += ` AND si."customerId" = $${paramIndex}`;
+      params.push(customerId);
+      paramIndex++;
     }
 
     // Sales person filter
     if (salesPerson) {
-      whereClause.salesPerson = { [Op.iLike]: `%${salesPerson}%` };
+      whereClause += ` AND si."salesPerson" ILIKE $${paramIndex}`;
+      params.push(`%${salesPerson}%`);
+      paramIndex++;
     }
 
     // Date range filter
-    if (dateFrom || dateTo) {
-      whereClause.date = {};
-      if (dateFrom) {
-        whereClause.date[Op.gte] = dateFrom;
-      }
-      if (dateTo) {
-        whereClause.date[Op.lte] = dateTo;
-      }
+    if (dateFrom && dateTo) {
+      whereClause += ` AND si."invoiceDate" BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
+      params.push(dateFrom, dateTo);
+      paramIndex += 2;
+    } else if (dateFrom) {
+      whereClause += ` AND si."invoiceDate" >= $${paramIndex}`;
+      params.push(dateFrom);
+      paramIndex++;
+    } else if (dateTo) {
+      whereClause += ` AND si."invoiceDate" <= $${paramIndex}`;
+      params.push(dateTo);
+      paramIndex++;
     }
 
-    const { count, rows: invoices } = await SalesInvoice.findAndCountAll({
-      where: whereClause,
-      include: [
-        {
-          model: Customer,
-          as: 'customer',
-          attributes: ['id', 'code', 'name', 'phone', 'email']
-        },
-        {
-          model: SalesInvoiceItem,
-          as: 'items',
-          attributes: ['id', 'description', 'quantity', 'unitPrice', 'lineTotal']
-        }
-      ],
-      order: [['date', 'DESC']],
-      limit: parseInt(limit),
-      offset: offset
-    });
+    // Count query
+    const countQuery = `
+      SELECT COUNT(*) as count
+      FROM sales_invoices si
+      LEFT JOIN customers c ON si."customerId" = c.id
+      ${whereClause}
+    `;
+
+    // Data query
+    const dataQuery = `
+      SELECT
+        si.id, si."invoiceNumber", si."invoiceDate", si."dueDate",
+        si."totalAmount", si.status, si."paymentStatus", si."salesPerson",
+        si."salesChannel", si.notes, si."createdAt",
+        c.id as "customer_id", c.code as "customer_code", c.name as "customer_name",
+        c.phone as "customer_phone", c.email as "customer_email"
+      FROM sales_invoices si
+      LEFT JOIN customers c ON si."customerId" = c.id
+      ${whereClause}
+      ORDER BY si."invoiceDate" DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    params.push(parseInt(limit), offset);
+
+    const [countResult, invoices] = await Promise.all([
+      db.query(countQuery, { bind: params.slice(0, -2), type: db.QueryTypes.SELECT }),
+      db.query(dataQuery, { bind: params, type: db.QueryTypes.SELECT })
+    ]);
+
+    const total = parseInt(countResult[0].count);
+
+    // Format response data
+    const formattedInvoices = invoices.map(invoice => ({
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      invoiceDate: invoice.invoiceDate,
+      dueDate: invoice.dueDate,
+      totalAmount: invoice.totalAmount,
+      status: invoice.status,
+      paymentStatus: invoice.paymentStatus,
+      salesPerson: invoice.salesPerson,
+      salesChannel: invoice.salesChannel,
+      notes: invoice.notes,
+      createdAt: invoice.createdAt,
+      customer: {
+        id: invoice.customer_id,
+        code: invoice.customer_code,
+        name: invoice.customer_name,
+        phone: invoice.customer_phone,
+        email: invoice.customer_email
+      }
+    }));
 
     res.json({
-      data: invoices,
+      data: formattedInvoices,
       pagination: {
-        total: count,
+        total: total,
         page: parseInt(page),
         limit: parseInt(limit),
-        totalPages: Math.ceil(count / parseInt(limit))
+        totalPages: Math.ceil(total / parseInt(limit))
       }
     });
   } catch (error) {
     console.error('Error fetching sales invoices:', error);
-    res.status(500).json({ message: 'خطأ في جلب فواتير المبيعات' });
+    res.status(500).json({ message: 'خطأ في جلب فواتير المبيعات', error: error.message });
   }
 });
 
