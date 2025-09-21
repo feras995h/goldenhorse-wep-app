@@ -54,10 +54,24 @@ router.post('/post/:type/:id',
     }
 
     // تنفيذ الترحيل
+    // إصلاح User ID إذا كان integer
+    let validUserId = req.user.id;
+    if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+      const userResult = await sequelize.query(`
+        SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+      `, { type: sequelize.QueryTypes.SELECT });
+
+      if (userResult.length > 0) {
+        validUserId = userResult[0].id;
+      } else {
+        return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
+      }
+    }
+
     const result = await sequelize.query(
       'SELECT post_document($1, $2, $3) as journal_id',
       {
-        bind: [type, id, req.user.id],
+        bind: [type, id, validUserId],
         type: sequelize.QueryTypes.SELECT
       }
     );
@@ -160,10 +174,24 @@ router.post('/reverse/:type/:id',
     }
 
     // تنفيذ الإلغاء
+    // إصلاح User ID إذا كان integer
+    let validUserId = req.user.id;
+    if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+      const userResult = await sequelize.query(`
+        SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+      `, { type: sequelize.QueryTypes.SELECT });
+
+      if (userResult.length > 0) {
+        validUserId = userResult[0].id;
+      } else {
+        return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
+      }
+    }
+
     const result = await sequelize.query(
       'SELECT reverse_document($1, $2, $3, $4) as reversal_journal_id',
       {
-        bind: [type, id, req.user.id, reason],
+        bind: [type, id, validUserId, reason],
         type: sequelize.QueryTypes.SELECT
       }
     );

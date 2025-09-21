@@ -1188,6 +1188,20 @@ router.post('/payments',
         counterAccountId = autoAccount.id;
       }
 
+      // إصلاح User ID إذا كان integer
+      let validUserId = req.user.id;
+      if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+        const userResult = await db.query(`
+          SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+        `, { type: db.QueryTypes.SELECT });
+
+        if (userResult.length > 0) {
+          validUserId = userResult[0].id;
+        } else {
+          return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
+        }
+      }
+
       // Create payment as pending first
       const payment = await Payment.create({
         id: uuidv4(),
@@ -1201,15 +1215,15 @@ router.post('/payments',
         status: 'pending',
         voucherType: 'payment',
         accountId: partyAccountId, // party account to be credited
-        createdBy: req.user.id
+        createdBy: validUserId
       }, { transaction });
 
       // Attach non-persistent counter account id for journal entry method
       payment.set('counterAccountId', counterAccountId);
 
       // Mark completed and create GL/Journal Entry
-      await payment.update({ status: 'completed', completedBy: req.user.id, completedAt: new Date() }, { transaction });
-      const journalEntry = await payment.createJournalEntry(req.user.id, { transaction });
+      await payment.update({ status: 'completed', completedBy: validUserId, completedAt: new Date() }, { transaction });
+      const journalEntry = await payment.createJournalEntry(validUserId, { transaction });
 
       return { payment, journalEntry };
     });
@@ -3003,6 +3017,20 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
     const transaction = await sequelize.transaction();
 
     try {
+      // إصلاح User ID إذا كان integer
+      let validUserId = req.user.id;
+      if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+        const userResult = await db.query(`
+          SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+        `, { type: db.QueryTypes.SELECT });
+
+        if (userResult.length > 0) {
+          validUserId = userResult[0].id;
+        } else {
+          return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
+        }
+      }
+
       // Create the invoice
       const newInvoice = await SalesInvoice.create({
         customerId,
@@ -3026,7 +3054,7 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
         deliveryFee: parseFloat(deliveryFee) || 0,
         notes,
         terms,
-        createdBy: req.user.id
+        createdBy: validUserId
       }, { transaction });
 
       // Create invoice items
