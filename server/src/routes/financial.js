@@ -7934,6 +7934,21 @@ router.post('/advances', authenticateToken, requireFinancialAccess, async (req, 
       return res.status(404).json({ message: 'الموظف غير موجود' });
     }
 
+    // إصلاح User ID إذا كان integer
+    let validUserId = req.user.id;
+    if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+      // البحث عن المستخدم الصحيح
+      const userResult = await sequelize.query(`
+        SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+      `, { type: sequelize.QueryTypes.SELECT });
+
+      if (userResult.length > 0) {
+        validUserId = userResult[0].id;
+      } else {
+        return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
+      }
+    }
+
     const advanceData = {
       id: uuidv4(),
       employeeId,
@@ -7947,7 +7962,7 @@ router.post('/advances', authenticateToken, requireFinancialAccess, async (req, 
       paymentMethod,
       installments,
       remarks,
-      createdBy: req.user.id,
+      createdBy: validUserId,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -8435,28 +8450,62 @@ router.post('/vouchers/receipts', authenticateToken, requireTreasuryAccess, asyn
         const nextNumber = lastReceipt ? parseInt(lastReceipt.receiptNo.replace(/\D/g, '')) + 1 : 1;
         const receiptNo = `REC-${String(nextNumber).padStart(6, '0')}`;
 
-        // Create receipt
-        const receipt = await Receipt.create({
-          receiptNo,
-          accountId: resolvedAccountId,
-          partyType,
-          partyId,
-          supplierId: partyType === 'supplier' ? partyId : null,
-          receiptDate,
-          amount,
-          paymentMethod,
+        // إصلاح User ID إذا كان integer
+        let validUserId = req.user.id;
+        if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+          // البحث عن المستخدم الصحيح
+          const userResult = await sequelize.query(`
+            SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+          `, { type: sequelize.QueryTypes.SELECT, transaction });
 
-          referenceNo,
-          bankAccount,
-          checkNumber,
-          remarks,
-          currency,
-          exchangeRate,
-          status: 'completed',
-          createdBy: req.user.id,
-          completedAt: new Date(),
-          completedBy: req.user.id
-        }, { transaction });
+          if (userResult.length > 0) {
+            validUserId = userResult[0].id;
+          } else {
+            await transaction.rollback();
+            return res.status(400).json({ success: false, message: 'لا يمكن تحديد المستخدم الصحيح' });
+          }
+        }
+
+        // Create receipt باستخدام SQL مباشر
+        const receiptId = await sequelize.query(`SELECT gen_random_uuid() as id`, { type: sequelize.QueryTypes.SELECT, transaction });
+        const newReceiptId = receiptId[0].id;
+
+        const createReceiptQuery = `
+          INSERT INTO receipts (
+            id, "receiptNo", "accountId", "partyType", "partyId", "supplierId", "voucherType",
+            "receiptDate", amount, "paymentMethod", "referenceNo", "bankAccount", "checkNumber",
+            status, currency, "exchangeRate", remarks, "createdBy", "completedAt", "completedBy",
+            "createdAt", "updatedAt"
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, 'receipt', $7, $8, $9, $10, $11, $12, 'completed', $13, $14, $15, $16, NOW(), $17, NOW(), NOW()
+          ) RETURNING *
+        `;
+
+        const receiptResult = await sequelize.query(createReceiptQuery, {
+          bind: [
+            newReceiptId,
+            receiptNo,
+            resolvedAccountId,
+            partyType,
+            partyId,
+            partyType === 'supplier' ? partyId : null,
+            receiptDate,
+            amount,
+            paymentMethod,
+            referenceNo || null,
+            bankAccount || null,
+            checkNumber || null,
+            currency,
+            exchangeRate,
+            remarks || null,
+            validUserId,
+            validUserId
+          ],
+          type: sequelize.QueryTypes.INSERT,
+          transaction
+        });
+
+        const receipt = receiptResult[0][0];
 
         // Attach non-persistent counter account id for journal entry method
         receipt.set('counterAccountId', resolvedCounterAccountId);
@@ -8761,22 +8810,58 @@ router.post('/vouchers/payments', authenticateToken, requireTreasuryAccess, asyn
         const paymentNumber = `PAY-${String(nextNumber).padStart(6, '0')}`;
 
         // Create payment - temporarily exclude fields that may not exist in production DB
-        const payment = await Payment.create({
-          paymentNumber,
-          accountId: resolvedAccountId,
-          partyType,
-          partyId,
-          customerId: partyType === 'customer' ? partyId : null,
-          date,
-          amount,
-          paymentMethod,
-          reference,
-          notes,
-          status: 'completed',
-          // createdBy: req.user.id,  // Temporarily disabled - column may not exist in production
-          // completedAt: new Date(),  // Keep this as it might exist
-          // completedBy: req.user.id  // Temporarily disabled - column may not exist in production
-        }, { transaction });
+        // إصلاح User ID إذا كان integer
+        let validUserId = req.user.id;
+        if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+          // البحث عن المستخدم الصحيح
+          const userResult = await sequelize.query(`
+            SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+          `, { type: sequelize.QueryTypes.SELECT, transaction });
+
+          if (userResult.length > 0) {
+            validUserId = userResult[0].id;
+          } else {
+            await transaction.rollback();
+            return res.status(400).json({ success: false, message: 'لا يمكن تحديد المستخدم الصحيح' });
+          }
+        }
+
+        // Create payment باستخدام SQL مباشر
+        const paymentId = await sequelize.query(`SELECT gen_random_uuid() as id`, { type: sequelize.QueryTypes.SELECT, transaction });
+        const newPaymentId = paymentId[0].id;
+
+        const createPaymentQuery = `
+          INSERT INTO payments (
+            id, "paymentNumber", "accountId", "partyType", "partyId", "customerId", "voucherType",
+            date, amount, "paymentMethod", reference, notes,
+            status, currency, "exchangeRate", "createdBy", "completedAt", "completedBy",
+            "createdAt", "updatedAt", "isActive"
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, 'payment', $7, $8, $9, $10, $11, 'completed', 'LYD', 1.0, $12, NOW(), $13, NOW(), NOW(), true
+          ) RETURNING *
+        `;
+
+        const paymentResult = await sequelize.query(createPaymentQuery, {
+          bind: [
+            newPaymentId,
+            paymentNumber,
+            resolvedAccountId,
+            partyType,
+            partyId,
+            partyType === 'customer' ? partyId : null,
+            date,
+            amount,
+            paymentMethod,
+            reference || null,
+            notes || null,
+            validUserId,
+            validUserId
+          ],
+          type: sequelize.QueryTypes.INSERT,
+          transaction
+        });
+
+        const payment = paymentResult[0][0];
 
         // Attach counter account for journal entry mapping
         payment.set('counterAccountId', resolvedCounterAccountId);

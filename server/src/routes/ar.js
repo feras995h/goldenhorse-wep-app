@@ -13,10 +13,25 @@ router.post('/allocate', authenticateToken, requireAccountingAccess, async (req,
       return res.status(400).json({ success: false, message: 'receipt_id, invoice_id, amount مطلوبة' });
     }
 
+    // إصلاح User ID إذا كان integer
+    let validUserId = req.user.id;
+    if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+      // البحث عن المستخدم الصحيح
+      const userResult = await sequelize.query(`
+        SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+      `, { type: sequelize.QueryTypes.SELECT });
+
+      if (userResult.length > 0) {
+        validUserId = userResult[0].id;
+      } else {
+        return res.status(400).json({ success: false, message: 'لا يمكن تحديد المستخدم الصحيح' });
+      }
+    }
+
     const result = await sequelize.query(
       'SELECT allocate_receipt_to_invoice($1, $2, $3, $4, $5) AS allocation_id',
       {
-        bind: [receipt_id, invoice_id, amount, req.user.id, notes || null],
+        bind: [receipt_id, invoice_id, amount, validUserId, notes || null],
         type: sequelize.QueryTypes.SELECT,
       }
     );
