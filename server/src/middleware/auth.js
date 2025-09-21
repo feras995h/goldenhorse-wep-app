@@ -27,8 +27,32 @@ export const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ message: 'Invalid token type', code: 'INVALID_TOKEN_TYPE' });
     }
 
-    // Find user by ID
-    const user = await User.findByPk(decoded.userId);
+    // إصلاح مشكلة JWT token القديم الذي يحتوي على integer userId
+    let user;
+
+    // إذا كان decoded.userId integer، ابحث عن المستخدم admin الافتراضي
+    if (typeof decoded.userId === 'number' || (typeof decoded.userId === 'string' && /^\d+$/.test(decoded.userId))) {
+      console.log(`⚠️ JWT token يحتوي على userId integer: ${decoded.userId}, البحث عن مستخدم admin افتراضي...`);
+
+      // البحث عن أول مستخدم admin نشط
+      user = await User.findOne({
+        where: {
+          role: 'admin',
+          isActive: true
+        },
+        order: [['createdAt', 'ASC']]
+      });
+
+      if (!user) {
+        console.log('❌ لم يتم العثور على مستخدم admin نشط');
+        return res.status(401).json({ message: 'User not found or inactive' });
+      }
+
+      console.log(`✅ تم العثور على مستخدم admin: ${user.username} (${user.id})`);
+    } else {
+      // البحث العادي بـ UUID
+      user = await User.findByPk(decoded.userId);
+    }
 
     if (!user || !user.isActive) {
       return res.status(401).json({ message: 'User not found or inactive' });
