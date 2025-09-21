@@ -188,6 +188,48 @@ export default (sequelize) => {
         max: 999999999999.99
       }
     },
+    serviceDescription: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    serviceDescriptionEn: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    shipmentNumbers: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: []
+    },
+    serviceType: {
+      type: DataTypes.ENUM('sea_freight', 'air_freight', 'land_freight', 'express', 'other'),
+      allowNull: false,
+      defaultValue: 'sea_freight'
+    },
+    weight: {
+      type: DataTypes.DECIMAL(10, 3),
+      allowNull: true,
+      validate: {
+        min: 0,
+        max: 999999.999
+      }
+    },
+    volume: {
+      type: DataTypes.DECIMAL(15, 3),
+      allowNull: true,
+      validate: {
+        min: 0,
+        max: 999999999999.999
+      }
+    },
+    cbm: {
+      type: DataTypes.DECIMAL(15, 3),
+      allowNull: true,
+      validate: {
+        min: 0,
+        max: 999999999999.999
+      }
+    },
     createdBy: {
       type: DataTypes.UUID,
       allowNull: false,

@@ -142,6 +142,15 @@ export default (sequelize) => {
         max: 999999999999.99
       }
     },
+    outstandingAmount: {
+      type: DataTypes.DECIMAL(15, 2),
+      field: 'outstandingamount',
+      defaultValue: 0.00,
+      validate: {
+        min: 0,
+        max: 999999999999.99
+      }
+    },
     currency: {
       type: DataTypes.ENUM('LYD', 'USD', 'EUR', 'CNY'),
       defaultValue: 'LYD'
@@ -236,7 +245,23 @@ export default (sequelize) => {
     tableName: 'shipping_invoices',
     timestamps: true,
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    hooks: {
+      beforeCreate: (invoice) => {
+        // Calculate outstanding amount
+        const total = parseFloat(invoice.total || 0);
+        const paidAmount = parseFloat(invoice.paidAmount || 0);
+        invoice.outstandingAmount = Math.max(0, total - paidAmount);
+      },
+      beforeUpdate: (invoice) => {
+        // Calculate outstanding amount
+        if (invoice.changed('total') || invoice.changed('paidAmount')) {
+          const total = parseFloat(invoice.total || 0);
+          const paidAmount = parseFloat(invoice.paidAmount || 0);
+          invoice.outstandingAmount = Math.max(0, total - paidAmount);
+        }
+      }
+    }
   });
 
   // Associations

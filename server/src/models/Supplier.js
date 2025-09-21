@@ -17,13 +17,23 @@ export default (sequelize) => {
     },
     name: {
       type: DataTypes.STRING(200),
-      allowNull: false
+      allowNull: false,
+      validate: {
+        len: [1, 200]
+      }
     },
     nameEn: {
       type: DataTypes.STRING(200),
       allowNull: true
     },
-
+    contactPerson: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
     email: {
       type: DataTypes.STRING(100),
       allowNull: true,
@@ -31,12 +41,16 @@ export default (sequelize) => {
         isEmail: true
       }
     },
-    phone: {
-      type: DataTypes.STRING(20),
-      allowNull: true
-    },
     address: {
       type: DataTypes.TEXT,
+      allowNull: true
+    },
+    city: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    country: {
+      type: DataTypes.STRING(100),
       allowNull: true
     },
     taxNumber: {
@@ -45,69 +59,56 @@ export default (sequelize) => {
     },
     creditLimit: {
       type: DataTypes.DECIMAL(15, 2),
+      allowNull: false,
       defaultValue: 0.00,
       validate: {
         min: 0,
         max: 999999999999.99
       }
     },
-
-    isActive: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
-    },
-    balance: {
-      type: DataTypes.DECIMAL(15, 2),
-      defaultValue: 0.00,
+    paymentTerms: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 30,
       validate: {
-        min: -999999999999.99,
-        max: 999999999999.99
+        min: 0,
+        max: 365
       }
     },
-
-    contactPerson: {
-      type: DataTypes.STRING(100),
+    currency: {
+      type: DataTypes.ENUM('LYD', 'USD', 'EUR', 'CNY'),
+      allowNull: false,
+      defaultValue: 'LYD'
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
+    },
+    notes: {
+      type: DataTypes.TEXT,
       allowNull: true
     },
-
+    createdBy: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    }
   }, {
     tableName: 'suppliers',
     timestamps: true,
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
-    indexes: [
-      {
-        unique: true,
-        fields: ['code']
-      },
-      {
-        fields: ['isActive']
-      },
-      {
-        fields: ['email']
-      }
-    ]
+    updatedAt: 'updatedAt'
   });
-
-  // Instance methods
-  Supplier.prototype.getBalance = function() {
-    return parseFloat(this.balance) || 0;
-  };
-
-  // Class methods
-  Supplier.findByCode = function(code) {
-    return this.findOne({ where: { code } });
-  };
-
-  Supplier.findActive = function() {
-    return this.findAll({ where: { isActive: true } });
-  };
 
   // Associations
   Supplier.associate = (models) => {
-    Supplier.hasMany(models.Receipt, { foreignKey: 'supplierId', as: 'receipts' });
+    Supplier.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
+    // Note: Other associations will be set up after all models are loaded
   };
 
   return Supplier;
 };
-

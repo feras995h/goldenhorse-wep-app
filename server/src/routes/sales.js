@@ -2813,6 +2813,16 @@ router.post('/shipping-invoices', authenticateToken, requireSalesAccess, async (
       return res.status(400).json({ message: 'العميل وتاريخ الفاتورة وتاريخ الاستحقاق مطلوبة' });
     }
 
+    // Validate itemDescription is required
+    if (!itemDescription || itemDescription.trim() === '') {
+      return res.status(400).json({ message: 'وصف البضاعة مطلوب' });
+    }
+
+    // Validate origin and destination locations
+    if (!originLocation || !destinationLocation) {
+      return res.status(400).json({ message: 'موقع المنشأ والوجهة مطلوبان' });
+    }
+
     // Validate customer exists
     const customer = await Customer.findByPk(customerId);
     if (!customer) {

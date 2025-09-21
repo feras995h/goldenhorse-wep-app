@@ -1,13 +1,13 @@
 import { DataTypes } from 'sequelize';
 
 export default (sequelize) => {
-  const SalesReturn = sequelize.define('SalesReturn', {
+  const ReceiptVoucher = sequelize.define('ReceiptVoucher', {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
-    returnNumber: {
+    voucherNumber: {
       type: DataTypes.STRING(50),
       allowNull: false,
       unique: true,
@@ -21,72 +21,69 @@ export default (sequelize) => {
     },
     customerId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'customers',
         key: 'id'
       }
     },
-    salesInvoiceId: {
+    customerName: {
+      type: DataTypes.STRING(200),
+      allowNull: false,
+      validate: {
+        len: [1, 200]
+      }
+    },
+    shipmentId: {
       type: DataTypes.UUID,
       allowNull: true,
       references: {
-        model: 'sales_invoices',
+        model: 'shipments',
         key: 'id'
       }
     },
-    reason: {
-      type: DataTypes.ENUM('defective', 'wrong_item', 'customer_request', 'damaged', 'other'),
+    paymentMethod: {
+      type: DataTypes.ENUM('cash', 'bank_transfer', 'check', 'credit_card', 'other'),
       allowNull: false,
-      defaultValue: 'other'
-    },
-    reasonDescription: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    items: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      defaultValue: []
-    },
-    subtotal: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-      validate: {
-        min: 0,
-        max: 999999999999.99
-      }
-    },
-    taxAmount: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-      defaultValue: 0.00,
-      validate: {
-        min: 0,
-        max: 999999999999.99
-      }
-    },
-    total: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-      validate: {
-        min: 0,
-        max: 999999999999.99
-      }
-    },
-    refundAmount: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-      defaultValue: 0.00,
-      validate: {
-        min: 0,
-        max: 999999999999.99
-      }
+      defaultValue: 'cash'
     },
     currency: {
       type: DataTypes.ENUM('LYD', 'USD', 'EUR', 'CNY'),
       allowNull: false,
       defaultValue: 'LYD'
+    },
+    amount: {
+      type: DataTypes.DECIMAL(15, 2),
+      allowNull: false,
+      validate: {
+        min: 0.01,
+        max: 999999999999.99
+      }
+    },
+    purpose: {
+      type: DataTypes.ENUM('invoice_payment', 'advance_payment', 'settlement', 'refund', 'other'),
+      allowNull: false,
+      defaultValue: 'invoice_payment'
+    },
+    purposeDescription: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
+    debitAccountId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'accounts',
+        key: 'id'
+      }
+    },
+    creditAccountId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'accounts',
+        key: 'id'
+      }
     },
     exchangeRate: {
       type: DataTypes.DECIMAL(10, 4),
@@ -97,20 +94,6 @@ export default (sequelize) => {
         max: 999999.9999
       }
     },
-    status: {
-      type: DataTypes.ENUM('pending', 'approved', 'rejected', 'processed'),
-      allowNull: false,
-      defaultValue: 'pending'
-    },
-    refundStatus: {
-      type: DataTypes.ENUM('pending', 'partial', 'completed', 'cancelled'),
-      allowNull: false,
-      defaultValue: 'pending'
-    },
-    refundMethod: {
-      type: DataTypes.ENUM('cash', 'bank_transfer', 'credit_note', 'exchange'),
-      allowNull: true
-    },
     notes: {
       type: DataTypes.TEXT,
       allowNull: true
@@ -119,6 +102,11 @@ export default (sequelize) => {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: []
+    },
+    status: {
+      type: DataTypes.ENUM('draft', 'posted', 'cancelled'),
+      allowNull: false,
+      defaultValue: 'draft'
     },
     createdBy: {
       type: DataTypes.UUID,
@@ -141,52 +129,42 @@ export default (sequelize) => {
       allowNull: true
     }
   }, {
-    tableName: 'sales_returns',
+    tableName: 'receipt_vouchers',
     timestamps: true,
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     hooks: {
-      beforeCreate: async (returnItem) => {
-        // Generate return number if not provided
-        if (!returnItem.returnNumber) {
-          const lastReturn = await SalesReturn.findOne({
+      beforeCreate: async (voucher) => {
+        // Generate voucher number if not provided
+        if (!voucher.voucherNumber) {
+          const lastVoucher = await ReceiptVoucher.findOne({
             order: [['createdAt', 'DESC']]
           });
-          const nextNumber = lastReturn ? 
-            (parseInt(String(lastReturn.returnNumber).replace(/\D/g, ''), 10) + 1) : 1;
-          returnItem.returnNumber = `RET-${String(nextNumber).padStart(6, '0')}`;
+          const nextNumber = lastVoucher ? 
+            (parseInt(String(lastVoucher.voucherNumber).replace(/\D/g, ''), 10) + 1) : 1;
+          voucher.voucherNumber = `RCV-${String(nextNumber).padStart(6, '0')}`;
         }
       }
     }
   });
 
   // Associations
-  SalesReturn.associate = (models) => {
-    SalesReturn.belongsTo(models.Customer, { foreignKey: 'customerId', as: 'customer' });
-    SalesReturn.belongsTo(models.SalesInvoice, { foreignKey: 'salesInvoiceId', as: 'salesInvoice' });
-    SalesReturn.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
-    SalesReturn.belongsTo(models.User, { foreignKey: 'approvedBy', as: 'approver' });
+  ReceiptVoucher.associate = (models) => {
+    ReceiptVoucher.belongsTo(models.Customer, { foreignKey: 'customerId', as: 'customer' });
+    ReceiptVoucher.belongsTo(models.Shipment, { foreignKey: 'shipmentId', as: 'shipment' });
+    ReceiptVoucher.belongsTo(models.Account, { foreignKey: 'debitAccountId', as: 'debitAccount' });
+    ReceiptVoucher.belongsTo(models.Account, { foreignKey: 'creditAccountId', as: 'creditAccount' });
+    ReceiptVoucher.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
+    ReceiptVoucher.belongsTo(models.User, { foreignKey: 'approvedBy', as: 'approver' });
   };
 
   // Instance methods
-  SalesReturn.prototype.createJournalEntry = async function(userId, options = {}) {
+  ReceiptVoucher.prototype.createJournalEntry = async function(userId, options = {}) {
     const t = options.transaction || await sequelize.transaction();
     const shouldCommit = !options.transaction;
 
     try {
-      const { JournalEntry, JournalEntryDetail, GLEntry, AccountMapping } = sequelize.models;
-
-      // Get active account mapping
-      const mapping = await AccountMapping.getActiveMapping();
-      if (!mapping) throw new Error('No active account mapping configured');
-
-      // Determine accounts
-      const salesReturnAccountId = mapping.salesReturnAccount || mapping.salesRevenueAccount;
-      const receivableAccountId = mapping.accountsReceivableAccount;
-
-      if (!salesReturnAccountId || !receivableAccountId) {
-        throw new Error('Required accounts for Sales Return are not configured');
-      }
+      const { JournalEntry, JournalEntryDetail, GLEntry } = sequelize.models;
 
       // Generate journal entry number
       const lastEntry = await JournalEntry.findOne({ order: [['createdAt', 'DESC']] });
@@ -194,17 +172,17 @@ export default (sequelize) => {
         (parseInt(String(lastEntry.entryNumber).replace(/\D/g, ''), 10) + 1) : 1;
       const entryNumber = `JE-${String(nextNumber).padStart(6, '0')}`;
 
-      const description = `Sales return ${this.returnNumber} - ${this.reasonDescription || this.reason}`;
+      const description = `Receipt voucher ${this.voucherNumber} - ${this.purposeDescription || this.purpose}`;
 
       // Create JE header
       const journalEntry = await JournalEntry.create({
         entryNumber,
         date: this.date,
         description,
-        totalDebit: this.total,
-        totalCredit: this.total,
+        totalDebit: this.amount,
+        totalCredit: this.amount,
         status: 'posted',
-        type: 'sales_return',
+        type: 'receipt_voucher',
         createdBy: userId
       }, { transaction: t });
 
@@ -212,17 +190,17 @@ export default (sequelize) => {
       const details = [
         {
           journalEntryId: journalEntry.id,
-          accountId: salesReturnAccountId,
-          debit: this.total,
+          accountId: this.debitAccountId,
+          debit: this.amount,
           credit: 0,
-          description: `Sales return ${this.returnNumber}`
+          description: `Receipt from ${this.customerName}`
         },
         {
           journalEntryId: journalEntry.id,
-          accountId: receivableAccountId,
+          accountId: this.creditAccountId,
           debit: 0,
-          credit: this.total,
-          description: `Return from ${this.customer?.name || 'Customer'}`
+          credit: this.amount,
+          description: `Payment received from ${this.customerName}`
         }
       ];
 
@@ -234,8 +212,8 @@ export default (sequelize) => {
         accountId: detail.accountId,
         debit: detail.debit,
         credit: detail.credit,
-        voucherType: 'Sales Return',
-        voucherNo: this.returnNumber,
+        voucherType: 'Receipt Voucher',
+        voucherNo: this.voucherNumber,
         journalEntryId: journalEntry.id,
         remarks: detail.description,
         currency: this.currency,
@@ -266,5 +244,5 @@ export default (sequelize) => {
     }
   };
 
-  return SalesReturn;
+  return ReceiptVoucher;
 };

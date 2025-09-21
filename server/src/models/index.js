@@ -173,6 +173,9 @@ import AuditLogModel from './AuditLog.js';
 import AccountingPeriodModel from './AccountingPeriod.js';
 
 import SalesReturnModel from './SalesReturn.js';
+import ReceiptVoucherModel from './ReceiptVoucher.js';
+import PaymentVoucherModel from './PaymentVoucher.js';
+import WarehouseModel from './Warehouse.js';
 
 // Initialize models with sequelize
 const User = UserModel(sequelize);
@@ -202,6 +205,10 @@ const InvoicePayment = InvoicePaymentModel(sequelize);
 const InvoiceReceipt = InvoiceReceiptModel(sequelize);
 const SalesReturn = SalesReturnModel(sequelize);
 const SalesInvoicePayment = SalesInvoicePaymentModel(sequelize);
+const ReceiptVoucher = ReceiptVoucherModel(sequelize);
+const PaymentVoucher = PaymentVoucherModel(sequelize);
+const PurchaseInvoice = PurchaseInvoiceModel(sequelize);
+const Warehouse = WarehouseModel(sequelize);
 const StockMovement = StockMovementModel(sequelize);
 const AuditLog = AuditLogModel(sequelize);
 const AccountingPeriod = AccountingPeriodModel(sequelize);
@@ -241,13 +248,16 @@ const models = {
   InvoiceReceipt,
   SalesReturn,
   SalesInvoicePayment,
+  ReceiptVoucher,
+  PaymentVoucher,
+  PurchaseInvoice,
+  Warehouse,
   StockMovement,
   AuditLog,
   AccountingPeriod,
   AccountProvision,
   AccountMapping,
   CompanyLogo,
-  PurchaseInvoice,
   PurchaseInvoicePayment
 };
 
