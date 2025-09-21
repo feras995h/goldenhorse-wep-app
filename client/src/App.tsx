@@ -48,6 +48,8 @@ const TreasuryVouchers = loadable(() => import('./pages/TreasuryVouchers'));
 const ShippingInvoices = loadable(() => import('./pages/ShippingInvoices'));
 const SalesInvoices = loadable(() => import('./pages/SalesInvoices'));
 const InvoiceManagementUnified = loadable(() => import('./pages/InvoiceManagementUnified'));
+const ReceiptVouchers = loadable(() => import('./pages/ReceiptVouchers'));
+const PaymentVouchers = loadable(() => import('./pages/PaymentVouchers'));
 const AccountMappingSettings = loadable(() => import('./components/Financial/AccountMappingSettings'));
 const AutoAccountCreatorPage = loadable(() => import('./pages/AutoAccountCreatorPage'));
 const AdvancedProfitabilityReports = loadable(() => import('./pages/AdvancedProfitabilityReports'));
@@ -133,6 +135,8 @@ function App() {
                 <Route path="cost-analysis" element={<CostAnalysis />} />
                 <Route path="budget-planning" element={<BudgetPlanning />} />
                 <Route path="cash-flow-management" element={<CashFlowManagement />} />
+                <Route path="receipt-vouchers" element={<ReceiptVouchers />} />
+                <Route path="payment-vouchers" element={<PaymentVouchers />} />
                 <Route path="settings" element={<SystemSettings />} />
               </Route>
 

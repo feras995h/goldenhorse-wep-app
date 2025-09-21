@@ -40,6 +40,14 @@ interface Invoice {
   exchangeRate: number;
   notes?: string;
   items: InvoiceItem[];
+  // New fields for updated invoice model
+  serviceDescription?: string;
+  serviceDescriptionEn?: string;
+  shipmentNumbers?: string[];
+  serviceType?: 'sea_freight' | 'air_freight' | 'land_freight' | 'express' | 'other';
+  weight?: number;
+  volume?: number;
+  cbm?: number;
 }
 
 interface InvoiceFormModalProps {
@@ -75,7 +83,15 @@ const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
     currency: 'LYD',
     exchangeRate: 1.0,
     notes: '',
-    items: []
+    items: [],
+    // New fields
+    serviceDescription: '',
+    serviceDescriptionEn: '',
+    shipmentNumbers: [],
+    serviceType: 'sea_freight',
+    weight: 0,
+    volume: 0,
+    cbm: 0
   });
 
   const [loading, setLoading] = useState(false);
@@ -100,7 +116,15 @@ const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
         currency: 'LYD',
         exchangeRate: 1.0,
         notes: '',
-        items: invoiceType === 'sales' ? [createEmptyItem()] : []
+        items: invoiceType === 'sales' ? [createEmptyItem()] : [],
+        // New fields
+        serviceDescription: '',
+        serviceDescriptionEn: '',
+        shipmentNumbers: [],
+        serviceType: 'sea_freight',
+        weight: 0,
+        volume: 0,
+        cbm: 0
       });
     }
   }, [invoice, mode, invoiceType, isOpen]);
@@ -327,6 +351,94 @@ const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 min="0.01"
                 step="0.01"
+              />
+            </FormField>
+          </div>
+
+          {/* New fields for updated invoice model */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <FormField label="وصف الخدمة (عربي)">
+              <textarea
+                value={formData.serviceDescription || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, serviceDescription: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[80px]"
+                placeholder="أدخل وصف الخدمة باللغة العربية"
+              />
+            </FormField>
+
+            <FormField label="وصف الخدمة (إنجليزي)">
+              <textarea
+                value={formData.serviceDescriptionEn || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, serviceDescriptionEn: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[80px]"
+                placeholder="Enter service description in English"
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <FormField label="نوع الخدمة">
+              <select
+                value={formData.serviceType || 'sea_freight'}
+                onChange={(e) => setFormData(prev => ({ ...prev, serviceType: e.target.value as any }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="sea_freight">شحن بحري</option>
+                <option value="air_freight">شحن جوي</option>
+                <option value="land_freight">شحن بري</option>
+                <option value="express">شحن سريع</option>
+                <option value="other">أخرى</option>
+              </select>
+            </FormField>
+
+            <FormField label="أرقام الشحنات (مفصولة بفواصل)">
+              <input
+                type="text"
+                value={formData.shipmentNumbers?.join(', ') || ''}
+                onChange={(e) => {
+                  const numbers = e.target.value.split(',').map(s => s.trim()).filter(s => s);
+                  setFormData(prev => ({ ...prev, shipmentNumbers: numbers }));
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="SH001, SH002, SH003"
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <FormField label="الوزن (كيلو)">
+              <input
+                type="number"
+                value={formData.weight || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, weight: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                step="0.001"
+                min="0"
+                placeholder="0.000"
+              />
+            </FormField>
+
+            <FormField label="الحجم (م³)">
+              <input
+                type="number"
+                value={formData.volume || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, volume: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                step="0.001"
+                min="0"
+                placeholder="0.000"
+              />
+            </FormField>
+
+            <FormField label="CBM">
+              <input
+                type="number"
+                value={formData.cbm || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, cbm: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                step="0.001"
+                min="0"
+                placeholder="0.000"
               />
             </FormField>
           </div>

@@ -128,6 +128,20 @@ const navItems: NavItem[] = [
             roles: ['financial'],
             isNew: true
           },
+          {
+            path: '/financial/receipt-vouchers',
+            label: 'إيصالات القبض',
+            icon: <FileText className="h-4 w-4" />,
+            roles: ['financial'],
+            isNew: true
+          },
+          {
+            path: '/financial/payment-vouchers',
+            label: 'إيصالات الصرف',
+            icon: <FileText className="h-4 w-4" />,
+            roles: ['financial'],
+            isNew: true
+          },
 
     ]
   },
