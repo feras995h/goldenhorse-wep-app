@@ -551,8 +551,8 @@ router.get('/invoices', authenticateToken, requireSalesAccess, async (req, res) 
       ]
     };
 
-    const invoices = await Invoice.findAll(options);
-    const total = await Invoice.count({ where: whereClause });
+    const invoices = await SalesInvoice.findAll(options);
+    const total = await SalesInvoice.count({ where: whereClause });
 
     const response = {
       data: invoices,
@@ -574,7 +574,7 @@ router.get('/invoices/:id', authenticateToken, requireSalesAccess, async (req, r
   try {
     const { id } = req.params;
 
-    const invoice = await Invoice.findByPk(id, {
+    const invoice = await SalesInvoice.findByPk(id, {
       include: [
         {
           model: Customer,
@@ -624,34 +624,75 @@ router.post('/invoices', authenticateToken, requireSalesAccess, async (req, res)
     // Generate invoice number
     const invoiceNumber = `INV-${Date.now()}`;
 
-    const newInvoice = await Invoice.create({
-      invoiceNumber: invoiceNumber,
-      customerId,
-      date,
-      dueDate,
-      subtotal: total,
-      total: total,
-      status: 'draft',
-      notes,
-      terms,
-      items: JSON.stringify(items)
-    });
+    const transaction = await sequelize.transaction();
 
-    // Fetch the created invoice with customer details
-    const invoiceWithCustomer = await Invoice.findByPk(newInvoice.id, {
-      include: [
-        {
-          model: Customer,
-          as: 'customer',
-          attributes: ['id', 'code', 'name', 'type', 'address', 'phone', 'email']
+    try {
+      // إصلاح User ID إذا كان integer
+      let validUserId = req.user.id;
+      if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+        const userResult = await sequelize.query(`
+          SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+        `, { type: sequelize.QueryTypes.SELECT, transaction });
+
+        if (userResult.length > 0) {
+          validUserId = userResult[0].id;
+        } else {
+          await transaction.rollback();
+          return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
         }
-      ]
-    });
+      }
 
-    res.status(201).json(invoiceWithCustomer);
+      // التحقق من صحة المبلغ
+      if (total <= 0) {
+        await transaction.rollback();
+        return res.status(400).json({ message: 'المبلغ الإجمالي يجب أن يكون أكبر من صفر' });
+      }
+
+      const newInvoice = await SalesInvoice.create({
+        invoiceNumber: invoiceNumber,
+        customerId,
+        date,
+        dueDate,
+        subtotal: total,
+        total: total,
+        status: 'draft',
+        paymentStatus: 'unpaid',
+        notes,
+        terms,
+        createdBy: validUserId
+      }, { transaction });
+
+      // Create automatic journal entry for sales invoice
+      try {
+        await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
+        console.log('✅ تم إنشاء القيد المحاسبي تلقائياً للفاتورة');
+      } catch (journalError) {
+        console.error('❌ خطأ في إنشاء القيد المحاسبي:', journalError.message);
+        // Don't fail the invoice creation if journal entry fails
+      }
+
+      await transaction.commit();
+
+      // Fetch the created invoice with customer details
+      const invoiceWithCustomer = await SalesInvoice.findByPk(newInvoice.id, {
+        include: [
+          {
+            model: Customer,
+            as: 'customer',
+            attributes: ['id', 'code', 'name', 'type', 'address', 'phone', 'email']
+          }
+        ]
+      });
+
+      res.status(201).json(invoiceWithCustomer);
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Error creating invoice:', error);
+      res.status(500).json({ message: 'خطأ في إنشاء الفاتورة', error: error.message });
+    }
   } catch (error) {
     console.error('Error creating invoice:', error);
-    res.status(500).json({ message: 'خطأ في إنشاء الفاتورة' });
+    res.status(500).json({ message: 'خطأ في إنشاء الفاتورة', error: error.message });
   }
 });
 
@@ -743,6 +784,15 @@ router.post('/receipt-vouchers',
       return res.status(400).json({
         success: false,
         message: 'العميل والمبلغ والتاريخ مطلوبة'
+      });
+    }
+
+    // التحقق من صحة المبلغ
+    const amountVal = parseFloat(amount);
+    if (isNaN(amountVal) || amountVal <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'المبلغ يجب أن يكون رقماً موجباً'
       });
     }
 
@@ -971,6 +1021,15 @@ router.post('/payment-vouchers',
       return res.status(400).json({
         success: false,
         message: 'المبلغ والتاريخ مطلوبان'
+      });
+    }
+
+    // التحقق من صحة المبلغ
+    const amountVal = parseFloat(amount);
+    if (isNaN(amountVal) || amountVal <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'المبلغ يجب أن يكون رقماً موجباً'
       });
     }
 
@@ -2761,48 +2820,113 @@ router.post('/shipping-invoices', authenticateToken, requireSalesAccess, async (
       }
     }
 
-    const newInvoice = await ShippingInvoice.create({
-      customerId,
-      shipmentId,
-      trackingNumber,
-      date,
-      dueDate,
-      shippingCost: parseFloat(shippingCost) || 0,
-      handlingFee: parseFloat(handlingFee) || 0,
-      storageFee: parseFloat(storageFee) || 0,
-      customsClearanceFee: parseFloat(customsClearanceFee) || 0,
-      insuranceFee: parseFloat(insuranceFee) || 0,
-      additionalFees: parseFloat(additionalFees) || 0,
-      discountAmount: parseFloat(discountAmount) || 0,
-      taxAmount: parseFloat(taxAmount) || 0,
-      currency: currency || 'LYD',
-      exchangeRate: parseFloat(exchangeRate) || 1.0,
-      paymentMethod,
-      paymentReference,
-      itemDescription,
-      itemDescriptionEn,
-      quantity: parseInt(quantity) || 1,
-      weight: parseFloat(weight) || null,
-      volume: parseFloat(volume) || null,
-      originLocation,
-      destinationLocation,
-      notes,
-      terms,
-      createdBy: req.user.id
-    });
+    const transaction = await sequelize.transaction();
 
-    // Fetch the created invoice with customer details
-    const invoiceWithDetails = await ShippingInvoice.findByPk(newInvoice.id, {
-      include: [
-        {
-          model: Customer,
-          as: 'customer',
-          attributes: ['id', 'code', 'name', 'phone', 'email']
+    try {
+      // إصلاح User ID إذا كان integer
+      let validUserId = req.user.id;
+      if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
+        // البحث عن المستخدم الصحيح
+        const userResult = await sequelize.query(`
+          SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
+        `, { type: sequelize.QueryTypes.SELECT, transaction });
+
+        if (userResult.length > 0) {
+          validUserId = userResult[0].id;
+        } else {
+          await transaction.rollback();
+          return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
         }
-      ]
-    });
+      }
 
-    res.status(201).json(invoiceWithDetails);
+      // حساب المبالغ بشكل صحيح
+      const shippingCostVal = parseFloat(shippingCost) || 0;
+      const handlingFeeVal = parseFloat(handlingFee) || 0;
+      const storageFeeVal = parseFloat(storageFee) || 0;
+      const customsClearanceFeeVal = parseFloat(customsClearanceFee) || 0;
+      const insuranceFeeVal = parseFloat(insuranceFee) || 0;
+      const additionalFeesVal = parseFloat(additionalFees) || 0;
+      const discountAmountVal = parseFloat(discountAmount) || 0;
+      const taxAmountVal = parseFloat(taxAmount) || 0;
+
+      // حساب المجموع الفرعي
+      const subtotal = shippingCostVal + handlingFeeVal + storageFeeVal + 
+                      customsClearanceFeeVal + insuranceFeeVal + additionalFeesVal;
+
+      // حساب المجموع الإجمالي
+      const total = subtotal - discountAmountVal + taxAmountVal;
+
+      // التحقق من صحة المبالغ
+      if (subtotal <= 0) {
+        await transaction.rollback();
+        return res.status(400).json({ message: 'المبلغ الإجمالي يجب أن يكون أكبر من صفر' });
+      }
+
+      if (discountAmountVal < 0 || taxAmountVal < 0) {
+        await transaction.rollback();
+        return res.status(400).json({ message: 'الخصم والضريبة لا يمكن أن تكون سالبة' });
+      }
+
+      const newInvoice = await ShippingInvoice.create({
+        customerId,
+        shipmentId,
+        trackingNumber,
+        date,
+        dueDate,
+        shippingCost: shippingCostVal,
+        handlingFee: handlingFeeVal,
+        storageFee: storageFeeVal,
+        customsClearanceFee: customsClearanceFeeVal,
+        insuranceFee: insuranceFeeVal,
+        additionalFees: additionalFeesVal,
+        discountAmount: discountAmountVal,
+        taxAmount: taxAmountVal,
+        subtotal: subtotal,
+        total: total,
+        currency: currency || 'LYD',
+        exchangeRate: parseFloat(exchangeRate) || 1.0,
+        paymentMethod,
+        paymentReference,
+        itemDescription,
+        itemDescriptionEn,
+        quantity: parseInt(quantity) || 1,
+        weight: parseFloat(weight) || null,
+        volume: parseFloat(volume) || null,
+        originLocation,
+        destinationLocation,
+        notes,
+        terms,
+        createdBy: validUserId
+      }, { transaction });
+
+      // Create automatic journal entry for shipping invoice
+      try {
+        await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
+        console.log('✅ تم إنشاء القيد المحاسبي تلقائياً لفاتورة الشحن');
+      } catch (journalError) {
+        console.error('❌ خطأ في إنشاء القيد المحاسبي:', journalError.message);
+        // Don't fail the invoice creation if journal entry fails
+      }
+
+      await transaction.commit();
+
+      // Fetch the created invoice with customer details
+      const invoiceWithDetails = await ShippingInvoice.findByPk(newInvoice.id, {
+        include: [
+          {
+            model: Customer,
+            as: 'customer',
+            attributes: ['id', 'code', 'name', 'phone', 'email']
+          }
+        ]
+      });
+
+      res.status(201).json(invoiceWithDetails);
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Error creating shipping invoice:', error);
+      res.status(500).json({ message: 'خطأ في إنشاء فاتورة الشحن', error: error.message });
+    }
   } catch (error) {
     console.error('Error creating shipping invoice:', error);
     res.status(500).json({ message: 'خطأ في إنشاء فاتورة الشحن', error: error.message });
@@ -3061,11 +3185,43 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
       return res.status(404).json({ message: 'العميل غير موجود' });
     }
 
-    // Calculate subtotal from items
+    // Calculate subtotal from items with validation
     const subtotal = items.reduce((sum, item) => {
-      const itemTotal = parseFloat(item.quantity || 0) * parseFloat(item.unitPrice || 0);
+      const quantity = parseFloat(item.quantity || 0);
+      const unitPrice = parseFloat(item.unitPrice || 0);
+      
+      // التحقق من صحة البيانات
+      if (quantity < 0) {
+        throw new Error(`الكمية للعنصر ${item.description || 'غير محدد'} لا يمكن أن تكون سالبة`);
+      }
+      if (unitPrice < 0) {
+        throw new Error(`سعر الوحدة للعنصر ${item.description || 'غير محدد'} لا يمكن أن يكون سالباً`);
+      }
+      
+      const itemTotal = quantity * unitPrice;
       return sum + itemTotal;
     }, 0);
+
+    // حساب الخصم والضريبة
+    const discountPercentVal = parseFloat(discountPercent || 0);
+    const taxPercentVal = parseFloat(taxPercent || 0);
+    
+    if (discountPercentVal < 0 || discountPercentVal > 100) {
+      return res.status(400).json({ message: 'نسبة الخصم يجب أن تكون بين 0 و 100' });
+    }
+    
+    if (taxPercentVal < 0 || taxPercentVal > 100) {
+      return res.status(400).json({ message: 'نسبة الضريبة يجب أن تكون بين 0 و 100' });
+    }
+
+    const discountAmount = (subtotal * discountPercentVal) / 100;
+    const taxAmount = ((subtotal - discountAmount) * taxPercentVal) / 100;
+    const total = subtotal - discountAmount + taxAmount;
+
+    // التحقق من صحة المبلغ الإجمالي
+    if (subtotal <= 0) {
+      return res.status(400).json({ message: 'المبلغ الإجمالي يجب أن يكون أكبر من صفر' });
+    }
 
     // توليد رقم الفاتورة تلقائياً
     const documentNoResult = await sequelize.query(
@@ -3097,14 +3253,16 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
         date,
         dueDate,
         subtotal,
-        discountPercent: parseFloat(discountPercent) || 0,
-        taxPercent: parseFloat(taxPercent) || 0,
+        total,
+        discountAmount,
+        taxAmount,
+        discountPercent: discountPercentVal,
+        taxPercent: taxPercentVal,
         currency: currency || 'LYD',
         exchangeRate: parseFloat(exchangeRate) || 1.0,
-        document_no: documentNo,
-        posted_status: 'draft',
-        fiscal_year: new Date().getFullYear(),
-        can_edit: true,
+        invoiceNumber: documentNo,
+        status: 'draft',
+        paymentStatus: 'unpaid',
         paymentTerms: parseInt(paymentTerms) || 30,
         salesPerson,
         salesChannel: salesChannel || 'direct',
@@ -3155,6 +3313,14 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
         await cust.update({ balance: currentBal + invTotal }, { transaction });
       }
 
+      // Create automatic journal entry for sales invoice
+      try {
+        await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
+        console.log('✅ تم إنشاء القيد المحاسبي تلقائياً للفاتورة');
+      } catch (journalError) {
+        console.error('❌ خطأ في إنشاء القيد المحاسبي:', journalError.message);
+        // Don't fail the invoice creation if journal entry fails
+      }
 
       await transaction.commit();
 

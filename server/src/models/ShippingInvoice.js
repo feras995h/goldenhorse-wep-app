@@ -246,5 +246,131 @@ export default (sequelize) => {
     ShippingInvoice.belongsTo(models.User, { foreignKey: 'createdBy', as: 'creator' });
   };
 
+  // Instance methods
+  ShippingInvoice.prototype.createJournalEntryAndAffectBalance = async function(userId, options = {}) {
+    const t = options.transaction || await sequelize.transaction();
+    const shouldCommit = !options.transaction;
+
+    try {
+      const { JournalEntry, JournalEntryDetail, GLEntry, AccountMapping, Customer } = sequelize.models;
+
+      // Get active account mapping
+      const mapping = await AccountMapping.getActiveMapping();
+      if (!mapping) throw new Error('No active account mapping configured');
+      mapping.validateMapping();
+
+      // Determine accounts
+      const receivableAccountId = mapping.accountsReceivableAccount;
+      const shippingRevenueAccountId = mapping.shippingRevenueAccount;
+      const taxAccountId = mapping.salesTaxAccount;
+      const discountAccountId = mapping.discountAccount;
+
+      if (!receivableAccountId || !shippingRevenueAccountId) {
+        throw new Error('Required accounts for Shipping Invoice are not configured');
+      }
+
+      // Generate journal entry number
+      const lastEntry = await JournalEntry.findOne({ order: [['createdAt', 'DESC']] });
+      const nextNumber = lastEntry ? (parseInt(String(lastEntry.entryNumber).replace(/\D/g, ''), 10) + 1) : 1;
+      const entryNumber = `SHI-${String(nextNumber).padStart(6, '0')}`;
+
+      const description = `Shipping invoice ${this.invoiceNumber}${this.notes ? ' - ' + this.notes : ''}`;
+
+      const total = parseFloat(this.total || 0);
+      const subtotal = parseFloat(this.subtotal || 0);
+      const tax = parseFloat(this.taxAmount || 0);
+      const discount = parseFloat(this.discountAmount || 0);
+
+      // Create JE header
+      const journalEntry = await JournalEntry.create({
+        entryNumber,
+        date: this.date,
+        description,
+        totalDebit: total,
+        totalCredit: total,
+        status: 'posted',
+        type: 'shipping_invoice',
+        createdBy: userId
+      }, { transaction: t });
+
+      const details = [];
+
+      // 1. Debit: Accounts Receivable
+      details.push({
+        journalEntryId: journalEntry.id,
+        accountId: receivableAccountId,
+        debit: total,
+        credit: 0,
+        description: `Shipping invoice ${this.invoiceNumber} - ${this.customer?.name || 'Customer'}`
+      });
+
+      // 2. Credit: Shipping Revenue (subtotal)
+      details.push({
+        journalEntryId: journalEntry.id,
+        accountId: shippingRevenueAccountId,
+        debit: 0,
+        credit: subtotal,
+        description: `Shipping revenue - ${this.invoiceNumber}`
+      });
+
+      // 3. Credit: Sales Tax (if applicable)
+      if (tax > 0 && taxAccountId) {
+        details.push({
+          journalEntryId: journalEntry.id,
+          accountId: taxAccountId,
+          debit: 0,
+          credit: tax,
+          description: `Shipping tax - ${this.invoiceNumber}`
+        });
+      }
+
+      // 4. Debit: Shipping Discount (if applicable)
+      if (discount > 0 && discountAccountId) {
+        details.push({
+          journalEntryId: journalEntry.id,
+          accountId: discountAccountId,
+          debit: discount,
+          credit: 0,
+          description: `Shipping discount - ${this.invoiceNumber}`
+        });
+      }
+
+      await JournalEntryDetail.bulkCreate(details, { transaction: t });
+
+      // Create GL entries
+      const glEntries = details.map(detail => ({
+        postingDate: this.date,
+        accountId: detail.accountId,
+        debit: detail.debit,
+        credit: detail.credit,
+        voucherType: 'Shipping Invoice',
+        voucherNo: this.invoiceNumber,
+        journalEntryId: journalEntry.id,
+        remarks: detail.description,
+        currency: this.currency || 'LYD',
+        exchangeRate: this.exchangeRate || 1.0,
+        createdBy: userId
+      }));
+
+      await GLEntry.bulkCreate(glEntries, { transaction: t });
+
+      // Update account balances
+      for (const detail of details) {
+        const account = await Account.findByPk(detail.accountId, { transaction: t, lock: t.LOCK.UPDATE });
+        if (account) {
+          const currentBalance = parseFloat(account.balance || 0);
+          const newBalance = currentBalance + detail.debit - detail.credit;
+          await account.update({ balance: newBalance }, { transaction: t });
+        }
+      }
+
+      if (shouldCommit) await t.commit();
+      return journalEntry;
+    } catch (error) {
+      if (shouldCommit) await t.rollback();
+      throw error;
+    }
+  };
+
   return ShippingInvoice;
 };

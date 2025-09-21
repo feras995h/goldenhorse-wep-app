@@ -593,6 +593,11 @@ router.post('/journal-entries', authenticateToken, requireFinancialAccess, async
       const debitVal = parseFloat(line.debit || 0) || 0;
       const creditVal = parseFloat(line.credit || 0) || 0;
 
+      // التحقق من صحة المبالغ
+      if (debitVal < 0 || creditVal < 0) {
+        return res.status(400).json({ message: 'المبالغ المدينة والدائنة لا يمكن أن تكون سالبة' });
+      }
+
       if (!line.accountId || (debitVal === 0 && creditVal === 0)) {
         return res.status(400).json({ message: 'كل تفصيل يجب أن يحتوي على حساب ومبلغ' });
       }
@@ -8387,6 +8392,12 @@ router.post('/vouchers/receipts', authenticateToken, requireTreasuryAccess, asyn
       return res.status(400).json({ success: false, message: 'المبلغ والتاريخ مطلوبة' });
     }
 
+    // التحقق من صحة المبلغ
+    const amountVal = parseFloat(amount);
+    if (isNaN(amountVal) || amountVal <= 0) {
+      return res.status(400).json({ success: false, message: 'المبلغ يجب أن يكون رقماً موجباً' });
+    }
+
     // Auto-derive cash/bank account if not provided
     let resolvedAccountId = accountId;
     if (!resolvedAccountId) {
@@ -8512,14 +8523,14 @@ router.post('/vouchers/receipts', authenticateToken, requireTreasuryAccess, asyn
 
 
         // Create journal entry
-        await receipt.createJournalEntry(req.user.id, { transaction });
+        await receipt.createJournalEntry(validUserId, { transaction });
 
         // Handle invoice allocations if provided
         if (invoiceAllocations && invoiceAllocations.length > 0) {
           await InvoiceReceipt.allocateReceiptToInvoices(
             receipt.id,
             invoiceAllocations,
-            req.user.id,
+            validUserId,
             { transaction }
           );
         }
@@ -8531,7 +8542,7 @@ router.post('/vouchers/receipts', authenticateToken, requireTreasuryAccess, asyn
           receiptId: receipt.id,
           receiptNo: receipt.receiptNo,
           amount: receipt.amount,
-          userId: req.user.id
+          userId: validUserId
         });
 
         // Emit real-time voucher created event
@@ -8867,14 +8878,14 @@ router.post('/vouchers/payments', authenticateToken, requireTreasuryAccess, asyn
         payment.set('counterAccountId', resolvedCounterAccountId);
 
         // Create journal entry
-        await payment.createJournalEntry(req.user.id, { transaction });
+        await payment.createJournalEntry(validUserId, { transaction });
 
         // Handle invoice allocations if provided
         if (invoiceAllocations && invoiceAllocations.length > 0) {
           await InvoicePayment.allocatePaymentToInvoices(
             payment.id,
             invoiceAllocations,
-            req.user.id,
+            validUserId,
             { transaction }
           );
         }
@@ -8886,7 +8897,7 @@ router.post('/vouchers/payments', authenticateToken, requireTreasuryAccess, asyn
           paymentId: payment.id,
           paymentNumber: payment.paymentNumber,
           amount: payment.amount,
-          userId: req.user.id
+          userId: validUserId
         });
 
         // Emit real-time voucher created event
