@@ -1314,7 +1314,7 @@ router.get('/summary', authenticateToken, requireSalesAccess, async (req, res) =
         COALESCE(SUM(si."totalAmount"), 0) as total_sales,
         COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,
         COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,
-        COALESCE(SUM(s."totalAmount"), 0) as shipping_revenue
+        COALESCE(SUM(s."shippingCost"), 0) as shipping_revenue
       FROM sales_invoices si
       LEFT JOIN shipments s ON true
       WHERE si."isActive" = true

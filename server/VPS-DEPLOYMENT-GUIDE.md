@@ -152,3 +152,4 @@ pm2 logs golden-horse-api
 Your database is ready and the application should work correctly once the environment variables are set properly on your VPS.
 
 
+
