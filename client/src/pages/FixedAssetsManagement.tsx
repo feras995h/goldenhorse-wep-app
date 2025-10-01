@@ -357,6 +357,7 @@ const FixedAssetsManagement: React.FC = () => {
         <div className="text-left">
           <span className="text-blue-600">
             {formatCurrencyAmount(value || 0)}
+          </span>
           <span className="text-gray-500 text-sm mr-1">{record.currency}</span>
         </div>
       )

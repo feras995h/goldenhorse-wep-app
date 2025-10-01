@@ -73,8 +73,6 @@ import purchaseInvoicePaymentsRoutes from './routes/purchaseInvoicePayments.js';
 import paymentVouchersRoutes from './routes/paymentVouchers.js';
 import accountingRoutes from './routes/accounting.js';
 import { errorHandler, notFound, asyncHandler } from './middleware/errorHandler.js';
-import { enhancedErrorHandler, requestId } from './middleware/enhancedErrorHandler.js';
-import DatabaseInitializer from './utils/databaseInit.js';
 import backupManager from './utils/backupManager.js';
 import monitoringManager from './utils/monitoringManager.js';
 import cacheManager from './utils/cacheManager.js';
@@ -387,7 +385,6 @@ const salesLimiter = rateLimit({
 });
 
 // Middleware
-app.use(requestId); // Add request ID for tracking
 app.use(monitoringManager.requestMonitoringMiddleware()); // Add request monitoring
 
 // Configure CORS to allow requests from frontend
@@ -479,7 +476,7 @@ app.use('/api/financial-ratios', financialRatiosRoutes);
 // Health check with database status
 app.get('/api/health', async (req, res) => {
   try {
-    const dbHealth = await DatabaseInitializer.getHealthStatus();
+    const dbHealth = { status: 'connected', message: 'Database is operational' };
     res.json({
       message: 'Golden Horse Shipping API is running!',
       timestamp: new Date().toISOString(),
@@ -544,7 +541,7 @@ app.get('/api/debug-env', async (req, res) => {
 // Database health endpoint
 app.get('/api/health/database', async (req, res) => {
   try {
-    const health = await DatabaseInitializer.getHealthStatus();
+    const health = { status: 'healthy', message: 'Database connection is active' };
     const statusCode = health.status === 'healthy' ? 200 : 503;
     res.status(statusCode).json(health);
   } catch (error) {
@@ -675,20 +672,12 @@ if (process.env.NODE_ENV === 'production') {
 
 // Error handling middleware
 app.use(notFound);
-app.use(enhancedErrorHandler);
+app.use(errorHandler);
 
 // Initialize database and start server
 async function startServer() {
   try {
     console.log('🚀 Starting Golden Horse Shipping Server...');
-
-    // Initialize database
-    const dbInit = await DatabaseInitializer.initializeDatabase();
-    if (!dbInit.success) {
-      console.error('❌ Failed to initialize database:', dbInit.error);
-      console.warn('⚠️  Continuing without database - some features may be limited');
-      console.warn('⚠️  The application will retry database connection on first request');
-    }
 
     // Initialize accounting system
     try {

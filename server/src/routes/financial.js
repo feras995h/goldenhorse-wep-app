@@ -18,7 +18,6 @@ import realtimeService from '../services/realtimeService.js';
 import { cache, invalidateCache } from '../middleware/cacheMiddleware.js';
 
 import AccountingAuditService from '../services/AccountingAuditService.js';
-import { getAuditTrail, getUserAuditTrail, getFinancialAuditTrail } from '../middleware/auditTrail.js';
 
 // Import fixed asset helpers
 import { generateHierarchicalAssetNumber, createFixedAssetAccounts, ensureFixedAssetsStructure } from '../utils/fixedAssetHelpers.js';
@@ -9994,7 +9993,7 @@ router.get('/audit-trail/:tableName/:recordId', authenticateToken, requireRole([
   try {
     const { tableName, recordId } = req.params;
 
-    const auditTrail = await getAuditTrail(tableName, recordId);
+    const auditTrail = await AccountingAuditService.getAuditTrail(tableName, recordId);
 
     res.json({
       success: true,
@@ -10017,7 +10016,7 @@ router.get('/audit-trail/user/:userId', authenticateToken, requireRole(['admin',
     const { userId } = req.params;
     const { startDate, endDate } = req.query;
 
-    const auditTrail = await getUserAuditTrail(
+    const auditTrail = await AccountingAuditService.getUserAuditTrail(
       userId,
       startDate ? new Date(startDate) : null,
       endDate ? new Date(endDate) : null
@@ -10043,7 +10042,7 @@ router.get('/audit-trail/financial', authenticateToken, requireRole(['admin', 'f
   try {
     const { startDate, endDate } = req.query;
 
-    const auditTrail = await getFinancialAuditTrail(
+    const auditTrail = await AccountingAuditService.getFinancialAuditTrail(
       startDate ? new Date(startDate) : null,
       endDate ? new Date(endDate) : null
     );
