@@ -203,48 +203,176 @@ class MonitoringManager {
   }
 
   /**
-   * Get comprehensive health status
+   * Get comprehensive health status with enhanced checks
    * @returns {Promise<Object>} Health status
    */
   async getHealthStatus() {
     const systemMetrics = this.getSystemMetrics();
     const dbMetrics = await this.getDatabaseMetrics();
-    
-    // Determine overall health
-    const isHealthy = 
-      dbMetrics.connected &&
-      systemMetrics.errorRate < 5 && // Less than 5% error rate
-      systemMetrics.averageResponseTime < 1000 && // Less than 1 second average response
-      (systemMetrics.memory.heapUsed / systemMetrics.memory.heapTotal) < 0.9; // Less than 90% heap usage
+
+    // Enhanced health checks
+    const checks = {
+      database: dbMetrics.connected,
+      errorRate: systemMetrics.errorRate < 5, // Less than 5% error rate
+      responseTime: systemMetrics.averageResponseTime < 1000, // Less than 1 second average response
+      memory: (systemMetrics.memory.heapUsed / systemMetrics.memory.heapTotal) < 0.9, // Less than 90% heap usage
+      cpu: (systemMetrics.cpu.user + systemMetrics.cpu.system) < 1000000000, // Less than 1 billion CPU ticks
+      diskSpace: await this.checkDiskSpace(),
+      databasePerformance: dbMetrics.connectionTime < 5000, // Less than 5 seconds connection time
+      poolHealth: dbMetrics.pool?.available > 0, // Database pool has available connections
+      uptime: systemMetrics.uptime > 60000 // System has been running for more than 1 minute
+    };
+
+    // Determine overall health with weighted scoring
+    const criticalChecks = ['database', 'memory', 'errorRate'];
+    const warningChecks = ['responseTime', 'cpu', 'diskSpace', 'databasePerformance', 'poolHealth'];
+
+    const criticalScore = criticalChecks.filter(check => checks[check]).length / criticalChecks.length;
+    const warningScore = warningChecks.filter(check => checks[check]).length / warningChecks.length;
+    const overallScore = (criticalScore * 0.7) + (warningScore * 0.3);
+
+    let status = 'healthy';
+    if (overallScore < 0.5) status = 'critical';
+    else if (overallScore < 0.8) status = 'warning';
+    else if (overallScore < 1.0) status = 'degraded';
+
+    // Log health status changes
+    if (this.lastHealthStatus && this.lastHealthStatus !== status) {
+      await this.log('warn', `Health status changed from ${this.lastHealthStatus} to ${status}`, {
+        previousStatus: this.lastHealthStatus,
+        newStatus: status,
+        timestamp: new Date().toISOString()
+      });
+    }
+    this.lastHealthStatus = status;
 
     return {
-      status: isHealthy ? 'healthy' : 'unhealthy',
+      status,
+      score: Math.round(overallScore * 100),
       timestamp: new Date().toISOString(),
       system: systemMetrics,
       database: dbMetrics,
-      checks: {
-        database: dbMetrics.connected,
-        errorRate: systemMetrics.errorRate < 5,
-        responseTime: systemMetrics.averageResponseTime < 1000,
-        memory: (systemMetrics.memory.heapUsed / systemMetrics.memory.heapTotal) < 0.9
-      }
+      checks,
+      recommendations: this.getHealthRecommendations(checks)
     };
   }
 
   /**
-   * Start periodic monitoring tasks
+   * Check disk space usage
+   * @returns {Promise<boolean>} True if disk space is sufficient
+   */
+  async checkDiskSpace() {
+    try {
+      const stats = fs.statSync('.');
+      const freeSpace = os.freemem();
+      const totalSpace = os.totalmem();
+      const usedPercentage = (totalSpace - freeSpace) / totalSpace;
+
+      return usedPercentage < 0.9; // Less than 90% memory usage
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Get health recommendations based on checks
+   * @param {Object} checks - Health check results
+   * @returns {Array} List of recommendations
+   */
+  getHealthRecommendations(checks) {
+    const recommendations = [];
+
+    if (!checks.database) {
+      recommendations.push('Database connection is down - check database server');
+    }
+    if (!checks.memory) {
+      recommendations.push('High memory usage - consider scaling or optimizing memory usage');
+    }
+    if (!checks.errorRate) {
+      recommendations.push('High error rate detected - investigate recent errors');
+    }
+    if (!checks.responseTime) {
+      recommendations.push('Slow response times - check for performance bottlenecks');
+    }
+    if (!checks.cpu) {
+      recommendations.push('High CPU usage - investigate resource-intensive operations');
+    }
+    if (!checks.diskSpace) {
+      recommendations.push('Low disk space - clean up logs or increase storage');
+    }
+    if (!checks.databasePerformance) {
+      recommendations.push('Slow database performance - check database configuration and queries');
+    }
+    if (!checks.poolHealth) {
+      recommendations.push('Database connection pool exhausted - increase pool size or check for connection leaks');
+    }
+
+    return recommendations;
+  }
+
+  /**
+   * Start periodic monitoring tasks with alerting
    */
   startPeriodicMonitoring() {
+    // Health check every 2 minutes
+    setInterval(async () => {
+      const healthStatus = await this.getHealthStatus();
+      await this.log('info', 'Health check', { health: healthStatus });
+
+      // Trigger alerts for unhealthy status
+      if (healthStatus.status === 'critical') {
+        await this.triggerAlert('CRITICAL_SYSTEM_STATUS', {
+          status: healthStatus.status,
+          score: healthStatus.score,
+          failingChecks: Object.entries(healthStatus.checks)
+            .filter(([check, passed]) => !passed)
+            .map(([check]) => check),
+          recommendations: healthStatus.recommendations
+        });
+      } else if (healthStatus.status === 'warning') {
+        await this.triggerAlert('WARNING_SYSTEM_STATUS', {
+          status: healthStatus.status,
+          score: healthStatus.score,
+          failingChecks: Object.entries(healthStatus.checks)
+            .filter(([check, passed]) => !passed)
+            .map(([check]) => check),
+          recommendations: healthStatus.recommendations
+        });
+      }
+    }, 2 * 60 * 1000);
+
     // Log system metrics every 5 minutes
     setInterval(async () => {
       const metrics = this.getSystemMetrics();
       await this.log('info', 'System metrics', { metrics });
+
+      // Alert on high error rates
+      if (metrics.errorRate > 10) {
+        await this.triggerAlert('HIGH_ERROR_RATE', {
+          errorRate: metrics.errorRate,
+          errors: metrics.errors,
+          requests: metrics.requests
+        });
+      }
     }, 5 * 60 * 1000);
 
     // Log database metrics every 10 minutes
     setInterval(async () => {
       const dbMetrics = await this.getDatabaseMetrics();
       await this.log('info', 'Database metrics', { database: dbMetrics });
+
+      // Alert on database issues
+      if (!dbMetrics.connected) {
+        await this.triggerAlert('DATABASE_CONNECTION_LOST', {
+          error: dbMetrics.error,
+          timestamp: new Date().toISOString()
+        });
+      } else if (dbMetrics.pool?.waiting > 5) {
+        await this.triggerAlert('DATABASE_POOL_EXHAUSTED', {
+          pool: dbMetrics.pool,
+          timestamp: new Date().toISOString()
+        });
+      }
     }, 10 * 60 * 1000);
 
     // Clean old logs daily
@@ -252,7 +380,113 @@ class MonitoringManager {
       await this.cleanOldLogs();
     }, 24 * 60 * 60 * 1000);
 
-    console.log('⏰ Periodic monitoring tasks started');
+    // Memory usage monitoring
+    setInterval(async () => {
+      const memUsage = process.memoryUsage();
+      const memUsagePercent = memUsage.heapUsed / memUsage.heapTotal;
+
+      if (memUsagePercent > 0.95) {
+        await this.triggerAlert('CRITICAL_MEMORY_USAGE', {
+          memoryUsage: memUsage,
+          usagePercent: memUsagePercent,
+          timestamp: new Date().toISOString()
+        });
+      } else if (memUsagePercent > 0.85) {
+        await this.triggerAlert('HIGH_MEMORY_USAGE', {
+          memoryUsage: memUsage,
+          usagePercent: memUsagePercent,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }, 30 * 1000); // Every 30 seconds
+
+    console.log('⏰ Enhanced periodic monitoring tasks started with alerting');
+  }
+
+  /**
+   * Trigger alert for system issues
+   * @param {string} alertType - Type of alert
+   * @param {Object} details - Alert details
+   */
+  async triggerAlert(alertType, details) {
+    const alert = {
+      type: alertType,
+      timestamp: new Date().toISOString(),
+      details,
+      severity: this.getAlertSeverity(alertType),
+      resolved: false
+    };
+
+    // Log the alert
+    await this.log('error', `🚨 ALERT: ${alertType}`, alert);
+
+    // In a real system, you would send notifications here
+    // For now, we'll just log to console
+    console.error(`🚨 SYSTEM ALERT: ${alertType}`, {
+      severity: alert.severity,
+      details: alert.details,
+      timestamp: alert.timestamp
+    });
+
+    // Store alert for later retrieval
+    if (!this.activeAlerts) this.activeAlerts = [];
+    this.activeAlerts.push(alert);
+
+    // Keep only last 100 alerts
+    if (this.activeAlerts.length > 100) {
+      this.activeAlerts = this.activeAlerts.slice(-100);
+    }
+  }
+
+  /**
+   * Get severity level for alert type
+   * @param {string} alertType - Type of alert
+   * @returns {string} Severity level
+   */
+  getAlertSeverity(alertType) {
+    const criticalAlerts = [
+      'CRITICAL_SYSTEM_STATUS',
+      'DATABASE_CONNECTION_LOST',
+      'CRITICAL_MEMORY_USAGE'
+    ];
+
+    const warningAlerts = [
+      'WARNING_SYSTEM_STATUS',
+      'HIGH_ERROR_RATE',
+      'DATABASE_POOL_EXHAUSTED',
+      'HIGH_MEMORY_USAGE'
+    ];
+
+    if (criticalAlerts.includes(alertType)) return 'critical';
+    if (warningAlerts.includes(alertType)) return 'warning';
+    return 'info';
+  }
+
+  /**
+   * Get active alerts
+   * @returns {Array} Active alerts
+   */
+  getActiveAlerts() {
+    return this.activeAlerts || [];
+  }
+
+  /**
+   * Resolve an alert
+   * @param {string} alertType - Type of alert to resolve
+   */
+  async resolveAlert(alertType) {
+    if (!this.activeAlerts) return;
+
+    const alertIndex = this.activeAlerts.findIndex(alert => alert.type === alertType && !alert.resolved);
+    if (alertIndex !== -1) {
+      this.activeAlerts[alertIndex].resolved = true;
+      this.activeAlerts[alertIndex].resolvedAt = new Date().toISOString();
+
+      await this.log('info', `✅ Alert resolved: ${alertType}`, {
+        alertType,
+        resolvedAt: this.activeAlerts[alertIndex].resolvedAt
+      });
+    }
   }
 
   /**

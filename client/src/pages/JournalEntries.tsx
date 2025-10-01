@@ -7,6 +7,7 @@ import SearchFilter from '../components/Financial/SearchFilter';
 import Modal from '../components/Financial/Modal';
 import FormField from '../components/Financial/FormField';
 import { JournalEntry, Account } from '../types/financial';
+import { formatCurrencyAmount } from '../utils/formatters';
 
 const JournalEntries: React.FC = () => {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
@@ -507,7 +508,7 @@ const JournalEntries: React.FC = () => {
       render: (value: number) => (
         <div className="text-left">
           <span className="text-green-600">
-            {new Intl.NumberFormat('ar-LY').format(isNaN(value) || !isFinite(value) ? 0 : value)}
+            {formatCurrencyAmount(value || 0)}
           </span>
           <span className="text-gray-500 text-sm mr-1">د.ل</span>
         </div>
@@ -1052,21 +1053,21 @@ const JournalEntries: React.FC = () => {
                     {/* Balance */}
                     <div className="col-span-1">
                       <span className="text-sm text-gray-600">
-                        {(isNaN(line.balance) || !isFinite(line.balance) ? 0 : line.balance).toLocaleString('ar-LY')}
+                        {formatCurrencyAmount(line.balance || 0)}
                       </span>
                     </div>
 
                     {/* Total Debit */}
                     <div className="col-span-1">
                       <span className="text-sm text-green-600 font-medium">
-                        {(isNaN(line.totalDebit) || !isFinite(line.totalDebit) ? 0 : line.totalDebit).toLocaleString('ar-LY')}
+                        {formatCurrencyAmount(line.totalDebit || 0)}
                       </span>
                     </div>
 
                     {/* Total Credit */}
                     <div className="col-span-1">
                       <span className="text-sm text-blue-600 font-medium">
-                        {(isNaN(line.totalCredit) || !isFinite(line.totalCredit) ? 0 : line.totalCredit).toLocaleString('ar-LY')}
+                        {formatCurrencyAmount(line.totalCredit || 0)}
                       </span>
                     </div>
                   </div>
@@ -1204,7 +1205,7 @@ const JournalEntries: React.FC = () => {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">الرصيد</label>
                           <div className="w-full px-4 py-3 border border-gray-200 rounded-md bg-gray-50 text-base text-gray-600">
-                            {(isNaN(line.balance) || !isFinite(line.balance) ? 0 : line.balance).toLocaleString('ar-LY')}
+                            {formatCurrencyAmount(line.balance || 0)}
                           </div>
                         </div>
                       </div>
@@ -1214,13 +1215,13 @@ const JournalEntries: React.FC = () => {
                         <div>
                           <span className="text-sm text-gray-600">إجمالي مدين: </span>
                           <span className="text-base font-medium text-green-600">
-                            {(isNaN(line.totalDebit) || !isFinite(line.totalDebit) ? 0 : line.totalDebit).toLocaleString('ar-LY')}
+                            {formatCurrencyAmount(line.totalDebit || 0)}
                           </span>
                         </div>
                         <div>
                           <span className="text-sm text-gray-600">إجمالي دائن: </span>
                           <span className="text-base font-medium text-blue-600">
-                            {(isNaN(line.totalCredit) || !isFinite(line.totalCredit) ? 0 : line.totalCredit).toLocaleString('ar-LY')}
+                            {formatCurrencyAmount(line.totalCredit || 0)}
                           </span>
                         </div>
                       </div>
@@ -1237,19 +1238,19 @@ const JournalEntries: React.FC = () => {
                 <div>
                   <span className="text-gray-600">إجمالي المدين: </span>
                   <span className="font-semibold text-green-600">
-                    {new Intl.NumberFormat('ar-LY').format(getTotalDebit())}
+                    {formatCurrencyAmount(getTotalDebit())}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">إجمالي الدائن: </span>
                   <span className="font-semibold text-blue-600">
-                    {new Intl.NumberFormat('ar-LY').format(getTotalCredit())}
+                    {formatCurrencyAmount(getTotalCredit())}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">الفرق: </span>
                   <span className={`font-semibold ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
-                    {new Intl.NumberFormat('ar-LY').format(Math.abs(getTotalDebit() - getTotalCredit()))}
+                    {formatCurrencyAmount(Math.abs(getTotalDebit() - getTotalCredit()))}
                   </span>
                 </div>
               </div>
@@ -1263,19 +1264,19 @@ const JournalEntries: React.FC = () => {
                   <div className="flex justify-between items-center p-3 bg-white rounded-md">
                     <span className="text-base text-gray-700">إجمالي المدين:</span>
                     <span className="text-lg font-semibold text-green-600">
-                      {new Intl.NumberFormat('ar-LY').format(getTotalDebit())} د.ل
+                      {formatCurrencyAmount(getTotalDebit())} د.ل
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-white rounded-md">
                     <span className="text-base text-gray-700">إجمالي الدائن:</span>
                     <span className="text-lg font-semibold text-blue-600">
-                      {new Intl.NumberFormat('ar-LY').format(getTotalCredit())} د.ل
+                      {formatCurrencyAmount(getTotalCredit())} د.ل
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-white rounded-md border-2 border-gray-200">
                     <span className="text-base font-medium text-gray-700">الفرق:</span>
                     <span className={`text-lg font-bold ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
-                      {new Intl.NumberFormat('ar-LY').format(Math.abs(getTotalDebit() - getTotalCredit()))} د.ل
+                      {formatCurrencyAmount(Math.abs(getTotalDebit() - getTotalCredit()))} د.ل
                     </span>
                   </div>
                   {isBalanced && (

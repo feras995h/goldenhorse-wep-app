@@ -1,4 +1,4 @@
-const { createAuditLog } = require('./auditTrail');
+import { createAuditLog } from './auditTrail.js';
 
 // Opening Balance Permissions Middleware
 const openingBalancePermissions = {
@@ -314,4 +314,4 @@ const openingBalancePermissions = {
   }
 };
 
-module.exports = openingBalancePermissions;
+export default openingBalancePermissions;

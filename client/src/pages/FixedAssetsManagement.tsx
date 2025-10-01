@@ -356,8 +356,7 @@ const FixedAssetsManagement: React.FC = () => {
       render: (value: number, record: FixedAsset) => (
         <div className="text-left">
           <span className="text-blue-600">
-            {new Intl.NumberFormat('ar-LY').format(isNaN(value) || !isFinite(value) ? 0 : value)}
-          </span>
+            {formatCurrencyAmount(value || 0)}
           <span className="text-gray-500 text-sm mr-1">{record.currency}</span>
         </div>
       )

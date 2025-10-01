@@ -7,6 +7,7 @@ import Modal from '../components/Financial/Modal';
 import FormField from '../components/Financial/FormField';
 import { Customer } from '../types/financial';
 import { useAuth } from '../contexts/AuthContext';
+import { formatCurrencyAmount } from '../utils/formatters';
 
 const CustomersManagement: React.FC = () => {
   const { user } = useAuth();
@@ -257,7 +258,7 @@ const CustomersManagement: React.FC = () => {
       render: (value: number, record: Customer) => (
         <div className="text-left">
           <span className="text-blue-600">
-            {new Intl.NumberFormat('ar-LY').format(isNaN(value) || !isFinite(value) ? 0 : value)}
+            {formatCurrencyAmount(value || 0)}
           </span>
           <span className="text-gray-500 text-sm mr-1">{record.currency}</span>
         </div>
@@ -273,7 +274,7 @@ const CustomersManagement: React.FC = () => {
           <span className={`font-medium ${
             (value || 0) > 0 ? 'text-green-600' : (value || 0) < 0 ? 'text-red-600' : 'text-gray-600'
           }`}>
-            {new Intl.NumberFormat('ar-LY').format(value || 0)}
+            {formatCurrencyAmount(value || 0)}
           </span>
           <span className="text-gray-500 text-sm mr-1">{record.currency}</span>
         </div>

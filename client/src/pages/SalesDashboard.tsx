@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { salesAPI } from '../services/api';
 import { useFinancialData } from '../contexts/FinancialDataContext';
+import { formatCurrency } from '../utils/formatters';
 
 interface SalesData {
   totalSales: number;
@@ -111,12 +112,7 @@ const SalesDashboard: React.FC = () => {
 
 
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ar-LY', {
-      style: 'currency',
-      currency: 'LYD'
-    }).format(amount);
-  };
+  // Using safe formatting utilities from formatters.ts instead of local function
 
   // وظائف أزرار الإجراءات
   const handleAddCustomer = () => {

@@ -327,6 +327,79 @@ export default (sequelize) => {
     };
   };
 
+  /**
+   * إنشاء أو الحصول على حساب العميل في دليل الحسابات
+   */
+  Customer.prototype.ensureAccount = async function(transaction) {
+    const { Account } = this.sequelize.models;
+    const t = transaction || await this.sequelize.transaction();
+    const shouldCommit = !transaction;
+
+    try {
+      // البحث عن الحساب الموجود
+      let account = await Account.findOne({
+        where: { 
+          code: `1201-${this.code}`,
+          type: 'asset'
+        },
+        transaction: t
+      });
+
+      if (!account) {
+        // البحث عن الحساب الأب (ذمم العملاء)
+        const parentAccount = await Account.findOne({
+          where: { 
+            code: '1201',
+            isGroup: true
+          },
+          transaction: t
+        });
+
+        if (!parentAccount) {
+          throw new Error('حساب ذمم العملاء الرئيسي غير موجود');
+        }
+
+        // إنشاء الحساب
+        account = await Account.create({
+          code: `1201-${this.code}`,
+          name: `ذمم العميل - ${this.name}`,
+          nameEn: `Customer AR - ${this.name}`,
+          type: 'asset',
+          rootType: 'current_assets',
+          reportType: 'balance_sheet',
+          parentId: parentAccount.id,
+          level: parentAccount.level + 1,
+          isGroup: false,
+          isActive: true,
+          balance: 0,
+          currency: this.currency || 'LYD',
+          nature: 'debit',
+          description: `حساب العميل: ${this.name} (${this.code})`
+        }, { transaction: t });
+
+        console.log(`✅ تم إنشاء حساب للعميل: ${this.name} (${account.code})`);
+      }
+
+      if (shouldCommit) await t.commit();
+      return account;
+    } catch (error) {
+      if (shouldCommit) await t.rollback();
+      throw error;
+    }
+  };
+
+  /**
+   * Hook: إنشاء حساب تلقائياً عند إنشاء عميل جديد
+   */
+  Customer.addHook('afterCreate', async (customer, options) => {
+    try {
+      await customer.ensureAccount(options.transaction);
+    } catch (error) {
+      console.error(`❌ فشل إنشاء حساب للعميل ${customer.name}:`, error.message);
+      // لا نفشل العملية، فقط نسجل الخطأ
+    }
+  });
+
   // Associations
   Customer.associate = (models) => {
     Customer.belongsTo(models.Account, { foreignKey: 'accountId', as: 'account' });

@@ -1,10 +1,3 @@
-import purchaseInvoicePaymentsActionsRoutes from './routes/purchaseInvoicePaymentsActions.js';
-import purchaseAgingReportRoutes from './routes/purchaseAgingReport.js';
-import advancedReportsRoutes from './routes/advancedReports.js';
-import costAnalysisRoutes from './routes/costAnalysis.js';
-import budgetPlanningRoutes from './routes/budgetPlanning.js';
-import cashFlowManagementRoutes from './routes/cashFlowManagement.js';
-import financialRatiosRoutes from './routes/financialRatios.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -13,6 +6,43 @@ import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+
+// TEST MODE DETECTION - MUST BE FIRST BEFORE ANY OTHER CODE
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Check if we're in test mode by looking for test environment file or test flags
+const isTestMode = process.env.NODE_ENV === 'test' ||
+                   process.env.SKIP_SERVER_STARTUP === 'true' ||
+                   process.env.npm_lifecycle_event === 'test';
+
+// Load test environment variables IMMEDIATELY if in test mode
+if (isTestMode) {
+  // Load test environment file FIRST
+  dotenv.config({ path: path.join(__dirname, '../.env.test') });
+
+  // Force test environment variables
+  process.env.NODE_ENV = 'test';
+  process.env.JWT_SECRET = 'test_jwt_secret_key_for_testing_only_not_for_production';
+  process.env.JWT_REFRESH_SECRET = 'test_refresh_jwt_secret_key_for_testing_only';
+  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://test:test@localhost:5432/golden_horse_test';
+
+  console.log('🧪 Test mode detected - environment variables loaded from .env.test');
+}
+
+// Skip server startup if in test mode - check this FIRST before any other code
+if (process.env.SKIP_SERVER_STARTUP === 'true') {
+  console.log('🚫 Server startup skipped (test mode)');
+  process.exit(0);
+}
+
+import purchaseInvoicePaymentsActionsRoutes from './routes/purchaseInvoicePaymentsActions.js';
+import purchaseAgingReportRoutes from './routes/purchaseAgingReport.js';
+import advancedReportsRoutes from './routes/advancedReports.js';
+import costAnalysisRoutes from './routes/costAnalysis.js';
+import budgetPlanningRoutes from './routes/budgetPlanning.js';
+import cashFlowManagementRoutes from './routes/cashFlowManagement.js';
+import financialRatiosRoutes from './routes/financialRatios.js';
 
 // Import enhanced services (optional)
 let cacheService, realtimeService;
@@ -50,12 +80,16 @@ import monitoringManager from './utils/monitoringManager.js';
 import cacheManager from './utils/cacheManager.js';
 import webSocketService from './services/websocketService.js';
 import balanceUpdateService from './services/balanceUpdateService.js';
+import AccountingInitializer from './utils/accountingInitializer.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables from the correct path
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+// Load environment variables from the correct path (only if not in test mode)
+// In test mode, environment variables are already loaded at the top of the file
+if (!isTestMode) {
+  dotenv.config({ path: path.join(__dirname, '../../.env') });
+} else {
+  // In test mode, ensure we have the correct test environment variables
+  console.log('🧪 Using test environment variables');
+}
 
 // Clean NODE_ENV value (remove any leading = signs)
 const NODE_ENV = (process.env.NODE_ENV || 'development').trim().replace(/^=+/, '');
@@ -63,6 +97,7 @@ console.log(`🔍 Environment: "${NODE_ENV}" (original: "${process.env.NODE_ENV}
 
 // Override process.env.NODE_ENV with cleaned value
 process.env.NODE_ENV = NODE_ENV;
+
 
 const app = express();
 const server = createServer(app);
@@ -182,32 +217,74 @@ app.use(helmet({
   hsts: false, // Disable HSTS for HTTP
 }));
 
-// Rate limiting middleware - More lenient for normal usage
+// Enhanced Rate limiting middleware with intelligent detection
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: NODE_ENV === 'development' ? 2000 : 500, // Much higher limits
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: (req, res) => {
+    // Dynamic limit based on user role and request type
+    if (req.user?.role === 'admin') return 2000;
+    if (req.user?.role === 'manager') return 1500;
+    if (req.user?.role === 'user') return 1000;
+    return NODE_ENV === 'development' ? 2000 : parseInt(process.env.RATE_LIMIT_GENERAL_MAX) || 1000;
+  },
   message: {
-    message: 'Too many requests from this IP, please try again later.',
-    code: 'RATE_LIMIT_EXCEEDED'
+    message: 'تم تجاوز الحد المسموح للطلبات. يرجى المحاولة مرة أخرى لاحقاً.',
+    code: 'RATE_LIMIT_EXCEEDED',
+    retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000) / 1000)
   },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for health checks and static files
-    return req.path === '/api/health' || req.path.startsWith('/uploads/');
-  }
+    // Skip rate limiting for health checks, static files, and authenticated admin users
+    return req.path === '/api/health' ||
+           req.path.startsWith('/uploads/') ||
+           req.path.startsWith('/api/debug-env') ||
+           (req.user?.role === 'admin' && req.path.startsWith('/api/admin/'));
+  },
+  skipSuccessfulRequests: false,
+  skipFailedRequests: false,
+  handler: (req, res, next, options) => {
+    // Log rate limit violations
+    console.warn(`🚨 Rate limit exceeded for IP: ${req.ip}, Path: ${req.path}, User: ${req.user?.id || 'anonymous'}`);
+
+    res.status(options.statusCode).json({
+      success: false,
+      message: options.message.message,
+      errorCode: options.message.code,
+      retryAfter: options.message.retryAfter,
+      timestamp: new Date().toISOString(),
+      requestId: req.id || 'unknown'
+    });
+  },
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: NODE_ENV === 'development' ? 100 : 20, // Higher limit for development
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: (req, res) => {
+    return NODE_ENV === 'development' ? 50 : parseInt(process.env.RATE_LIMIT_AUTH_MAX) || 10;
+  },
   message: {
-    message: 'Too many login attempts, please try again later.',
-    code: 'AUTH_RATE_LIMIT_EXCEEDED'
+    message: 'تم تجاوز عدد محاولات تسجيل الدخول المسموحة. يرجى المحاولة مرة أخرى لاحقاً.',
+    code: 'AUTH_RATE_LIMIT_EXCEEDED',
+    retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000) / 1000)
   },
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Don't count successful requests
+  skipFailedRequests: false, // Count failed requests for security
+  handler: (req, res, next, options) => {
+    // Log authentication rate limit violations
+    console.warn(`🚨 Auth rate limit exceeded for IP: ${req.ip}, Path: ${req.path}`);
+
+    res.status(options.statusCode).json({
+      success: false,
+      message: options.message.message,
+      errorCode: options.message.code,
+      retryAfter: options.message.retryAfter,
+      timestamp: new Date().toISOString(),
+      requestId: req.id || 'unknown'
+    });
+  },
 });
 
 // Stricter rate limiting for password-related operations
@@ -222,44 +299,91 @@ const passwordLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// API rate limiting for financial operations - More generous limits
+// Enhanced API rate limiting for financial operations
 const financialLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: NODE_ENV === 'development' ? 1000 : 200, // Much higher limits for normal usage
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: (req, res) => {
+    // Dynamic limits based on user role and operation type
+    if (req.user?.role === 'admin') return 1000;
+    if (req.user?.role === 'manager') return 800;
+    if (req.user?.role === 'user') return 500;
+    return NODE_ENV === 'development' ? 1000 : parseInt(process.env.RATE_LIMIT_FINANCIAL_MAX) || 500;
+  },
   message: {
-    message: 'Too many financial requests, please slow down.',
-    code: 'FINANCIAL_RATE_LIMIT_EXCEEDED'
+    message: 'تم تجاوز الحد المسموح للعمليات المالية. يرجى الانتظار قليلاً.',
+    code: 'FINANCIAL_RATE_LIMIT_EXCEEDED',
+    retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000) / 1000)
   },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for read-only operations
-    return req.method === 'GET' && (
+    // Skip rate limiting for read-only operations and admin users
+    return (req.method === 'GET' && (
       req.path.includes('/accounts') ||
       req.path.includes('/reports') ||
-      req.path.includes('/statements')
-    );
-  }
+      req.path.includes('/statements') ||
+      req.path.includes('/financial/summary')
+    )) || req.user?.role === 'admin';
+  },
+  skipSuccessfulRequests: false,
+  skipFailedRequests: false,
+  handler: (req, res, next, options) => {
+    // Log financial rate limit violations
+    console.warn(`🚨 Financial rate limit exceeded for IP: ${req.ip}, User: ${req.user?.id || 'anonymous'}, Path: ${req.path}`);
+
+    res.status(options.statusCode).json({
+      success: false,
+      message: options.message.message,
+      errorCode: options.message.code,
+      retryAfter: options.message.retryAfter,
+      timestamp: new Date().toISOString(),
+      requestId: req.id || 'unknown'
+    });
+  },
 });
 
-// Sales API rate limiting - More generous limits
+// Enhanced Sales API rate limiting
 const salesLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: NODE_ENV === 'development' ? 1000 : 300, // Much higher limits for normal usage
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: (req, res) => {
+    // Dynamic limits based on user role and operation type
+    if (req.user?.role === 'admin') return 1500;
+    if (req.user?.role === 'manager') return 1200;
+    if (req.user?.role === 'user') return 800;
+    return NODE_ENV === 'development' ? 1500 : parseInt(process.env.RATE_LIMIT_SALES_MAX) || 800;
+  },
   message: {
-    message: 'Too many sales requests, please slow down.',
-    code: 'SALES_RATE_LIMIT_EXCEEDED'
+    message: 'تم تجاوز الحد المسموح لعمليات المبيعات. يرجى الانتظار قليلاً.',
+    code: 'SALES_RATE_LIMIT_EXCEEDED',
+    retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000) / 1000)
   },
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for read-only operations
-    return req.method === 'GET' && (
+    // Skip rate limiting for read-only operations and admin users
+    return (req.method === 'GET' && (
       req.path.includes('/customers') ||
       req.path.includes('/invoices') ||
-      req.path.includes('/analytics')
-    );
-  }
+      req.path.includes('/analytics') ||
+      req.path.includes('/reports') ||
+      req.path.includes('/summary')
+    )) || req.user?.role === 'admin';
+  },
+  skipSuccessfulRequests: false,
+  skipFailedRequests: false,
+  handler: (req, res, next, options) => {
+    // Log sales rate limit violations
+    console.warn(`🚨 Sales rate limit exceeded for IP: ${req.ip}, User: ${req.user?.id || 'anonymous'}, Path: ${req.path}`);
+
+    res.status(options.statusCode).json({
+      success: false,
+      message: options.message.message,
+      errorCode: options.message.code,
+      retryAfter: options.message.retryAfter,
+      timestamp: new Date().toISOString(),
+      requestId: req.id || 'unknown'
+    });
+  },
 });
 
 // Middleware
@@ -564,6 +688,15 @@ async function startServer() {
       console.error('❌ Failed to initialize database:', dbInit.error);
       console.warn('⚠️  Continuing without database - some features may be limited');
       console.warn('⚠️  The application will retry database connection on first request');
+    }
+
+    // Initialize accounting system
+    try {
+      await AccountingInitializer.initialize();
+    } catch (error) {
+      console.error('❌ Failed to initialize accounting system:', error);
+      console.warn('⚠️  Accounting system may not function correctly');
+      // لا نوقف السيرفر، لكن نحذر
     }
 
     // Initialize backup system

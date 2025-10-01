@@ -1,9 +1,13 @@
-const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs').promises;
-const { authenticateToken, requireRole } = require('../middleware/auth');
-const { Setting } = require('../models');
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import { promises as fs } from 'fs';
+import { fileURLToPath } from 'url';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
+import { Setting } from '../models/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -49,7 +53,7 @@ const upload = multer({
 router.get('/', authenticateToken, async (req, res) => {
   try {
     // Get logo data from database
-    const { sequelize } = require('../models');
+    const { sequelize } = await import('../models/index.js');
     
     let logoInfo = null;
     try {
@@ -145,7 +149,7 @@ router.post('/logo', authenticateToken, requireRole(['admin']), upload.single('l
 
     // Save to database as BLOB
     try {
-      const { sequelize } = require('../models');
+      const { sequelize } = await import('../models/index.js');
       
       // Delete old logo if exists
       await sequelize.query('DELETE FROM company_logo');
@@ -255,7 +259,7 @@ router.get('/logo/:filename', async (req, res) => {
     const { filename } = req.params;
     console.log('📁 Logo request for:', filename);
 
-    const { sequelize } = require('../models');
+    const { sequelize } = await import('../models/index.js');
     
     // Get logo from database
     const [logoResults] = await sequelize.query(`
@@ -318,7 +322,7 @@ router.get('/logo', async (req, res) => {
   try {
     console.log('📁 Current logo request');
 
-    const { sequelize } = require('../models');
+    const { sequelize } = await import('../models/index.js');
     
     // Get current logo from database
     const [logoResults] = await sequelize.query(`
@@ -373,4 +377,4 @@ router.get('/logo', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

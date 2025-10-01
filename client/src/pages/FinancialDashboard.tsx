@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFinancialData } from '../contexts/FinancialDataContext';
 import FinancialSummary from '../components/Financial/FinancialSummary';
+import TestAPI from '../components/TestAPI';
 import {
   FileText,
   Users,
@@ -161,6 +162,9 @@ const FinancialDashboard: React.FC = () => {
           تحديث البيانات
         </button>
       </div>
+
+      {/* API Test Component */}
+      <TestAPI />
 
       {/* Financial Summary Component */}
       <FinancialSummary

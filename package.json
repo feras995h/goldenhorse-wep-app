@@ -16,7 +16,16 @@
     "install-all": "npm install && cd client && npm install && cd ../server && npm install",
     "install-deps": "cd client && npm install && cd ../server && npm install",
     "prepare-production": "cd server && npm run prepare-production",
-    "postinstall": "npm run install-deps"
+    "postinstall": "npm run install-deps",
+    "setup-db": "node setup-database.js",
+    "fix-db": "node fix-database.js",
+    "quick-fix": "node simple-fix.js",
+    "psql-setup": "run-psql.bat",
+    "final-setup": "node final-setup.js",
+    "complete-fix": "node complete-fix.js",
+    "ultimate-fix": "node final-ultimate-fix.js",
+    "check-db": "node check-database.js",
+    "create-mapping": "node create-mapping.js"
   },
   "keywords": [
     "shipping",
@@ -33,9 +42,9 @@
   "dependencies": {
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
-    "expres": "^0.0.5",
     "node-fetch": "^3.3.2",
     "pg": "^8.16.3",
+    "psql": "^0.0.1",
     "sequelize": "^6.37.7",
     "sqlite3": "^5.1.7",
     "uuid": "^13.0.0"

@@ -267,5 +267,50 @@ Object.values(models).forEach(model => {
   }
 });
 
+// Export individual models as named exports
+export {
+  User,
+  Role,
+  Account,
+  GLEntry,
+  JournalEntry,
+  JournalEntryDetail,
+  Customer,
+  Supplier,
+  Employee,
+  PayrollEntry,
+  EmployeeAdvance,
+  Invoice,
+  Payment,
+  Receipt,
+  FixedAsset,
+  Setting,
+  Notification,
+  Shipment,
+  ShipmentMovement,
+  WarehouseReleaseOrder,
+  ShippingInvoice,
+  SalesInvoice,
+  SalesInvoiceItem,
+  InvoicePayment,
+  InvoiceReceipt,
+  SalesReturn,
+  SalesInvoicePayment,
+  ReceiptVoucher,
+  PaymentVoucher,
+  PurchaseInvoice,
+  Warehouse,
+  StockMovement,
+  AuditLog,
+  AccountingPeriod,
+  AccountProvision,
+  AccountMapping,
+  CompanyLogo,
+  PurchaseInvoicePayment
+};
+
+// Export sequelize
 export { sequelize };
+
+// Export as default
 export default models;

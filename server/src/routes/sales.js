@@ -666,13 +666,8 @@ router.post('/invoices', authenticateToken, requireSalesAccess, async (req, res)
       }, { transaction });
 
       // Create automatic journal entry for sales invoice
-      try {
-        await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
-        console.log('✅ تم إنشاء القيد المحاسبي تلقائياً للفاتورة');
-      } catch (journalError) {
-        console.error('❌ خطأ في إنشاء القيد المحاسبي:', journalError.message);
-        // Don't fail the invoice creation if journal entry fails
-      }
+      await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
+      console.log('✅ تم إنشاء القيد المحاسبي تلقائياً للفاتورة');
 
       await transaction.commit();
 
@@ -2917,13 +2912,8 @@ router.post('/shipping-invoices', authenticateToken, requireSalesAccess, async (
       }, { transaction });
 
       // Create automatic journal entry for shipping invoice
-      try {
-        await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
-        console.log('✅ تم إنشاء القيد المحاسبي تلقائياً لفاتورة الشحن');
-      } catch (journalError) {
-        console.error('❌ خطأ في إنشاء القيد المحاسبي:', journalError.message);
-        // Don't fail the invoice creation if journal entry fails
-      }
+      await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
+      console.log('✅ تم إنشاء القيد المحاسبي تلقائياً لفاتورة الشحن');
 
       await transaction.commit();
 
@@ -3331,13 +3321,8 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
       }
 
       // Create automatic journal entry for sales invoice
-      try {
-        await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
-        console.log('✅ تم إنشاء القيد المحاسبي تلقائياً للفاتورة');
-      } catch (journalError) {
-        console.error('❌ خطأ في إنشاء القيد المحاسبي:', journalError.message);
-        // Don't fail the invoice creation if journal entry fails
-      }
+      await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
+      console.log('✅ تم إنشاء القيد المحاسبي تلقائياً للفاتورة');
 
       await transaction.commit();
 
