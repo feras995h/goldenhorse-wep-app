@@ -13,8 +13,10 @@ const { User } = models;
 router.post('/login', trackFailedLogin, async (req, res) => {
   try {
     const { username, password } = req.body;
+    console.log('🔐 Login attempt:', { username, passwordLength: password?.length });
 
     if (!username || !password) {
+      console.log('❌ Missing credentials');
       return res.status(400).json({ message: 'اسم المستخدم وكلمة المرور مطلوبان' });
     }
 
@@ -24,10 +26,13 @@ router.post('/login', trackFailedLogin, async (req, res) => {
     });
 
     if (!user) {
+      console.log('❌ User not found:', username);
       return res.status(401).json({ message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }
 
+    console.log('✅ User found:', { username: user.username, hasPassword: !!user.password });
     const isValidPassword = await bcrypt.compare(password, user.password);
+    console.log('🔑 Password valid:', isValidPassword);
 
     if (!isValidPassword) {
       return res.status(401).json({ message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
