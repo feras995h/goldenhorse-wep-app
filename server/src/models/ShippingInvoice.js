@@ -125,6 +125,31 @@ export default (sequelize) => {
       const existing = await JournalEntry.findOne({ where: { type: 'shipping_invoice', voucherNo: this.invoiceNumber }, transaction: t });
       if (existing) return existing;
 
+      // Enforce posting within open accounting periods if enabled
+      const enforcePeriods = String(process.env.ACCOUNTING_ENFORCE_PERIODS || 'false').toLowerCase() === 'true';
+      if (enforcePeriods) {
+        const { AccountingPeriod } = sequelize.models;
+        if (!AccountingPeriod) {
+          throw new Error('Accounting periods model not available while enforcement is enabled');
+        }
+        const Op = sequelize.Sequelize.Op;
+        const postDate = this.date;
+        if (!postDate) {
+          throw new Error('Posting date is required to validate accounting period');
+        }
+        const openPeriod = await AccountingPeriod.findOne({
+          where: {
+            status: 'open',
+            startDate: { [Op.lte]: postDate },
+            endDate: { [Op.gte]: postDate }
+          },
+          transaction: t
+        });
+        if (!openPeriod) {
+          throw new Error('لا يمكن الترحيل خارج فترة محاسبية مفتوحة. الرجاء إنشاء/فتح الفترة أولاً.');
+        }
+      }
+
       const mapping = await AccountMapping.getActiveMapping();
       if (!mapping) throw new Error('No active account mapping');
       const arId = mapping.accountsReceivableAccount;
