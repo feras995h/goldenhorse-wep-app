@@ -13,7 +13,14 @@ class CacheService {
   async connect() {
     // تحقق من وجود Redis في البيئة أولاً
     if (!process.env.REDIS_HOST && !process.env.REDIS_URL) {
-      console.log('ℹ️ Redis not configured - running without cache');
+      // console.log('ℹ️ Redis not configured - running without cache');
+      this.isConnected = false;
+      this.redis = null;
+      return false;
+    }
+    
+    // في بيئة التطوير، تعطيل Redis تماماً إذا لم يكن متوفراً
+    if (process.env.NODE_ENV !== 'production') {
       this.isConnected = false;
       this.redis = null;
       return false;

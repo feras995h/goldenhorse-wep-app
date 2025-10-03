@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Users,
   Package,
+  Calendar,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { UserRole } from '../../../types/auth';
@@ -142,6 +143,13 @@ const navigationItems: NavigationItem[] = [
         path: '/financial/invoice-reports',
         label: 'تقارير الفواتير',
         icon: <FileText className="h-4 w-4" />,
+        roles: ['admin', 'financial']
+      },
+      {
+        id: 'accounting-periods',
+        path: '/financial/accounting-periods',
+        label: 'الفترات المحاسبية',
+        icon: <Calendar className="h-4 w-4" />,
         roles: ['admin', 'financial']
       },
     ]

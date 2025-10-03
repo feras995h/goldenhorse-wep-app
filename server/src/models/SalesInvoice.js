@@ -53,28 +53,12 @@ export default (sequelize) => {
         max: 999999999999.99
       }
     },
-    discountPercent: {
-      type: DataTypes.DECIMAL(5, 2),
-      defaultValue: 0.00,
-      validate: {
-        min: 0,
-        max: 100.00
-      }
-    },
     taxAmount: {
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0.00,
       validate: {
         min: 0,
         max: 999999999999.99
-      }
-    },
-    taxPercent: {
-      type: DataTypes.DECIMAL(5, 2),
-      defaultValue: 0.00,
-      validate: {
-        min: 0,
-        max: 100.00
       }
     },
     total: {
@@ -95,7 +79,6 @@ export default (sequelize) => {
     },
     outstandingAmount: {
       type: DataTypes.DECIMAL(15, 2),
-      field: 'outstandingamount',
       defaultValue: 0.00,
       validate: {
         min: 0,
@@ -124,111 +107,64 @@ export default (sequelize) => {
       defaultValue: 'unpaid'
     },
     paymentMethod: {
-      type: DataTypes.ENUM('cash', 'bank_transfer', 'check', 'credit_card', 'account_credit'),
+      type: DataTypes.STRING,
       allowNull: true
-    },
-    paymentReference: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      comment: 'Payment reference number or transaction ID'
-    },
-    paymentTerms: {
-      type: DataTypes.INTEGER,
-      defaultValue: 30,
-      validate: {
-        min: 0,
-        max: 365
-      },
-      comment: 'Payment terms in days'
     },
     notes: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    internalNotes: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Internal notes not visible to customer'
-    },
-    terms: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Invoice terms and conditions'
-    },
-    // Sales specific fields
-    salesPerson: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      comment: 'Sales person responsible for this sale'
-    },
-    salesChannel: {
-      type: DataTypes.ENUM('direct', 'online', 'phone', 'email', 'referral'),
-      defaultValue: 'direct'
-    },
-    deliveryMethod: {
-      type: DataTypes.ENUM('pickup', 'delivery', 'shipping'),
-      defaultValue: 'pickup'
-    },
-    deliveryAddress: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    deliveryDate: {
+    // Additional fields from DB
+    invoiceDate: {
       type: DataTypes.DATEONLY,
       allowNull: true,
-      validate: {
-        isDate: true
-      }
+      field: 'invoiceDate'
     },
-    deliveryFee: {
+    totalAmount: {
       type: DataTypes.DECIMAL(15, 2),
-      defaultValue: 0.00,
-      validate: {
-        min: 0,
-        max: 999999999999.99
-      }
+      allowNull: true,
+      field: 'totalAmount'
     },
-    serviceDescription: {
+    postedStatus: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'posted_status'
+    },
+    postedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'posted_at'
+    },
+    postedBy: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'posted_by'
+    },
+    documentNo: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'document_no'
+    },
+    fiscalYear: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'fiscal_year'
+    },
+    canEdit: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      field: 'can_edit'
+    },
+    voidReason: {
       type: DataTypes.TEXT,
-      allowNull: false
-    },
-    serviceDescriptionEn: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    shipmentNumbers: {
-      type: DataTypes.JSON,
       allowNull: true,
-      defaultValue: []
+      field: 'void_reason'
     },
-    serviceType: {
-      type: DataTypes.ENUM('sea_freight', 'air_freight', 'land_freight', 'express', 'other'),
-      allowNull: false,
-      defaultValue: 'sea_freight'
-    },
-    weight: {
-      type: DataTypes.DECIMAL(10, 3),
+    isActive: {
+      type: DataTypes.BOOLEAN,
       allowNull: true,
-      validate: {
-        min: 0,
-        max: 999999.999
-      }
-    },
-    volume: {
-      type: DataTypes.DECIMAL(15, 3),
-      allowNull: true,
-      validate: {
-        min: 0,
-        max: 999999999999.999
-      }
-    },
-    cbm: {
-      type: DataTypes.DECIMAL(15, 3),
-      allowNull: true,
-      validate: {
-        min: 0,
-        max: 999999999999.999
-      }
+      defaultValue: true,
+      field: 'isActive'
     },
     createdBy: {
       type: DataTypes.UUID,
@@ -240,9 +176,10 @@ export default (sequelize) => {
     }
   }, {
     tableName: 'sales_invoices',
+    underscored: true,
     timestamps: true,
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     indexes: [
       {
         unique: true,
@@ -294,14 +231,14 @@ export default (sequelize) => {
           invoice.discountAmount = (invoice.subtotal * invoice.discountPercent) / 100;
         }
 
-        // Calculate tax amount from percentage if not provided
-        if (!invoice.taxAmount && invoice.taxPercent > 0) {
-          const taxableAmount = invoice.subtotal - (invoice.discountAmount || 0);
-          invoice.taxAmount = (taxableAmount * invoice.taxPercent) / 100;
-        }
+        // Tax amount should be provided directly
+        // if (!invoice.taxAmount && invoice.taxPercent > 0) {
+        //   const taxableAmount = invoice.subtotal - (invoice.discountAmount || 0);
+        //   invoice.taxAmount = (taxableAmount * invoice.taxPercent) / 100;
+        // }
 
         // Calculate total
-        invoice.total = (invoice.subtotal || 0) - (invoice.discountAmount || 0) + (invoice.taxAmount || 0) + (invoice.deliveryFee || 0);
+        invoice.total = (invoice.subtotal || 0) - (invoice.discountAmount || 0) + (invoice.taxAmount || 0);
         
         // Calculate outstanding amount
         const total = parseFloat(invoice.total || 0);
@@ -316,19 +253,19 @@ export default (sequelize) => {
           }
         }
 
-        // Recalculate tax amount if percentage changed
-        if (invoice.changed('taxPercent') || invoice.changed('subtotal') || invoice.changed('discountAmount')) {
-          if (invoice.taxPercent > 0) {
-            const taxableAmount = invoice.subtotal - (invoice.discountAmount || 0);
-            invoice.taxAmount = (taxableAmount * invoice.taxPercent) / 100;
-          }
-        }
+        // Recalculate tax amount if changed
+        // if (invoice.changed('taxPercent') || invoice.changed('subtotal') || invoice.changed('discountAmount')) {
+        //   if (invoice.taxPercent > 0) {
+        //     const taxableAmount = invoice.subtotal - (invoice.discountAmount || 0);
+        //     invoice.taxAmount = (taxableAmount * invoice.taxPercent) / 100;
+        //   }
+        // }
 
         // Recalculate total if any component changed
         if (invoice.changed('subtotal') || invoice.changed('discountAmount') || 
-            invoice.changed('taxAmount') || invoice.changed('deliveryFee')) {
+            invoice.changed('taxAmount')) {
           invoice.total = (invoice.subtotal || 0) - (invoice.discountAmount || 0) + 
-                         (invoice.taxAmount || 0) + (invoice.deliveryFee || 0);
+                         (invoice.taxAmount || 0);
         }
 
         // Update payment status based on paid amount
@@ -412,15 +349,15 @@ export default (sequelize) => {
   // Associations
   SalesInvoice.associate = (models) => {
     SalesInvoice.belongsTo(models.Customer, { 
-      foreignKey: 'customerId', 
+      foreignKey: { name: 'customerId', field: 'customer_id' }, 
       as: 'customer' 
     });
     SalesInvoice.belongsTo(models.User, { 
-      foreignKey: 'createdBy', 
+      foreignKey: { name: 'createdBy', field: 'created_by' }, 
       as: 'creator' 
     });
     SalesInvoice.hasMany(models.SalesInvoiceItem, { 
-      foreignKey: 'invoiceId', 
+      foreignKey: { name: 'invoiceId', field: 'invoice_id' }, 
       as: 'items' 
     });
   };
@@ -429,38 +366,102 @@ export default (sequelize) => {
   SalesInvoice.prototype.createJournalEntryAndAffectBalance = async function(userId, options = {}) {
     const t = options.transaction || await sequelize.transaction();
     const shouldCommit = !options.transaction;
+    const force = options.force || false;
 
     try {
-      const { JournalEntry, JournalEntryDetail, GLEntry, AccountMapping, Customer } = sequelize.models;
+      const { JournalEntry, JournalEntryDetail, GLEntry, AccountMapping, Account } = sequelize.models;
 
-      // Get active account mapping
+      // Enhanced validation
+      if (!userId) {
+        throw new Error('User ID is required for journal entry creation');
+      }
+
+      if (!this.invoiceNumber) {
+        throw new Error('Invoice number is required for journal entry creation');
+      }
+
+      // Check for duplicate journal entries (unless forced)
+      if (!force) {
+        const existingEntry = await JournalEntry.findOne({
+          where: {
+            type: 'sales_invoice',
+            voucherNo: this.invoiceNumber
+          },
+          transaction: t
+        });
+        
+        if (existingEntry) {
+          console.log(`⚠️ Journal entry already exists for invoice ${this.invoiceNumber}`);
+          return existingEntry;
+        }
+      }
+
+      // Get active account mapping with enhanced error handling
       const mapping = await AccountMapping.getActiveMapping();
-      if (!mapping) throw new Error('No active account mapping configured');
-      mapping.validateMapping();
+      if (!mapping) {
+        throw new Error('No active account mapping configured. Please configure account mapping in Admin > Settings > Accounting.');
+      }
+      
+      // Validate mapping with detailed error messages
+      try {
+        mapping.validateMapping();
+      } catch (validationError) {
+        throw new Error(`Account mapping validation failed: ${validationError.message}. Please review your account mapping configuration.`);
+      }
 
-      // Determine accounts
+      // Enhanced amount validation and calculation
+      const total = parseFloat(this.total || 0);
+      const subtotal = parseFloat(this.subtotal || 0);
+      const tax = parseFloat(this.taxAmount || 0);
+      const discount = parseFloat(this.discountAmount || 0);
+
+      if (total <= 0) {
+        throw new Error(`Invalid invoice total: ${total}. Invoice total must be greater than zero.`);
+      }
+
+      // Validate amount consistency
+      const calculatedTotal = subtotal + tax - discount;
+      if (Math.abs(calculatedTotal - total) > 0.01) {
+        throw new Error(`Amount calculation error: calculated total (${calculatedTotal.toFixed(2)}) does not match invoice total (${total.toFixed(2)})`);
+      }
+
+      // Get and validate account IDs
       const receivableAccountId = mapping.accountsReceivableAccount;
       const salesRevenueAccountId = mapping.salesRevenueAccount;
       const taxAccountId = mapping.salesTaxAccount;
       const discountAccountId = mapping.discountAccount;
 
       if (!receivableAccountId || !salesRevenueAccountId) {
-        throw new Error('Required accounts for Sales Invoice are not configured');
+        throw new Error('Critical accounts missing: Accounts Receivable and Sales Revenue accounts must be configured in account mapping.');
       }
 
-      // Generate journal entry number
-      const lastEntry = await JournalEntry.findOne({ order: [['createdAt', 'DESC']] });
+      // Verify all required accounts exist
+      const requiredAccountIds = [receivableAccountId, salesRevenueAccountId];
+      if (tax > 0 && taxAccountId) requiredAccountIds.push(taxAccountId);
+      if (discount > 0 && discountAccountId) requiredAccountIds.push(discountAccountId);
+
+      const existingAccounts = await Account.findAll({
+        where: { id: { [sequelize.Sequelize.Op.in]: requiredAccountIds } },
+        transaction: t
+      });
+
+      if (existingAccounts.length !== requiredAccountIds.length) {
+        const foundIds = existingAccounts.map(acc => acc.id);
+        const missingIds = requiredAccountIds.filter(id => !foundIds.includes(id));
+        throw new Error(`Required accounts not found in chart of accounts. Missing account IDs: ${missingIds.join(', ')}`);
+      }
+
+      // Generate enhanced journal entry number
+      const lastEntry = await JournalEntry.findOne({ 
+        order: [['createdAt', 'DESC']], 
+        transaction: t 
+      });
       const nextNumber = lastEntry ? (parseInt(String(lastEntry.entryNumber).replace(/\D/g, ''), 10) + 1) : 1;
       const entryNumber = `SIN-${String(nextNumber).padStart(6, '0')}`;
 
-      const description = `Sales invoice ${this.invoiceNumber}${this.notes ? ' - ' + this.notes : ''}`;
+      const description = `Sales Invoice ${this.invoiceNumber}${this.customer?.name ? ` - ${this.customer.name}` : ''}${this.notes ? ` (${this.notes})` : ''}`;
 
-      const total = parseFloat(this.total || 0);
-      const subtotal = parseFloat(this.subtotal || 0);
-      const tax = parseFloat(this.taxAmount || 0);
-      const discount = parseFloat(this.discountAmount || 0);
-
-      // Create JE header
+      // Create enhanced journal entry
       const journalEntry = await JournalEntry.create({
         entryNumber,
         date: this.date,
@@ -469,19 +470,29 @@ export default (sequelize) => {
         totalCredit: total,
         status: 'posted',
         type: 'sales_invoice',
-        createdBy: userId
+        voucherType: 'Sales Invoice',
+        voucherNo: this.invoiceNumber,
+        currency: this.currency || 'LYD',
+        exchangeRate: this.exchangeRate || 1.0,
+        createdBy: userId,
+        notes: `Auto-generated for sales invoice. Subtotal: ${subtotal}, Tax: ${tax}, Discount: ${discount}`
       }, { transaction: t });
 
       const details = [];
+      let totalDebits = 0;
+      let totalCredits = 0;
 
-      // 1. Debit: Accounts Receivable
+      // 1. Debit: Accounts Receivable (full invoice amount)
       details.push({
         journalEntryId: journalEntry.id,
         accountId: receivableAccountId,
         debit: total,
         credit: 0,
-        description: `Sales invoice ${this.invoiceNumber} - ${this.customer?.name || 'Customer'}`
+        description: `Sales invoice ${this.invoiceNumber} - ${this.customer?.name || 'Customer'}`,
+        currency: this.currency || 'LYD',
+        exchangeRate: this.exchangeRate || 1.0
       });
+      totalDebits += total;
 
       // 2. Credit: Sales Revenue (subtotal)
       details.push({
@@ -489,8 +500,11 @@ export default (sequelize) => {
         accountId: salesRevenueAccountId,
         debit: 0,
         credit: subtotal,
-        description: `Sales revenue - ${this.invoiceNumber}`
+        description: `Sales revenue - Invoice ${this.invoiceNumber}`,
+        currency: this.currency || 'LYD',
+        exchangeRate: this.exchangeRate || 1.0
       });
+      totalCredits += subtotal;
 
       // 3. Credit: Sales Tax (if applicable)
       if (tax > 0 && taxAccountId) {
@@ -499,8 +513,11 @@ export default (sequelize) => {
           accountId: taxAccountId,
           debit: 0,
           credit: tax,
-          description: `Sales tax - ${this.invoiceNumber}`
+          description: `Sales tax - Invoice ${this.invoiceNumber}`,
+          currency: this.currency || 'LYD',
+          exchangeRate: this.exchangeRate || 1.0
         });
+        totalCredits += tax;
       }
 
       // 4. Debit: Sales Discount (if applicable)
@@ -510,13 +527,22 @@ export default (sequelize) => {
           accountId: discountAccountId,
           debit: discount,
           credit: 0,
-          description: `Sales discount - ${this.invoiceNumber}`
+          description: `Sales discount - Invoice ${this.invoiceNumber}`,
+          currency: this.currency || 'LYD',
+          exchangeRate: this.exchangeRate || 1.0
         });
+        totalDebits += discount;
       }
 
+      // Final validation: Double-entry principle
+      if (Math.abs(totalDebits - totalCredits) > 0.01) {
+        throw new Error(`Double-entry accounting validation failed: Total debits (${totalDebits.toFixed(2)}) must equal total credits (${totalCredits.toFixed(2)})`);
+      }
+
+      // Create journal entry details
       await JournalEntryDetail.bulkCreate(details, { transaction: t });
 
-      // Create GL entries
+      // Create enhanced GL entries
       const glEntries = details.map(detail => ({
         postingDate: this.date,
         accountId: detail.accountId,
@@ -528,26 +554,101 @@ export default (sequelize) => {
         remarks: detail.description,
         currency: this.currency || 'LYD',
         exchangeRate: this.exchangeRate || 1.0,
-        createdBy: userId
+        createdBy: userId,
+        postingStatus: 'posted',
+        period: new Date(this.date).toISOString().substring(0, 7) // YYYY-MM format
       }));
 
       await GLEntry.bulkCreate(glEntries, { transaction: t });
 
-      // Update account balances
+      // Enhanced account balance updates with proper nature-based calculation
+      const balanceUpdates = [];
       for (const detail of details) {
-        const account = await Account.findByPk(detail.accountId, { transaction: t, lock: t.LOCK.UPDATE });
-        if (account) {
-          const currentBalance = parseFloat(account.balance || 0);
-          const newBalance = currentBalance + detail.debit - detail.credit;
-          await account.update({ balance: newBalance }, { transaction: t });
+        const account = await Account.findByPk(detail.accountId, { 
+          transaction: t, 
+          lock: t.LOCK.UPDATE 
+        });
+        
+        if (!account) {
+          throw new Error(`Account not found during balance update: ${detail.accountId}`);
         }
+
+        const currentBalance = parseFloat(account.balance || 0);
+        let newBalance;
+        
+        // Apply balance changes based on account nature (debit/credit)
+        if (account.nature === 'debit') {
+          // For debit accounts: increase with debits, decrease with credits
+          newBalance = currentBalance + detail.debit - detail.credit;
+        } else {
+          // For credit accounts: increase with credits, decrease with debits  
+          newBalance = currentBalance + detail.credit - detail.debit;
+        }
+
+        await account.update({ 
+          balance: newBalance,
+          lastTransactionDate: this.date,
+          updatedAt: new Date()
+        }, { transaction: t });
+        
+        balanceUpdates.push({
+          accountId: account.id,
+          accountCode: account.code,
+          accountName: account.name,
+          accountNature: account.nature,
+          previousBalance: currentBalance,
+          newBalance: newBalance,
+          debitAmount: detail.debit,
+          creditAmount: detail.credit
+        });
       }
 
+      // Store journal entry reference in invoice
+      await this.update({ 
+        journalEntryId: journalEntry.id,
+        accountingStatus: 'posted' 
+      }, { transaction: t });
+
+      // Log successful creation with details
+      console.log(`✅ Enhanced journal entry created for invoice ${this.invoiceNumber}:`);
+      console.log(`   📊 Entry Number: ${entryNumber}`);
+      console.log(`   💰 Total Amount: ${total} ${this.currency || 'LYD'}`);
+      console.log(`   📋 Details: ${details.length} line items`);
+      console.log(`   🏦 Accounts Updated: ${balanceUpdates.length}`);
+      console.log(`   ⚖️ Double-Entry Validated: Debits=${totalDebits}, Credits=${totalCredits}`);
+
       if (shouldCommit) await t.commit();
-      return journalEntry;
+      
+      // Return comprehensive result
+      return {
+        success: true,
+        journalEntry,
+        balanceUpdates,
+        summary: {
+          entryNumber,
+          totalDebits,
+          totalCredits,
+          detailsCount: details.length,
+          accountsAffected: balanceUpdates.length,
+          currency: this.currency || 'LYD',
+          exchangeRate: this.exchangeRate || 1.0
+        }
+      };
     } catch (error) {
       if (shouldCommit) await t.rollback();
-      throw error;
+      console.error(`❌ Enhanced accounting engine error for invoice ${this.invoiceNumber}:`, {
+        error: error.message,
+        stack: error.stack,
+        invoiceData: {
+          invoiceNumber: this.invoiceNumber,
+          total: this.total,
+          subtotal: this.subtotal,
+          taxAmount: this.taxAmount,
+          discountAmount: this.discountAmount,
+          currency: this.currency
+        }
+      });
+      throw new Error(`Accounting Engine Failure: ${error.message}`);
     }
   };
 

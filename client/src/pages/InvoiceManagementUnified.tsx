@@ -116,7 +116,9 @@ const InvoiceManagementUnified: React.FC = () => {
 
       if (activeTab === 'sales') {
         const res = await salesAPI.getInvoices(params);
-        const data = (res?.data || []).map((inv: any) => ({ ...inv, type: 'sales' as const }));
+        const data = (res?.data || [])
+          .filter((inv: any) => inv && inv.id) // Filter out invalid entries
+          .map((inv: any) => ({ ...inv, type: 'sales' as const }));
         setInvoices(data);
         setPagination(prev => ({ ...prev, total: res?.total || data.length }));
       } else if (activeTab === 'shipping') {
@@ -127,11 +129,14 @@ const InvoiceManagementUnified: React.FC = () => {
           status: params.status as any,
           customerId: params.customerId
         });
-        const data = (res?.data || []).map((inv: any) => ({
-          ...inv,
-          type: 'shipping' as const,
-          outstandingAmount: inv.outstandingAmount ?? (parseFloat(inv.total || 0) - parseFloat(inv.paidAmount || 0))
-        }));
+        const data = (res?.data || [])
+          .filter((inv: any) => inv && inv.id) // Filter out invalid entries
+          .map((inv: any) => ({
+            ...inv,
+            type: 'shipping' as const,
+            total: inv.totalAmount || inv.total || 0, // Ensure total is present
+            outstandingAmount: inv.outstandingAmount ?? (parseFloat(inv.totalAmount || inv.total || 0) - parseFloat(inv.paidAmount || 0))
+          }));
         setInvoices(data);
         const total = res?.pagination?.total ?? res?.total ?? data.length;
         setPagination(prev => ({ ...prev, total }));
@@ -146,12 +151,17 @@ const InvoiceManagementUnified: React.FC = () => {
             customerId: params.customerId
           })
         ]);
-        const salesData = (salesRes?.data || []).map((inv: any) => ({ ...inv, type: 'sales' as const }));
-        const shipData = (shipRes?.data || []).map((inv: any) => ({
-          ...inv,
-          type: 'shipping' as const,
-          outstandingAmount: inv.outstandingAmount ?? (parseFloat(inv.total || 0) - parseFloat(inv.paidAmount || 0))
-        }));
+        const salesData = (salesRes?.data || [])
+          .filter((inv: any) => inv && inv.id)
+          .map((inv: any) => ({ ...inv, type: 'sales' as const }));
+        const shipData = (shipRes?.data || [])
+          .filter((inv: any) => inv && inv.id)
+          .map((inv: any) => ({
+            ...inv,
+            type: 'shipping' as const,
+            total: inv.totalAmount || inv.total || 0,
+            outstandingAmount: inv.outstandingAmount ?? (parseFloat(inv.totalAmount || inv.total || 0) - parseFloat(inv.paidAmount || 0))
+          }));
         const combined = [...salesData, ...shipData].sort((a: any, b: any) => (new Date(b.date).getTime() - new Date(a.date).getTime()));
         setInvoices(combined);
         const total = (salesRes?.total || salesData.length) + (shipRes?.pagination?.total ?? shipRes?.total ?? shipData.length);
@@ -259,98 +269,124 @@ const InvoiceManagementUnified: React.FC = () => {
     {
       key: 'invoiceNumber',
       title: 'رقم الفاتورة',
-      render: (invoice: Invoice) => (
-        <div className="font-medium text-blue-600">
-          {invoice.invoiceNumber}
-        </div>
-      )
+      render: (invoice: Invoice) => {
+        if (!invoice) return <span>-</span>;
+        return (
+          <div className="font-medium text-blue-600">
+            {invoice.invoiceNumber || '-'}
+          </div>
+        );
+      }
     },
     {
       key: 'type',
       title: 'النوع',
-      render: (invoice: Invoice) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(invoice.type)}`}>
-          {getTypeText(invoice.type)}
-        </span>
-      )
+      render: (invoice: Invoice) => {
+        if (!invoice) return <span>-</span>;
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(invoice.type)}`}>
+            {getTypeText(invoice.type)}
+          </span>
+        );
+      }
     },
     {
       key: 'customer',
       title: 'العميل',
-      render: (invoice: Invoice) => (
-        <div>
-          <div className="font-medium">{invoice.customer?.name}</div>
-          <div className="text-sm text-gray-500">{invoice.customer?.code}</div>
-        </div>
-      )
+      render: (invoice: Invoice) => {
+        if (!invoice) return <span>-</span>;
+        return (
+          <div>
+            <div className="font-medium">{invoice.customer?.name || 'غير محدد'}</div>
+            <div className="text-sm text-gray-500">{invoice.customer?.code || '-'}</div>
+          </div>
+        );
+      }
     },
     {
       key: 'date',
       title: 'التاريخ',
-      render: (invoice: Invoice) => (
-        <div className="text-sm text-right">
-          <div className="font-medium">{formatDate(invoice.date)}</div>
-          {invoice.dueDate && (
-            <div className="text-xs text-gray-500 mt-1">
-              الاستحقاق: {formatDate(invoice.dueDate)}
-            </div>
-          )}
-        </div>
-      )
+      render: (invoice: Invoice) => {
+        if (!invoice) return <span>-</span>;
+        return (
+          <div className="text-sm text-right">
+            <div className="font-medium">{formatDate(invoice.date)}</div>
+            {invoice.dueDate && (
+              <div className="text-xs text-gray-500 mt-1">
+                الاستحقاق: {formatDate(invoice.dueDate)}
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'total',
       title: 'المبلغ الإجمالي',
-      render: (invoice: Invoice) => (
-        <div className="font-medium text-right">
-          <div>{formatCurrency(invoice.total || 0, invoice.currency)}</div>
-          {invoice.paidAmount > 0 && (
-            <div className="text-xs text-green-600 mt-1">
-              مدفوع: {formatCurrency(invoice.paidAmount, invoice.currency)}
-            </div>
-          )}
-        </div>
-      )
+      render: (invoice: Invoice) => {
+        if (!invoice) return <span>-</span>;
+        return (
+          <div className="font-medium text-right">
+            <div>{formatCurrency(invoice.total || 0, invoice.currency || 'LYD')}</div>
+            {(invoice.paidAmount || 0) > 0 && (
+              <div className="text-xs text-green-600 mt-1">
+                مدفوع: {formatCurrency(invoice.paidAmount || 0, invoice.currency || 'LYD')}
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'outstandingAmount',
       title: 'المبلغ المستحق',
-      render: (invoice: Invoice) => (
-        <div className={`font-medium text-right ${(invoice.outstandingAmount || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {formatCurrency(invoice.outstandingAmount || 0, invoice.currency)}
-        </div>
-      )
+      render: (invoice: Invoice) => {
+        if (!invoice) return <span>-</span>;
+        return (
+          <div className={`font-medium text-right ${(invoice.outstandingAmount || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            {formatCurrency(invoice.outstandingAmount || 0, invoice.currency || 'LYD')}
+          </div>
+        );
+      }
     },
     {
       key: 'paymentStatus',
       title: 'حالة الدفع',
-      render: (invoice: Invoice) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(invoice.paymentStatus)}`}>
-          {getPaymentStatusText(invoice.paymentStatus)}
-        </span>
-      )
+      render: (invoice: Invoice) => {
+        if (!invoice) return <span>-</span>;
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(invoice.paymentStatus || 'unpaid')}`}>
+            {getPaymentStatusText(invoice.paymentStatus || 'unpaid')}
+          </span>
+        );
+      }
     },
     {
       key: 'status',
       title: 'الحالة',
-      render: (invoice: Invoice) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
-          {getStatusText(invoice.status)}
-        </span>
-      )
+      render: (invoice: Invoice) => {
+        if (!invoice) return <span>-</span>;
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status || 'draft')}`}>
+            {getStatusText(invoice.status || 'draft')}
+          </span>
+        );
+      }
     },
     {
       key: 'actions',
       title: 'الإجراءات',
-      render: (invoice: Invoice) => (
-        <div className="flex space-x-2 space-x-reverse">
-          <button
-            onClick={() => handleView(invoice)}
-            className="text-blue-600 hover:text-blue-800"
-            title="عرض"
-          >
-            <Eye size={16} />
-          </button>
+      render: (invoice: Invoice) => {
+        if (!invoice || !invoice.id) return <span>-</span>;
+        return (
+          <div className="flex space-x-2 space-x-reverse">
+            <button
+              onClick={() => handleView(invoice)}
+              className="text-blue-600 hover:text-blue-800"
+              title="عرض"
+            >
+              <Eye size={16} />
+            </button>
           <button
             onClick={() => handleEdit(invoice)}
             className="text-green-600 hover:text-green-800"
@@ -380,7 +416,8 @@ const InvoiceManagementUnified: React.FC = () => {
             <Download size={16} />
           </button>
         </div>
-      )
+        );
+      }
     }
   ];
 

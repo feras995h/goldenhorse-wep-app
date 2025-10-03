@@ -33,7 +33,11 @@ module.exports = {
   test: {
     dialect: 'sqlite',
     storage: ':memory:',
-    logging: false
+    logging: false,
+    define: {
+      underscored: true,
+      timestamps: true
+    }
   },
   production: {
     // Use DATABASE_URL or DB_URL if provided (for hosted databases like Railway, Heroku, Coolify, etc.)
@@ -50,6 +54,10 @@ module.exports = {
       port: process.env.DB_PORT || 5432
     }),
     logging: false,
+    define: {
+      underscored: true,
+      timestamps: true
+    },
     pool: {
       max: 10,
       min: 2,

@@ -79,6 +79,7 @@ public
 # Temporary folders
 tmp/
 temp/
+temp-scripts/
 
 # Editor directories and files
 .vscode/

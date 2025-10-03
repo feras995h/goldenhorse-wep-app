@@ -150,41 +150,92 @@ export default (sequelize) => {
           customer.code = `${prefix}${String(nextNumber).padStart(6, '0')}`;
         }
 
-        // Auto-assign account based on customer type
-        if (!customer.accountId) {
-          await customer.assignAccountByType();
-        }
+        // Auto-assign account based on customer type will be handled in afterCreate hook
+        // This ensures proper account creation with transaction consistency
       },
       afterCreate: async (customer, options) => {
-        // Create corresponding account in chart of accounts
+        // Enhanced automatic account creation for customers
         const { Account } = sequelize.models;
 
         try {
-          // Find the customers parent account (usually under receivables)
-          const customersParentAccount = await Account.findOne({
-            where: {
-              [Op.or]: [
-                { name: { [Op.like]: '%عملاء%' } },
-                { name: { [Op.like]: '%customers%' } },
-                { name: { [Op.like]: '%receivables%' } },
-                { name: { [Op.like]: '%مدينون%' } }
-              ],
-              type: 'asset'
-            }
+          console.log(`🔄 Creating account for new customer: ${customer.name} (${customer.code})`);
+          
+          // Find the appropriate parent account based on customer type
+          let customersParentAccount;
+          
+          if (customer.customerType === 'foreign') {
+            // Look for foreign customers account first
+            customersParentAccount = await Account.findOne({
+              where: {
+                [Op.or]: [
+                  { code: '1202' }, // Foreign customers receivables
+                  { name: { [Op.like]: '%عملاء أجانب%' } },
+                  { name: { [Op.like]: '%foreign customers%' } }
+                ],
+                type: 'asset'
+              },
+              transaction: options.transaction
+            });
+          }
+          
+          if (!customersParentAccount) {
+            // Fallback to main receivables account
+            customersParentAccount = await Account.findOne({
+              where: {
+                [Op.or]: [
+                  { code: '1201' }, // Main accounts receivable
+                  { name: { [Op.like]: '%ذمم العملاء%' } },
+                  { name: { [Op.like]: '%عملاء%' } },
+                  { name: { [Op.like]: '%receivable%' } }
+                ],
+                type: 'asset',
+                isGroup: true
+              },
+              transaction: options.transaction
+            });
+          }
+
+          if (!customersParentAccount) {
+            console.warn(`⚠️ No suitable parent account found for customer ${customer.code}`);
+            return;
+          }
+
+          // Generate enhanced account code
+          const accountCode = `${customersParentAccount.code}-${customer.code}`;
+          
+          // Check if account already exists
+          const existingAccount = await Account.findOne({
+            where: { code: accountCode },
+            transaction: options.transaction
           });
 
+          if (existingAccount) {
+            console.log(`ℹ️ Account already exists for customer ${customer.code}: ${accountCode}`);
+            await customer.update({
+              accountId: existingAccount.id
+            }, { transaction: options.transaction });
+            return;
+          }
+
+          // Create enhanced customer account
           const customerAccount = await Account.create({
-            code: customer.code,
-            name: customer.name,
-            nameEn: customer.nameEn,
+            code: accountCode,
+            name: `${customer.name} (${customer.customerType === 'foreign' ? 'أجنبي' : 'محلي'})`,
+            nameEn: `${customer.nameEn || customer.name} (${customer.customerType === 'foreign' ? 'Foreign' : 'Local'})`,
             type: 'asset',
-            accountCategory: 'receivables',
-            parentId: customersParentAccount?.id || null,
-            level: customersParentAccount ? (customersParentAccount.level + 1) : 1,
+            rootType: 'current_assets',
+            reportType: 'balance_sheet',
+            parentId: customersParentAccount.id,
+            level: customersParentAccount.level + 1,
+            isGroup: false,
             isActive: true,
-            currency: customer.currency,
+            currency: customer.currency || 'LYD',
             balance: 0,
-            description: `حساب العميل: ${customer.name}`
+            nature: 'debit',
+            description: `Customer account - ${customer.name} (${customer.code}) - ${customer.customerType}`,
+            accountCategory: 'receivables',
+            customerType: customer.customerType,
+            customerCode: customer.code
           }, { transaction: options.transaction });
 
           // Update customer with account reference
@@ -192,9 +243,23 @@ export default (sequelize) => {
             accountId: customerAccount.id
           }, { transaction: options.transaction });
 
+          console.log(`✅ Successfully created account for customer: ${customer.name}`);
+          console.log(`   📊 Account Code: ${accountCode}`);
+          console.log(`   🏷️ Account ID: ${customerAccount.id}`);
+          console.log(`   🌍 Customer Type: ${customer.customerType}`);
+          console.log(`   💰 Currency: ${customer.currency || 'LYD'}`);
+
         } catch (error) {
-          console.error('Error creating customer account:', error);
+          console.error(`❌ Error creating account for customer ${customer.name}:`, {
+            error: error.message,
+            customerCode: customer.code,
+            customerType: customer.customerType,
+            stack: error.stack
+          });
+          
           // Don't fail customer creation if account creation fails
+          // but log it for investigation
+          console.warn(`⚠️ Customer ${customer.code} created without automatic account. Manual account creation may be required.`);
         }
       }
     },

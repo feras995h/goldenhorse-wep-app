@@ -101,7 +101,123 @@ export default (sequelize) => {
     tableName: 'suppliers',
     timestamps: true,
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    hooks: {
+      beforeCreate: async (supplier) => {
+        // Generate supplier code if not provided
+        if (!supplier.code) {
+          const lastSupplier = await Supplier.findOne({
+            order: [['code', 'DESC']]
+          });
+
+          let nextNumber = 1;
+          if (lastSupplier && lastSupplier.code) {
+            const match = lastSupplier.code.match(/\d+$/);
+            if (match) {
+              nextNumber = parseInt(match[0]) + 1;
+            }
+          }
+
+          supplier.code = `S${String(nextNumber).padStart(6, '0')}`;
+        }
+      }
+    }
+  });
+
+  /**
+   * إنشاء أو الحصول على حساب المورد في دليل الحسابات
+   */
+  Supplier.prototype.ensureAccount = async function(transaction) {
+    const { Account } = this.sequelize.models;
+    const t = transaction || await this.sequelize.transaction();
+    const shouldCommit = !transaction;
+
+    try {
+      // البحث عن الحساب الموجود
+      let account = await Account.findOne({
+        where: { 
+          code: `2101-${this.code}`,
+          type: 'liability'
+        },
+        transaction: t
+      });
+
+      if (account) {
+        console.log(`✅ حساب المورد ${this.name} موجود بالفعل: ${account.code}`);
+        if (shouldCommit) await t.commit();
+        return account;
+      }
+
+      // البحث عن الحساب الرئيسي للموردين
+      let parentAccount = await Account.findOne({
+        where: { code: '2101', type: 'liability' },
+        transaction: t
+      });
+
+      if (!parentAccount) {
+        console.log('⚠️ حساب الموردين الرئيسي غير موجود، إنشاء الهيكل الكامل...');
+        
+        // إنشاء الالتزامات المتداولة
+        let currentLiabilitiesAccount = await Account.findOne({
+          where: { code: '21', type: 'liability' },
+          transaction: t
+        });
+
+        if (!currentLiabilitiesAccount) {
+          currentLiabilitiesAccount = await Account.create({
+            code: '21',
+            name: 'الالتزامات المتداولة',
+            nameEn: 'Current Liabilities',
+            type: 'liability',
+            parentId: null,
+            balance: 0
+          }, { transaction: t });
+        }
+
+        // إنشاء حساب الموردين الرئيسي
+        parentAccount = await Account.create({
+          code: '2101',
+          name: 'الموردون',
+          nameEn: 'Accounts Payable',
+          type: 'liability',
+          parentId: currentLiabilitiesAccount.id,
+          balance: 0
+        }, { transaction: t });
+      }
+
+      // إنشاء حساب فرعي للمورد
+      account = await Account.create({
+        code: `2101-${this.code}`,
+        name: this.name,
+        nameEn: this.nameEn || this.name,
+        type: 'liability',
+        parentId: parentAccount.id,
+        balance: 0,
+        isSubAccount: true
+      }, { transaction: t });
+
+      console.log(`✅ تم إنشاء حساب جديد للمورد: ${account.code} - ${account.name}`);
+      
+      if (shouldCommit) await t.commit();
+      return account;
+
+    } catch (error) {
+      console.error(`❌ خطأ في إنشاء حساب المورد ${this.name}:`, error);
+      if (shouldCommit) await t.rollback();
+      throw error;
+    }
+  };
+
+  /**
+   * Hook: إنشاء حساب تلقائياً عند إنشاء مورد جديد
+   */
+  Supplier.addHook('afterCreate', async (supplier, options) => {
+    try {
+      await supplier.ensureAccount(options.transaction);
+    } catch (error) {
+      console.error(`❌ فشل إنشاء حساب للمورد ${supplier.name}:`, error.message);
+      // لا نفشل العملية، فقط نسجل الخطأ
+    }
   });
 
   // Associations

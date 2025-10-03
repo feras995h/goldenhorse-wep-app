@@ -41,7 +41,8 @@ const {
   InvoicePayment,
   InvoiceReceipt,
   AccountProvision,
-  User
+  User,
+  AccountMapping
 } = models;
 
 
@@ -61,6 +62,124 @@ router.get('/audit', authenticateToken, requireFinancialAccess, async (req, res)
   } catch (error) {
     console.error('Error running accounting audit:', error);
     res.status(500).json({ message: 'خطأ في تشغيل فحوصات المحاسبة', error: error.message });
+  }
+});
+
+// ==================== SYSTEM HEALTH ROUTES ====================
+
+// GET /api/financial/system-health - فحص صحة النظام المحاسبي
+router.get('/system-health', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const health = {
+      timestamp: new Date().toISOString(),
+      checks: {},
+      issues: [],
+      recommendations: []
+    };
+
+    // 1) Account Mapping
+    let mapping = null;
+    try {
+      mapping = await AccountMapping.findOne({ where: { isActive: true } });
+    } catch (e) {
+      // If model/table missing, continue gracefully
+    }
+
+    health.checks.accountMapping = {
+      exists: !!mapping,
+      isActive: mapping?.isActive || false
+    };
+
+    if (!mapping) {
+      health.issues.push('لا يوجد Account Mapping نشط');
+      health.recommendations.push('قم بإنشاء Account Mapping من صفحة الإعدادات');
+    }
+
+    // 2) Chart of accounts counts
+    const totalAccounts = await Account.count();
+    const activeAccounts = await Account.count({ where: { isActive: true } });
+    health.checks.chartOfAccounts = {
+      totalAccounts,
+      activeAccounts
+    };
+    if (totalAccounts < 10) {
+      health.issues.push('عدد الحسابات قليل جداً');
+      health.recommendations.push('قم بإنشاء دليل حسابات كامل');
+    }
+
+    // 3) Entries counts
+    const glEntriesCount = await GLEntry.count();
+    const journalEntriesCount = await JournalEntry.count();
+    health.checks.accountingEntries = {
+      glEntries: glEntriesCount,
+      journalEntries: journalEntriesCount
+    };
+
+    // 4) Balance integrity (compare accounts.balance vs sum(GL))
+    try {
+      const [rows] = await sequelize.query(`
+        SELECT COUNT(*) AS count
+        FROM accounts a
+        LEFT JOIN (
+          SELECT "accountId", SUM(COALESCE(debit,0) - COALESCE(credit,0)) AS gl_balance
+          FROM gl_entries
+          GROUP BY "accountId"
+        ) ge ON a.id = ge."accountId"
+        WHERE ABS(COALESCE(a.balance,0) - COALESCE(ge.gl_balance,0)) > 0.01
+      `);
+      const mismatchCount = parseInt(rows?.[0]?.count || rows?.count || 0);
+      health.checks.balanceIntegrity = { accountsWithMismatch: mismatchCount };
+      if (mismatchCount > 0) {
+        health.issues.push(`${mismatchCount} حساب لديه عدم تطابق في الرصيد`);
+        health.recommendations.push('قم بتشغيل أداة إعادة حساب الأرصدة');
+      }
+    } catch (e) {
+      // If the query fails, do not break the endpoint
+      health.recommendations.push('تعذر التحقق من تكامل الأرصدة (جداول/صلاحيات)');
+    }
+
+    health.status = health.issues.length === 0 ? 'healthy' : 'needs_attention';
+    health.healthy = health.issues.length === 0;
+
+    res.json({ success: true, data: health });
+  } catch (error) {
+    console.error('Error checking system health:', error);
+    res.status(500).json({ success: false, message: 'خطأ في فحص صحة النظام', error: error.message });
+  }
+});
+
+// POST /api/financial/recalculate-balances - إعادة احتساب الأرصدة من GL
+router.post('/recalculate-balances', authenticateToken, requireRole(['admin']), async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    // Reset balances
+    await Account.update({ balance: 0 }, { where: {}, transaction });
+
+    // Compute from GL
+    const [balances] = await sequelize.query(`
+      SELECT "accountId" AS account_id,
+             SUM(COALESCE(debit,0) - COALESCE(credit,0)) AS calculated_balance
+      FROM gl_entries
+      GROUP BY "accountId"
+    `, { transaction });
+
+    // Apply
+    let updated = 0;
+    for (const row of balances || []) {
+      const id = row.account_id || row.accountId;
+      const val = parseFloat(row.calculated_balance || 0);
+      if (id) {
+        await Account.update({ balance: val }, { where: { id }, transaction });
+        updated += 1;
+      }
+    }
+
+    await transaction.commit();
+    res.json({ success: true, message: 'تم إعادة حساب الأرصدة بنجاح', accountsUpdated: updated });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Error recalculating balances:', error);
+    res.status(500).json({ success: false, message: 'خطأ في إعادة حساب الأرصدة', error: error.message });
   }
 });
 
@@ -10183,6 +10302,278 @@ router.get('/receivables-details', async (req, res) => {
       message: 'حدث خطأ أثناء جلب تفاصيل المدينون',
       error: error.message,
       data: []
+    });
+  }
+});
+
+// ====================================================================
+// System Health and Integrity Endpoints
+// ====================================================================
+
+/**
+ * GET /api/financial/system-health
+ * فحص صحة النظام المحاسبي
+ */
+router.get('/system-health', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    console.log('🔍 بدء فحص صحة النظام المحاسبي...');
+
+    const healthReport = {
+      timestamp: new Date().toISOString(),
+      status: 'healthy',
+      checks: {
+        database: { status: 'ok', message: '' },
+        chartOfAccounts: { status: 'ok', message: '' },
+        accountBalances: { status: 'ok', message: '' },
+        journalEntries: { status: 'ok', message: '' },
+        customerBalances: { status: 'ok', message: '' },
+        supplierBalances: { status: 'ok', message: '' }
+      },
+      issues: [],
+      recommendations: []
+    };
+
+    // 1. فحص الاتصال بقاعدة البيانات
+    try {
+      await sequelize.authenticate();
+      healthReport.checks.database.status = 'ok';
+      healthReport.checks.database.message = 'الاتصال بقاعدة البيانات سليم';
+    } catch (error) {
+      healthReport.checks.database.status = 'error';
+      healthReport.checks.database.message = `خطأ في الاتصال: ${error.message}`;
+      healthReport.status = 'unhealthy';
+      healthReport.issues.push('فشل الاتصال بقاعدة البيانات');
+    }
+
+    // 2. فحص دليل الحسابات
+    const accountsCount = await Account.count();
+    if (accountsCount === 0) {
+      healthReport.checks.chartOfAccounts.status = 'warning';
+      healthReport.checks.chartOfAccounts.message = 'دليل الحسابات فارغ';
+      healthReport.status = 'warning';
+      healthReport.issues.push('لا توجد حسابات في دليل الحسابات');
+      healthReport.recommendations.push('قم بتهيئة دليل الحسابات الأساسي');
+    } else {
+      healthReport.checks.chartOfAccounts.status = 'ok';
+      healthReport.checks.chartOfAccounts.message = `يحتوي على ${accountsCount} حساب`;
+    }
+
+    // 3. فحص صحة أرصدة الحسابات مقابل القيود
+    const accountsWithWrongBalance = await sequelize.query(`
+      SELECT 
+        a.id,
+        a.code,
+        a.name,
+        a.balance as current_balance,
+        COALESCE(SUM(ge.debit - ge.credit), 0) as calculated_balance,
+        ABS(a.balance - COALESCE(SUM(ge.debit - ge.credit), 0)) as difference
+      FROM accounts a
+      LEFT JOIN gl_entries ge ON a.id = ge."accountId"
+      GROUP BY a.id, a.code, a.name, a.balance
+      HAVING ABS(a.balance - COALESCE(SUM(ge.debit - ge.credit), 0)) > 0.01
+      LIMIT 10;
+    `, { type: sequelize.QueryTypes.SELECT });
+
+    if (accountsWithWrongBalance.length > 0) {
+      healthReport.checks.accountBalances.status = 'warning';
+      healthReport.checks.accountBalances.message = `${accountsWithWrongBalance.length} حساب بأرصدة غير متطابقة`;
+      healthReport.status = 'warning';
+      healthReport.issues.push(`${accountsWithWrongBalance.length} حساب بحاجة لإعادة حساب الأرصدة`);
+      healthReport.recommendations.push('استخدم endpoint /recalculate-balances لتصحيح الأرصدة');
+      healthReport.accountsWithWrongBalance = accountsWithWrongBalance;
+    } else {
+      healthReport.checks.accountBalances.status = 'ok';
+      healthReport.checks.accountBalances.message = 'جميع الأرصدة متطابقة';
+    }
+
+    // 4. فحص توازن القيود اليومية
+    const unbalancedJournalEntries = await sequelize.query(`
+      SELECT 
+        je.id,
+        je."entryNumber",
+        je."totalDebit",
+        je."totalCredit",
+        ABS(je."totalDebit" - je."totalCredit") as difference
+      FROM journal_entries je
+      WHERE ABS(je."totalDebit" - je."totalCredit") > 0.01
+      LIMIT 10;
+    `, { type: sequelize.QueryTypes.SELECT });
+
+    if (unbalancedJournalEntries.length > 0) {
+      healthReport.checks.journalEntries.status = 'error';
+      healthReport.checks.journalEntries.message = `${unbalancedJournalEntries.length} قيد غير متوازن`;
+      healthReport.status = 'unhealthy';
+      healthReport.issues.push(`${unbalancedJournalEntries.length} قيد غير متوازن (مدين ≠ دائن)`);
+      healthReport.recommendations.push('راجع القيود غير المتوازنة وصححها يدوياً');
+      healthReport.unbalancedJournalEntries = unbalancedJournalEntries;
+    } else {
+      healthReport.checks.journalEntries.status = 'ok';
+      healthReport.checks.journalEntries.message = 'جميع القيود متوازنة';
+    }
+
+    // 5. فحص أرصدة العملاء
+    const customersWithWrongBalance = await sequelize.query(`
+      SELECT 
+        c.id,
+        c.code,
+        c.name,
+        c.balance as current_balance,
+        COALESCE(SUM(si.total), 0) - COALESCE(SUM(p.amount), 0) as calculated_balance,
+        ABS(c.balance - (COALESCE(SUM(si.total), 0) - COALESCE(SUM(p.amount), 0))) as difference
+      FROM customers c
+      LEFT JOIN sales_invoices si ON c.id = si."customer_id" AND si."isActive" = true
+      LEFT JOIN receipts p ON c.id = p."customerId" AND p.status = 'approved'
+      GROUP BY c.id, c.code, c.name, c.balance
+      HAVING ABS(c.balance - (COALESCE(SUM(si.total), 0) - COALESCE(SUM(p.amount), 0))) > 0.01
+      LIMIT 10;
+    `, { type: sequelize.QueryTypes.SELECT });
+
+    if (customersWithWrongBalance.length > 0) {
+      healthReport.checks.customerBalances.status = 'warning';
+      healthReport.checks.customerBalances.message = `${customersWithWrongBalance.length} عميل بأرصدة غير متطابقة`;
+      healthReport.status = 'warning';
+      healthReport.issues.push(`${customersWithWrongBalance.length} عميل بحاجة لإعادة حساب الأرصدة`);
+      healthReport.customersWithWrongBalance = customersWithWrongBalance;
+    } else {
+      healthReport.checks.customerBalances.status = 'ok';
+      healthReport.checks.customerBalances.message = 'جميع أرصدة العملاء متطابقة';
+    }
+
+    // 6. فحص أرصدة الموردين (إذا كانت موجودة)
+    try {
+      const suppliersWithWrongBalance = await sequelize.query(`
+        SELECT 
+          s.id,
+          s.code,
+          s.name,
+          s.balance as current_balance
+        FROM suppliers s
+        WHERE s.balance != 0
+        LIMIT 10;
+      `, { type: sequelize.QueryTypes.SELECT });
+
+      healthReport.checks.supplierBalances.status = 'ok';
+      healthReport.checks.supplierBalances.message = `${suppliersWithWrongBalance.length} مورد نشط`;
+    } catch (error) {
+      healthReport.checks.supplierBalances.status = 'info';
+      healthReport.checks.supplierBalances.message = 'لم يتم التحقق (جدول الموردين قد لا يحتوي balance)';
+    }
+
+    console.log(`✅ اكتمل فحص النظام - الحالة: ${healthReport.status}`);
+    console.log(`📊 المشاكل المكتشفة: ${healthReport.issues.length}`);
+
+    res.json({
+      success: true,
+      data: healthReport,
+      message: 'تم فحص صحة النظام بنجاح'
+    });
+
+  } catch (error) {
+    console.error('❌ خطأ في فحص صحة النظام:', error);
+    res.status(500).json({
+      success: false,
+      message: 'حدث خطأ أثناء فحص صحة النظام',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/financial/recalculate-balances
+ * إعادة حساب جميع الأرصدة من القيود
+ */
+router.post('/recalculate-balances', authenticateToken, requireRole('admin'), async (req, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    console.log('🔧 بدء إعادة حساب الأرصدة...');
+
+    const report = {
+      timestamp: new Date().toISOString(),
+      accountsUpdated: 0,
+      customersUpdated: 0,
+      suppliersUpdated: 0,
+      errors: []
+    };
+
+    // 1. إعادة حساب أرصدة الحسابات من GL Entries
+    console.log('📊 إعادة حساب أرصدة الحسابات...');
+    const accountBalances = await sequelize.query(`
+      SELECT 
+        a.id,
+        a.code,
+        a.name,
+        a.balance as old_balance,
+        COALESCE(SUM(ge.debit - ge.credit), 0) as new_balance
+      FROM accounts a
+      LEFT JOIN gl_entries ge ON a.id = ge."accountId"
+      GROUP BY a.id, a.code, a.name, a.balance;
+    `, { type: sequelize.QueryTypes.SELECT, transaction });
+
+    for (const acc of accountBalances) {
+      if (Math.abs(acc.old_balance - acc.new_balance) > 0.01) {
+        await Account.update(
+          { balance: acc.new_balance },
+          { where: { id: acc.id }, transaction }
+        );
+        report.accountsUpdated++;
+        console.log(`  ✓ تحديث ${acc.code} - ${acc.name}: ${acc.old_balance} → ${acc.new_balance}`);
+      }
+    }
+
+    // 2. إعادة حساب أرصدة العملاء
+    console.log('📊 إعادة حساب أرصدة العملاء...');
+    const customerBalances = await sequelize.query(`
+      SELECT 
+        c.id,
+        c.code,
+        c.name,
+        c.balance as old_balance,
+        COALESCE(SUM(si.total), 0) - COALESCE(SUM(r.amount), 0) as new_balance
+      FROM customers c
+      LEFT JOIN sales_invoices si ON c.id = si."customer_id" AND si."isActive" = true
+      LEFT JOIN receipts r ON c.id = r."customerId" AND r.status = 'approved'
+      GROUP BY c.id, c.code, c.name, c.balance;
+    `, { type: sequelize.QueryTypes.SELECT, transaction });
+
+    for (const cust of customerBalances) {
+      if (Math.abs(cust.old_balance - cust.new_balance) > 0.01) {
+        await Customer.update(
+          { balance: cust.new_balance },
+          { where: { id: cust.id }, transaction }
+        );
+        report.customersUpdated++;
+        console.log(`  ✓ تحديث ${cust.code} - ${cust.name}: ${cust.old_balance} → ${cust.new_balance}`);
+      }
+    }
+
+    // 3. إعادة حساب أرصدة الموردين (إذا كانت موجودة)
+    try {
+      console.log('📊 إعادة حساب أرصدة الموردين...');
+      // يمكن إضافة منطق إعادة حساب الموردين هنا إذا كان الجدول يحتوي على عمود balance
+    } catch (error) {
+      console.log('⚠️ تخطي أرصدة الموردين:', error.message);
+    }
+
+    await transaction.commit();
+
+    console.log('✅ اكتمل إعادة حساب الأرصدة بنجاح');
+    console.log(`📊 الحسابات المُحدثة: ${report.accountsUpdated}`);
+    console.log(`📊 العملاء المُحدثون: ${report.customersUpdated}`);
+
+    res.json({
+      success: true,
+      data: report,
+      message: 'تم إعادة حساب الأرصدة بنجاح'
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error('❌ خطأ في إعادة حساب الأرصدة:', error);
+    res.status(500).json({
+      success: false,
+      message: 'حدث خطأ أثناء إعادة حساب الأرصدة',
+      error: error.message
     });
   }
 });

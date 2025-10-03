@@ -567,8 +567,12 @@ router.get('/invoices', async (req, res) => {
 
     res.json(response);
   } catch (error) {
-    console.error('Error fetching invoices:', error);
-    res.status(500).json({ message: 'خطأ في جلب الفواتير' });
+    console.error('❌ Error fetching invoices:', error.message);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ 
+      message: 'خطأ في جلب الفواتير',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -630,21 +634,6 @@ router.post('/invoices', authenticateToken, requireSalesAccess, async (req, res)
     const transaction = await sequelize.transaction();
 
     try {
-      // إصلاح User ID إذا كان integer
-      let validUserId = req.user.id;
-      if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
-        const userResult = await sequelize.query(`
-          SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
-        `, { type: sequelize.QueryTypes.SELECT, transaction });
-
-        if (userResult.length > 0) {
-          validUserId = userResult[0].id;
-        } else {
-          await transaction.rollback();
-          return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
-        }
-      }
-
       // التحقق من صحة المبلغ
       if (total <= 0) {
         await transaction.rollback();
@@ -662,11 +651,11 @@ router.post('/invoices', authenticateToken, requireSalesAccess, async (req, res)
         paymentStatus: 'unpaid',
         notes,
         terms,
-        createdBy: validUserId
+        createdBy: req.user.id
       }, { transaction });
 
       // Create automatic journal entry for sales invoice
-      await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
+      await newInvoice.createJournalEntryAndAffectBalance(req.user.id, { transaction });
       console.log('✅ تم إنشاء القيد المحاسبي تلقائياً للفاتورة');
 
       await transaction.commit();
@@ -1296,20 +1285,6 @@ router.post('/payments',
         counterAccountId = autoAccount.id;
       }
 
-      // إصلاح User ID إذا كان integer
-      let validUserId = req.user.id;
-      if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
-        const userResult = await db.query(`
-          SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
-        `, { type: db.QueryTypes.SELECT });
-
-        if (userResult.length > 0) {
-          validUserId = userResult[0].id;
-        } else {
-          return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
-        }
-      }
-
       // Create payment as pending first
       const payment = await Payment.create({
         id: uuidv4(),
@@ -1323,15 +1298,15 @@ router.post('/payments',
         status: 'pending',
         voucherType: 'payment',
         accountId: partyAccountId, // party account to be credited
-        createdBy: validUserId
+        createdBy: req.user.id
       }, { transaction });
 
       // Attach non-persistent counter account id for journal entry method
       payment.set('counterAccountId', counterAccountId);
 
       // Mark completed and create GL/Journal Entry
-      await payment.update({ status: 'completed', completedBy: validUserId, completedAt: new Date() }, { transaction });
-      const journalEntry = await payment.createJournalEntry(validUserId, { transaction });
+      await payment.update({ status: 'completed', completedBy: req.user.id, completedAt: new Date() }, { transaction });
+      const journalEntry = await payment.createJournalEntry(req.user.id, { transaction });
 
       return { payment, journalEntry };
     });
@@ -1372,15 +1347,15 @@ router.get('/summary',
     const summaryQuery = `
       SELECT
         COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,
-        COALESCE(SUM(si."totalAmount"), 0) as total_sales,
-        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,
+        COALESCE(SUM(si.total), 0) as total_sales,
+        COALESCE(COUNT(DISTINCT si.customer_id), 0) as active_customers,
         COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,
         COALESCE(SUM(s."shippingCost"), 0) as shipping_revenue
       FROM sales_invoices si
       LEFT JOIN shipments s ON true
       WHERE si."isActive" = true
-      ${dateFrom ? `AND si."invoiceDate" >= '${dateFrom}'` : ''}
-      ${dateTo ? `AND si."invoiceDate" <= '${dateTo}'` : ''}
+      ${dateFrom ? `AND si.date >= '${dateFrom}'` : ''}
+      ${dateTo ? `AND si.date <= '${dateTo}'` : ''}
     `;
 
     const result = await db.query(summaryQuery, {
@@ -1396,8 +1371,8 @@ router.get('/summary',
 
     const growthQuery = `
       SELECT
-        COALESCE(SUM(CASE WHEN "invoiceDate" >= $1 THEN "totalAmount" ELSE 0 END), 0) as this_month,
-        COALESCE(SUM(CASE WHEN "invoiceDate" >= $2 AND "invoiceDate" < $1 THEN "totalAmount" ELSE 0 END), 0) as prev_month
+        COALESCE(SUM(CASE WHEN date >= $1 THEN total ELSE 0 END), 0) as this_month,
+        COALESCE(SUM(CASE WHEN date >= $2 AND date < $1 THEN total ELSE 0 END), 0) as prev_month
       FROM sales_invoices
       WHERE "isActive" = true AND status::text != 'cancelled'
     `;
@@ -1597,22 +1572,6 @@ router.post('/inventory/:id/movement', authenticateToken, requireSalesAccess, as
     const { id } = req.params;
     const { type, quantity, reason, reference, notes } = req.body;
 
-    // إصلاح User ID إذا كان integer
-    let validUserId = req.user.id;
-    if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
-      // البحث عن المستخدم الصحيح
-      const { sequelize } = await import('../models/index.js');
-      const userResult = await sequelize.query(`
-        SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
-      `, { type: sequelize.QueryTypes.SELECT });
-
-      if (userResult.length > 0) {
-        validUserId = userResult[0].id;
-      } else {
-        return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
-      }
-    }
-
     // TODO: Implement actual stock movement recording
     const movement = {
       id: uuidv4(),
@@ -1623,7 +1582,7 @@ router.post('/inventory/:id/movement', authenticateToken, requireSalesAccess, as
       reference,
       notes,
       date: new Date().toISOString(),
-      createdBy: validUserId
+      createdBy: req.user.id
     };
 
     console.log('✅ تم تسجيل حركة مخزون:', movement.id);
@@ -2835,22 +2794,6 @@ router.post('/shipping-invoices', authenticateToken, requireSalesAccess, async (
     const transaction = await sequelize.transaction();
 
     try {
-      // إصلاح User ID إذا كان integer
-      let validUserId = req.user.id;
-      if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
-        // البحث عن المستخدم الصحيح
-        const userResult = await sequelize.query(`
-          SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
-        `, { type: sequelize.QueryTypes.SELECT, transaction });
-
-        if (userResult.length > 0) {
-          validUserId = userResult[0].id;
-        } else {
-          await transaction.rollback();
-          return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
-        }
-      }
-
       // حساب المبالغ بشكل صحيح
       const shippingCostVal = parseFloat(shippingCost) || 0;
       const handlingFeeVal = parseFloat(handlingFee) || 0;
@@ -2908,11 +2851,11 @@ router.post('/shipping-invoices', authenticateToken, requireSalesAccess, async (
         destinationLocation,
         notes,
         terms,
-        createdBy: validUserId
+        createdBy: req.user.id
       }, { transaction });
 
       // Create automatic journal entry for shipping invoice
-      await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
+      await newInvoice.createJournalEntryAndAffectBalance(req.user.id, { transaction });
       console.log('✅ تم إنشاء القيد المحاسبي تلقائياً لفاتورة الشحن');
 
       await transaction.commit();
@@ -3240,20 +3183,6 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
     const transaction = await sequelize.transaction();
 
     try {
-      // إصلاح User ID إذا كان integer
-      let validUserId = req.user.id;
-      if (typeof req.user.id === 'number' || (typeof req.user.id === 'string' && /^\d+$/.test(req.user.id))) {
-        const userResult = await db.query(`
-          SELECT id FROM users WHERE "isActive" = true AND role = 'admin' LIMIT 1
-        `, { type: db.QueryTypes.SELECT });
-
-        if (userResult.length > 0) {
-          validUserId = userResult[0].id;
-        } else {
-          return res.status(400).json({ message: 'لا يمكن تحديد المستخدم الصحيح' });
-        }
-      }
-
       // Create the invoice
       const newInvoice = await SalesInvoice.create({
         customerId,
@@ -3279,7 +3208,7 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
         deliveryFee: parseFloat(deliveryFee) || 0,
         notes,
         terms,
-        createdBy: validUserId
+        createdBy: req.user.id
       }, { transaction });
 
       // Create invoice items
@@ -3321,7 +3250,7 @@ router.post('/sales-invoices', authenticateToken, requireSalesAccess, async (req
       }
 
       // Create automatic journal entry for sales invoice
-      await newInvoice.createJournalEntryAndAffectBalance(validUserId, { transaction });
+      await newInvoice.createJournalEntryAndAffectBalance(req.user.id, { transaction });
       console.log('✅ تم إنشاء القيد المحاسبي تلقائياً للفاتورة');
 
       await transaction.commit();

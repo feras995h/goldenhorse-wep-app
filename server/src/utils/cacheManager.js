@@ -38,6 +38,13 @@ class CacheManager {
         }
       }
 
+      // تعطيل Redis في بيئة التطوير إذا لم يكن متوفراً
+      if (process.env.NODE_ENV !== 'production' && !process.env.REDIS_URL) {
+        console.log('ℹ️  Redis disabled in development mode');
+        this.isConnected = false;
+        return;
+      }
+
       // Try to connect to Redis
       if (process.env.REDIS_URL) {
         this.redis = new Redis(process.env.REDIS_URL);
@@ -65,7 +72,7 @@ class CacheManager {
 
       // Set up event handlers
       this.redis.on('error', (err) => {
-        console.warn('⚠️  Redis error:', err.message);
+        // console.warn('⚠️  Redis error:', err.message);
         this.isConnected = false;
       });
 
@@ -75,7 +82,7 @@ class CacheManager {
       });
 
     } catch (error) {
-      console.warn('⚠️  Redis cache not available, continuing without cache:', error.message);
+      // console.warn('⚠️  Redis cache not available, continuing without cache:', error.message);
       this.isConnected = false;
       if (this.redis) {
         this.redis.disconnect();

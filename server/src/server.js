@@ -43,6 +43,7 @@ import costAnalysisRoutes from './routes/costAnalysis.js';
 import budgetPlanningRoutes from './routes/budgetPlanning.js';
 import cashFlowManagementRoutes from './routes/cashFlowManagement.js';
 import financialRatiosRoutes from './routes/financialRatios.js';
+import accountingPeriodsRoutes from './routes/accountingPeriods.js';
 
 // Import enhanced services (optional)
 let cacheService, realtimeService;
@@ -63,6 +64,7 @@ if (hasRedisConfig) {
 import authRoutes from './routes/auth.js';
 import settingsRoutes from './routes/settings.js';
 import financialRoutes from './routes/financial.js';
+import enhancedFinancialRoutes from './routes/enhancedFinancial.js';
 import salesRoutes from './routes/sales.js';
 import vouchersRoutes from './routes/vouchers.js';
 import adminRoutes from './routes/admin.js';
@@ -421,6 +423,7 @@ if (rateLimitingEnabled) {
   app.use('/api/', generalLimiter);
   app.use('/api/auth/login', authLimiter);
   app.use('/api/financial/', financialLimiter);
+  app.use('/api/enhanced-financial/', financialLimiter);
   app.use('/api/sales/', salesLimiter);
 } else {
   console.log('⚠️  Rate limiting disabled');
@@ -459,6 +462,7 @@ if (process.env.NODE_ENV === 'production') {
 app.use('/api/auth', authRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/financial', financialRoutes);
+app.use('/api/enhanced-financial', enhancedFinancialRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/vouchers', vouchersRoutes);
 app.use('/api/admin', adminRoutes);
@@ -472,6 +476,7 @@ app.use('/api/cost-analysis', costAnalysisRoutes);
 app.use('/api/budget-planning', budgetPlanningRoutes);
 app.use('/api/cash-flow', cashFlowManagementRoutes);
 app.use('/api/financial-ratios', financialRatiosRoutes);
+app.use('/api/accounting-periods', accountingPeriodsRoutes);
 
 // Health check with database status
 app.get('/api/health', async (req, res) => {
