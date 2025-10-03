@@ -405,6 +405,14 @@ export const financialAPI = {
     const response = await api.post('/accounting-periods', { year, month, notes });
     return response.data;
   },
+  closeAccountingPeriod: async (id: string, createClosingEntries: boolean = true) => {
+    const response = await api.post(`/accounting-periods/${id}/close`, { createClosingEntries });
+    return response.data;
+  },
+  archiveAccountingPeriod: async (id: string) => {
+    const response = await api.post(`/accounting-periods/${id}/archive`);
+    return response.data;
+  },
 
   // Invoices without journal entry
   getInvoicesWithoutJournal: async (limit: number = 50) => {
