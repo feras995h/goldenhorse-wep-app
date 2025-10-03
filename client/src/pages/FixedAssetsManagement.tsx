@@ -8,6 +8,7 @@ import FormField from '../components/Financial/FormField';
 import { FixedAsset } from '../types/financial';
 import { formatCurrencyAmount } from '../utils/formatters';
 import CurrencyDisplay from '../components/UI/CurrencyDisplay';
+import { ToastContainer } from '../components/UI/Toast';
 
 const FixedAssetsManagement: React.FC = () => {
   const [assets, setAssets] = useState<FixedAsset[]>([]);
@@ -52,6 +53,19 @@ const FixedAssetsManagement: React.FC = () => {
   const [formData, setFormData] = useState(getDefaultFormData());
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Toasts
+  const [toasts, setToasts] = useState<any[]>([]);
+  const showToast = (type: 'success' | 'error' | 'warning' | 'info', title: string, message?: string) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setToasts((prev) => [
+      ...prev,
+      { id, type, title, message, duration: 4000, onClose: handleCloseToast, position: 'top-right' }
+    ]);
+  };
+  const handleCloseToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   useEffect(() => {
     loadAssets();
@@ -279,16 +293,17 @@ const FixedAssetsManagement: React.FC = () => {
           }
         }
 
-        alert(successMessage);
+        showToast('success', 'تم إنشاء الأصل بنجاح', successMessage);
       } else if (modalMode === 'edit' && selectedAsset) {
         await financialAPI.updateFixedAsset(selectedAsset.id, formData);
-        alert('تم تحديث الأصل الثابت بنجاح');
+        showToast('success', 'تم تحديث الأصل الثابت بنجاح');
       }
 
       closeModal();
       loadAssets();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving fixed asset:', error);
+      showToast('error', 'فشل حفظ الأصل', error?.message);
     } finally {
       setSubmitting(false);
     }
@@ -298,6 +313,7 @@ const FixedAssetsManagement: React.FC = () => {
     try {
       const result = await financialAPI.calculateDepreciation(asset.id);
       if (result.success) {
+        showToast('success', 'تم حساب الاستهلاك بنجاح');
         const data = result.data;
         const message = `تم حساب الاستهلاك بنجاح:
 
@@ -312,11 +328,11 @@ const FixedAssetsManagement: React.FC = () => {
 
         alert(message);
       } else {
-        alert('تم حساب الاستهلاك بنجاح');
+        showToast('info', 'تم حساب الاستهلاك بنجاح');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calculating depreciation:', error);
-      alert('حدث خطأ أثناء حساب الاستهلاك');
+      showToast('error', 'خطأ أثناء حساب الاستهلاك', error?.message);
     }
   };
 
@@ -525,6 +541,7 @@ const FixedAssetsManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <ToastContainer toasts={toasts} onClose={handleCloseToast} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center">
@@ -539,10 +556,10 @@ const FixedAssetsManagement: React.FC = () => {
             onClick={async () => {
               try {
                 const res = await financialAPI.runMonthlyDepreciation();
-                alert(res?.message || 'تم تشغيل الإهلاك الشهري');
+                showToast('success', 'تم تشغيل الإهلاك الشهري', res?.message);
                 loadAssets();
-              } catch (e) {
-                alert('تعذر تشغيل الإهلاك الشهري');
+              } catch (e: any) {
+                showToast('error', 'تعذر تشغيل الإهلاك الشهري', e?.message);
               }
             }}
             className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"

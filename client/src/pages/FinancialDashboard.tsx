@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFinancialData } from '../contexts/FinancialDataContext';
 import FinancialSummary from '../components/Financial/FinancialSummary';
 import { financialAPI } from '../services/api';
+import { ToastContainer } from '../components/UI/Toast';
 import {
   FileText,
   Users,
@@ -35,6 +36,19 @@ const FinancialDashboard: React.FC = () => {
   const [healthLoading, setHealthLoading] = useState<boolean>(false);
   const [healthError, setHealthError] = useState<string | null>(null);
 
+  // Toasts
+  const [toasts, setToasts] = useState<any[]>([]);
+  const showToast = (type: 'success' | 'error' | 'warning' | 'info', title: string, message?: string) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setToasts((prev) => [
+      ...prev,
+      { id, type, title, message, duration: 4000, onClose: handleCloseToast, position: 'top-right' }
+    ]);
+  };
+  const handleCloseToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   const loadHealth = async () => {
     try {
       setHealthLoading(true);
@@ -53,8 +67,11 @@ const FinancialDashboard: React.FC = () => {
       setHealthLoading(true);
       await financialAPI.recalculateBalances();
       await loadHealth();
+      showToast('success', 'تمت إعادة احتساب الأرصدة بنجاح');
     } catch (e: any) {
-      setHealthError(e?.message || 'تعذر إعادة احتساب الأرصدة');
+      const msg = e?.message || 'تعذر إعادة احتساب الأرصدة';
+      setHealthError(msg);
+      showToast('error', 'فشل العملية', msg);
     } finally {
       setHealthLoading(false);
     }
@@ -182,6 +199,7 @@ const FinancialDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 fade-in">
+      <ToastContainer toasts={toasts} onClose={handleCloseToast} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
