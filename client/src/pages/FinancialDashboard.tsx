@@ -79,7 +79,39 @@ const FinancialDashboard: React.FC = () => {
 
   useEffect(() => {
     loadHealth();
+    loadCurrentPeriod();
   }, []);
+
+  // Accounting period state
+  const [currentPeriod, setCurrentPeriod] = useState<any>(null);
+  const [periodLoading, setPeriodLoading] = useState<boolean>(false);
+  const loadCurrentPeriod = async () => {
+    try {
+      setPeriodLoading(true);
+      const res = await financialAPI.getCurrentAccountingPeriod();
+      setCurrentPeriod(res?.data || null);
+    } catch (e) {
+      setCurrentPeriod(null);
+    } finally {
+      setPeriodLoading(false);
+    }
+  };
+
+  const openCurrentMonthPeriod = async () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    try {
+      setPeriodLoading(true);
+      const res = await financialAPI.createAccountingPeriod(year, month);
+      showToast('success', 'تم فتح فترة الشهر الحالي بنجاح');
+      setCurrentPeriod(res?.data || res);
+    } catch (e: any) {
+      showToast('error', 'فشل فتح فترة الشهر الحالي', e?.message);
+    } finally {
+      setPeriodLoading(false);
+    }
+  };
 
   const quickActions = [
     {
@@ -213,6 +245,63 @@ const FinancialDashboard: React.FC = () => {
           <RefreshCw className="h-4 w-4" />
           تحديث البيانات
         </button>
+      </div>
+
+      {/* Accounting Period Card */}
+      <div className="grid grid-cols-1 gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">الفترة المحاسبية الحالية</h2>
+              <p className="text-sm text-gray-500">التحكم في فتح فترة الشهر الحالي</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {!currentPeriod && (
+                <button
+                  onClick={openCurrentMonthPeriod}
+                  disabled={periodLoading}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg"
+                >
+                  فتح فترة الشهر الحالي
+                </button>
+              )}
+              <button
+                onClick={loadCurrentPeriod}
+                disabled={periodLoading}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-lg"
+              >
+                تحديث
+              </button>
+            </div>
+          </div>
+
+          {(!currentPeriod && !periodLoading) && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded mb-4">
+              <p className="text-yellow-800 text-sm">لا توجد فترة محاسبية مفتوحة للشهر الحالي. إذا كانت سياسة الفترات مفعلة، لن يتم الترحيل حتى يتم فتح الفترة.</p>
+            </div>
+          )}
+
+          {currentPeriod && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">السنة</p>
+                <p className="text-lg font-semibold text-gray-900">{currentPeriod.year}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">الشهر</p>
+                <p className="text-lg font-semibold text-gray-900">{currentPeriod.month}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">البداية</p>
+                <p className="text-lg font-semibold text-gray-900">{currentPeriod.startDate}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">النهاية</p>
+                <p className="text-lg font-semibold text-gray-900">{currentPeriod.endDate}</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* System Health Card */}

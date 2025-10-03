@@ -390,6 +390,22 @@ export const financialAPI = {
     return response.data;
   },
 
+  // Accounting Periods
+  getCurrentAccountingPeriod: async () => {
+    try {
+      const response = await api.get('/accounting-periods/current');
+      return response.data; // { success, data }
+    } catch (e: any) {
+      // 404 -> no current period
+      if (e?.response?.status === 404) return { success: false, data: null };
+      throw e;
+    }
+  },
+  createAccountingPeriod: async (year: number, month: number, notes?: string) => {
+    const response = await api.post('/accounting-periods', { year, month, notes });
+    return response.data;
+  },
+
   // Invoices without journal entry
   getInvoicesWithoutJournal: async (limit: number = 50) => {
     const response = await api.get('/financial/invoices-without-journal', { params: { limit } });
