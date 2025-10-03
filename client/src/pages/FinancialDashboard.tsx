@@ -242,6 +242,24 @@ const FinancialDashboard: React.FC = () => {
                 onClick={async () => {
                   try {
                     setHealthLoading(true);
+                    const res = await financialAPI.repairMissingJournalEntries();
+                    showToast('success', 'تم إصلاح القيود المفقودة', `المبيعات: ${res?.repaired?.sales || 0}, الشحن: ${res?.repaired?.shipping || 0}`);
+                    await loadHealth();
+                  } catch (e: any) {
+                    showToast('error', 'فشل إصلاح القيود المفقودة', e?.message);
+                  } finally {
+                    setHealthLoading(false);
+                  }
+                }}
+                disabled={healthLoading}
+                className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg"
+              >
+                إصلاح القيود المفقودة
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setHealthLoading(true);
                     const res = await financialAPI.installTriggers();
                     showToast('success', 'تم تثبيت Triggers', res?.message);
                   } catch (e: any) {

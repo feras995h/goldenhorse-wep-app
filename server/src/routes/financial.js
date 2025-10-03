@@ -240,6 +240,65 @@ router.get('/invoices-without-journal', authenticateToken, requireFinancialAcces
   }
 });
 
+// POST /api/financial/repair-missing-journal-entries - إنشاء قيود للفواتير التي تفتقد قيدًا (Sales & Shipping)
+router.post('/repair-missing-journal-entries', authenticateToken, requireRole(['admin']), async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { SalesInvoice, ShippingInvoice, JournalEntry } = models;
+    let repairedSales = 0;
+    let repairedShipping = 0;
+
+    // Sales invoices without JE
+    const [missingSales] = await sequelize.query(`
+      SELECT si.id
+      FROM sales_invoices si
+      LEFT JOIN journal_entries je ON je.voucherNo = si."invoiceNumber" AND je.type = 'sales_invoice'
+      WHERE je.id IS NULL
+      LIMIT 200
+    `, { transaction: t });
+
+    for (const row of (missingSales || [])) {
+      const inv = await SalesInvoice.findByPk(row.id, { transaction: t });
+      if (!inv) continue;
+      try {
+        await inv.createJournalEntryAndAffectBalance(req.user?.id || 'system', { transaction: t, force: false });
+        repairedSales += 1;
+      } catch (e) {
+        // continue, report at the end
+      }
+    }
+
+    // Shipping invoices without JE
+    const [missingShip] = await sequelize.query(`
+      SELECT si.id
+      FROM shipping_invoices si
+      LEFT JOIN journal_entries je ON je.voucherNo = si."invoice_number" AND je.type = 'shipping_invoice'
+      WHERE je.id IS NULL
+      LIMIT 200
+    `, { transaction: t });
+
+    for (const row of (missingShip || [])) {
+      const inv = await ShippingInvoice.findByPk(row.id, { transaction: t });
+      if (!inv) continue;
+      try {
+        if (typeof inv.createJournalEntryAndAffectBalance === 'function') {
+          await inv.createJournalEntryAndAffectBalance(req.user?.id || 'system', { transaction: t });
+          repairedShipping += 1;
+        }
+      } catch (e) {
+        // continue
+      }
+    }
+
+    await t.commit();
+    res.json({ success: true, repaired: { sales: repairedSales, shipping: repairedShipping } });
+  } catch (error) {
+    await t.rollback();
+    console.error('Error repairing missing JEs:', error);
+    res.status(500).json({ success: false, message: 'فشل إصلاح القيود المفقودة', error: error.message });
+  }
+});
+
 // POST /api/financial/install-triggers - تثبيت Triggers في قاعدة البيانات (إداري فقط)
 router.post('/install-triggers', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {

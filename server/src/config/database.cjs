@@ -30,15 +30,27 @@ module.exports = {
       idle: 10000
     }
   },
-  test: {
-    dialect: 'sqlite',
-    storage: ':memory:',
-    logging: false,
-    define: {
-      underscored: true,
-      timestamps: true
-    }
-  },
+  test: (
+    (DATABASE_URL && DATABASE_URL.trim() !== '')
+      ? {
+          url: DATABASE_URL.trim(),
+          dialect: 'postgres',
+          logging: false,
+          define: {
+            underscored: true,
+            timestamps: true
+          }
+        }
+      : {
+          dialect: 'sqlite',
+          storage: ':memory:',
+          logging: false,
+          define: {
+            underscored: true,
+            timestamps: true
+          }
+        }
+  ),
   production: {
     // Use DATABASE_URL or DB_URL if provided (for hosted databases like Railway, Heroku, Coolify, etc.)
     ...(DATABASE_URL && DATABASE_URL.trim() !== '' ? {

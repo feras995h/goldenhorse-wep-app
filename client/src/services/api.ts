@@ -380,6 +380,11 @@ export const financialAPI = {
     return response.data;
   },
 
+  repairMissingJournalEntries: async () => {
+    const response = await api.post('/financial/repair-missing-journal-entries');
+    return response.data;
+  },
+
   runMonthlyDepreciation: async (date?: string) => {
     const response = await api.post('/financial/fixed-assets/depreciation/run', { date });
     return response.data;
