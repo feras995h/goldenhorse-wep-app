@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken, requireSalesAccess } from '../middleware/auth.js';
+import { authenticateToken, requireSalesAccess, requireRole } from '../middleware/auth.js';
 import {
   validateCustomer,
   validatePayment,
@@ -136,6 +136,167 @@ router.get('/shipments/top-delays', authenticateToken, requireSalesAccess, async
   } catch (error) {
     console.error('Error fetching top delayed shipments:', error);
     res.status(500).json({ success: false, message: 'خطأ في جلب الشحنات المتأخرة' });
+  }
+});
+
+// ==================== INVOICE CANCELLATION WITH REVERSAL ====================
+// Cancel SalesInvoice with reversing journal entry
+router.post('/sales-invoices/:id/cancel', authenticateToken, requireRole(['admin', 'financial']), async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { SalesInvoice, JournalEntry, JournalEntryDetail, GLEntry, Account } = models;
+    const inv = await SalesInvoice.findByPk(req.params.id, { transaction: t });
+    if (!inv) return res.status(404).json({ success: false, message: 'الفاتورة غير موجودة' });
+    if (inv.status === 'cancelled') return res.status(400).json({ success: false, message: 'الفاتورة ملغاة مسبقاً' });
+
+    // Find original JE
+    const je = await JournalEntry.findOne({ where: { type: 'sales_invoice', voucherNo: inv.invoiceNumber }, transaction: t });
+    if (!je) return res.status(400).json({ success: false, message: 'لا يوجد قيد مرتبط بالفاتورة لإلغائه' });
+
+    const details = await JournalEntryDetail.findAll({ where: { journalEntryId: je.id }, transaction: t });
+    if (!details || details.length === 0) return res.status(400).json({ success: false, message: 'لا توجد تفاصيل قيد لإلغائها' });
+
+    // Create reversing JE
+    const last = await JournalEntry.findOne({ order: [['createdAt', 'DESC']], transaction: t });
+    const next = last ? (parseInt(String(last.entryNumber).replace(/\D/g, ''), 10) + 1) : 1;
+    const entryNumber = `REV-${String(next).padStart(6, '0')}`;
+
+    const totalDebit = details.reduce((s, d) => s + parseFloat(d.credit || 0), 0);
+    const totalCredit = details.reduce((s, d) => s + parseFloat(d.debit || 0), 0);
+
+    const rev = await JournalEntry.create({
+      entryNumber,
+      date: new Date(),
+      description: `Reversal for Sales Invoice ${inv.invoiceNumber}`,
+      totalDebit,
+      totalCredit,
+      status: 'posted',
+      type: 'sales_invoice_reversal',
+      voucherType: 'Sales Invoice',
+      voucherNo: inv.invoiceNumber,
+      createdBy: req.user?.id || 'system'
+    }, { transaction: t });
+
+    const revDetailsPayload = details.map(d => ({
+      journalEntryId: rev.id,
+      accountId: d.accountId,
+      debit: parseFloat(d.credit || 0),
+      credit: parseFloat(d.debit || 0),
+      description: `Reversal: ${d.description || ''}`,
+    }));
+
+    await JournalEntryDetail.bulkCreate(revDetailsPayload, { transaction: t });
+
+    // GL and balances
+    for (const d of revDetailsPayload) {
+      await GLEntry.create({
+        postingDate: rev.date,
+        accountId: d.accountId,
+        debit: d.debit,
+        credit: d.credit,
+        voucherType: 'Sales Invoice Reversal',
+        voucherNo: inv.invoiceNumber,
+        journalEntryId: rev.id,
+        remarks: d.description,
+        currency: inv.currency || 'LYD',
+        exchangeRate: inv.exchangeRate || 1,
+        createdBy: req.user?.id || 'system',
+        postingStatus: 'posted'
+      }, { transaction: t });
+
+      const acc = await Account.findByPk(d.accountId, { transaction: t, lock: t.LOCK.UPDATE });
+      if (!acc) continue;
+      const cur = parseFloat(acc.balance || 0);
+      const newBal = acc.nature === 'debit' ? (cur + d.debit - d.credit) : (cur + d.credit - d.debit);
+      await acc.update({ balance: newBal, updatedAt: new Date() }, { transaction: t });
+    }
+
+    await inv.update({ status: 'cancelled' }, { transaction: t });
+
+    await t.commit();
+    res.json({ success: true, message: 'تم إلغاء الفاتورة وإنشاء قيد عكسي', reversingEntryNumber: rev.entryNumber });
+  } catch (error) {
+    await t.rollback();
+    console.error('Error cancelling sales invoice:', error);
+    res.status(500).json({ success: false, message: 'خطأ في إلغاء الفاتورة', error: error.message });
+  }
+});
+
+// Cancel ShippingInvoice with reversing journal entry
+router.post('/shipping-invoices/:id/cancel', authenticateToken, requireRole(['admin', 'financial']), async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { ShippingInvoice, JournalEntry, JournalEntryDetail, GLEntry, Account } = models;
+    const inv = await ShippingInvoice.findByPk(req.params.id, { transaction: t });
+    if (!inv) return res.status(404).json({ success: false, message: 'فاتورة الشحن غير موجودة' });
+    if (inv.status === 'cancelled') return res.status(400).json({ success: false, message: 'الفاتورة ملغاة مسبقاً' });
+
+    const je = await JournalEntry.findOne({ where: { type: 'shipping_invoice', voucherNo: inv.invoiceNumber || inv.invoice_number }, transaction: t });
+    if (!je) return res.status(400).json({ success: false, message: 'لا يوجد قيد مرتبط بالفاتورة لإلغائه' });
+
+    const details = await JournalEntryDetail.findAll({ where: { journalEntryId: je.id }, transaction: t });
+    if (!details || details.length === 0) return res.status(400).json({ success: false, message: 'لا توجد تفاصيل قيد لإلغائها' });
+
+    const last = await JournalEntry.findOne({ order: [['createdAt', 'DESC']], transaction: t });
+    const next = last ? (parseInt(String(last.entryNumber).replace(/\D/g, ''), 10) + 1) : 1;
+    const entryNumber = `REV-${String(next).padStart(6, '0')}`;
+
+    const totalDebit = details.reduce((s, d) => s + parseFloat(d.credit || 0), 0);
+    const totalCredit = details.reduce((s, d) => s + parseFloat(d.debit || 0), 0);
+
+    const rev = await JournalEntry.create({
+      entryNumber,
+      date: new Date(),
+      description: `Reversal for Shipping Invoice ${inv.invoiceNumber || inv.invoice_number}`,
+      totalDebit,
+      totalCredit,
+      status: 'posted',
+      type: 'shipping_invoice_reversal',
+      voucherType: 'Shipping Invoice',
+      voucherNo: inv.invoiceNumber || inv.invoice_number,
+      createdBy: req.user?.id || 'system'
+    }, { transaction: t });
+
+    const revDetailsPayload = details.map(d => ({
+      journalEntryId: rev.id,
+      accountId: d.accountId,
+      debit: parseFloat(d.credit || 0),
+      credit: parseFloat(d.debit || 0),
+      description: `Reversal: ${d.description || ''}`,
+    }));
+    await JournalEntryDetail.bulkCreate(revDetailsPayload, { transaction: t });
+
+    for (const d of revDetailsPayload) {
+      await GLEntry.create({
+        postingDate: rev.date,
+        accountId: d.accountId,
+        debit: d.debit,
+        credit: d.credit,
+        voucherType: 'Shipping Invoice Reversal',
+        voucherNo: inv.invoiceNumber || inv.invoice_number,
+        journalEntryId: rev.id,
+        remarks: d.description,
+        currency: 'LYD',
+        exchangeRate: 1,
+        createdBy: req.user?.id || 'system',
+        postingStatus: 'posted'
+      }, { transaction: t });
+
+      const acc = await Account.findByPk(d.accountId, { transaction: t, lock: t.LOCK.UPDATE });
+      if (!acc) continue;
+      const cur = parseFloat(acc.balance || 0);
+      const newBal = acc.nature === 'debit' ? (cur + d.debit - d.credit) : (cur + d.credit - d.debit);
+      await acc.update({ balance: newBal, updatedAt: new Date() }, { transaction: t });
+    }
+
+    await inv.update({ status: 'cancelled' }, { transaction: t });
+
+    await t.commit();
+    res.json({ success: true, message: 'تم إلغاء فاتورة الشحن وإنشاء قيد عكسي', reversingEntryNumber: rev.entryNumber });
+  } catch (error) {
+    await t.rollback();
+    console.error('Error cancelling shipping invoice:', error);
+    res.status(500).json({ success: false, message: 'خطأ في إلغاء فاتورة الشحن', error: error.message });
   }
 });
 
