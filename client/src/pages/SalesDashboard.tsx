@@ -68,7 +68,22 @@ const SalesDashboard: React.FC = () => {
 
   useEffect(() => {
     loadSalesData();
+    loadShipmentsSummary();
   }, []);
+
+  const [shipmentsSummary, setShipmentsSummary] = useState<{ statuses?: Record<string, number>, payments?: Record<string, number> } | null>(null);
+  const [shipmentsLoading, setShipmentsLoading] = useState(false);
+  const loadShipmentsSummary = async () => {
+    try {
+      setShipmentsLoading(true);
+      const res = await salesAPI.getShipmentsSummary();
+      setShipmentsSummary(res?.data || res);
+    } catch (e) {
+      // ignore
+    } finally {
+      setShipmentsLoading(false);
+    }
+  };
 
   const loadSalesData = async () => {
     setLoading(true);
@@ -490,6 +505,28 @@ const SalesDashboard: React.FC = () => {
                     <li>• متوسط قيمة الشحنة: {salesData ? formatCurrency(salesData.averageOrderValue) : '0 LYD'}</li>
                     <li>• إجمالي المدفوعات: {salesData?.totalPayments || 0}</li>
                   </ul>
+                </div>
+              </div>
+
+              {/* International Shipping KPIs */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 sm:p-6 rounded-lg border border-blue-200">
+                <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">مؤشرات الشحن الدولي</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                  {[
+                    { key: 'pending', label: 'قيد الإعداد' },
+                    { key: 'in_transit', label: 'في الطريق' },
+                    { key: 'arrived', label: 'وصلت' },
+                    { key: 'customs_clearance', label: 'في الجمارك' },
+                    { key: 'cleared', label: 'مخلي' },
+                    { key: 'delivered', label: 'تم التسليم' }
+                  ].map((s) => (
+                    <div key={s.key} className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 text-center">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">{s.label}</p>
+                      <p className="text-lg sm:text-xl font-bold text-gray-900">
+                        {shipmentsLoading ? '...' : (shipmentsSummary?.statuses?.[s.key] ?? 0)}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
 

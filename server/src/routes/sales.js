@@ -45,6 +45,36 @@ const sequelize = db;
 // Dialect-aware LIKE operator (SQLite uses Op.like, Postgres uses Op.iLike)
 const likeOp = sequelize.getDialect && sequelize.getDialect() === 'sqlite' ? Op.like : Op.iLike;
 
+// ==================== SHIPMENTS SUMMARY (International shipping KPIs) ====================
+router.get('/shipments/summary', authenticateToken, requireSalesAccess, async (req, res) => {
+  try {
+    const statuses = ['pending','in_transit','arrived','customs_clearance','cleared','delivered'];
+    const summary = {};
+    for (const s of statuses) {
+      try {
+        summary[s] = await ShippingInvoice.count({ where: { status: s } });
+      } catch (e) {
+        summary[s] = 0;
+      }
+    }
+    // Payment status summary (if available)
+    const paymentStatuses = ['unpaid','partial','paid','overpaid'];
+    const paymentSummary = {};
+    for (const ps of paymentStatuses) {
+      try {
+        paymentSummary[ps] = await ShippingInvoice.count({ where: { paymentStatus: ps } });
+      } catch (e) {
+        paymentSummary[ps] = 0;
+      }
+    }
+
+    res.json({ success: true, data: { statuses: summary, payments: paymentSummary } });
+  } catch (error) {
+    console.error('Error fetching shipments summary:', error);
+    res.status(500).json({ success: false, message: 'خطأ في إحضار ملخص الشحنات' });
+  }
+});
+
 // ==================== CUSTOMERS ROUTES ====================
 
 // GET /api/sales/customers/:id/statement - Get customer account statement

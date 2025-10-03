@@ -696,6 +696,16 @@ export const salesAPI = {
     return response.data;
   },
 
+  // Shipments Summary (International Shipping KPIs)
+  getShipmentsSummary: async () => {
+    try {
+      const response = await api.get('/sales/shipments/summary');
+      return response.data;
+    } catch (e) {
+      return { success: false, data: { statuses: {}, payments: {} } };
+    }
+  },
+
   // Analytics
   getSalesAnalytics: async (params?: {
     period?: 'week' | 'month' | 'quarter' | 'year';
