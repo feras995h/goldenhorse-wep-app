@@ -238,6 +238,23 @@ const FinancialDashboard: React.FC = () => {
               >
                 إعادة احتساب الأرصدة
               </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setHealthLoading(true);
+                    const res = await financialAPI.installTriggers();
+                    showToast('success', 'تم تثبيت Triggers', res?.message);
+                  } catch (e: any) {
+                    showToast('error', 'فشل تثبيت Triggers', e?.message);
+                  } finally {
+                    setHealthLoading(false);
+                  }
+                }}
+                disabled={healthLoading}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg"
+              >
+                تثبيت Triggers
+              </button>
             </div>
           </div>
 
@@ -264,6 +281,38 @@ const FinancialDashboard: React.FC = () => {
             </div>
           </div>
 
+          {/* Details: mismatched accounts */}
+          {health?.details?.mismatchedAccounts && health.details.mismatchedAccounts.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-gray-900 mb-2">أعلى الحسابات ذات عدم التطابق</p>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-600">
+                      <th className="py-2 pr-4 text-right">الكود</th>
+                      <th className="py-2 pr-4 text-right">الاسم</th>
+                      <th className="py-2 pr-4 text-right">رصيد الحساب</th>
+                      <th className="py-2 pr-4 text-right">رصيد GL</th>
+                      <th className="py-2 pr-4 text-right">الفرق</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {health.details.mismatchedAccounts.map((acc: any) => (
+                      <tr key={acc.id} className="border-t">
+                        <td className="py-2 pr-4">{acc.code}</td>
+                        <td className="py-2 pr-4">{acc.name}</td>
+                        <td className="py-2 pr-4">{Number(acc.account_balance).toFixed(2)}</td>
+                        <td className="py-2 pr-4">{Number(acc.gl_balance).toFixed(2)}</td>
+                        <td className="py-2 pr-4 font-semibold text-amber-700">{Number(acc.diff).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Issues list */}
           {health?.issues && health.issues.length > 0 && (
             <div className="mt-4">
               <p className="text-sm font-semibold text-gray-900 mb-2">المشاكل:</p>

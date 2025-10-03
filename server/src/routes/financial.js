@@ -68,6 +68,9 @@ router.get('/audit', authenticateToken, requireFinancialAccess, async (req, res)
 
 // ==================== SYSTEM HEALTH ROUTES ====================
 
+import fs from 'fs';
+import path from 'path';
+
 // GET /api/financial/system-health - فحص صحة النظام المحاسبي
 router.get('/system-health', authenticateToken, requireFinancialAccess, async (req, res) => {
   try {
@@ -133,10 +136,44 @@ router.get('/system-health', authenticateToken, requireFinancialAccess, async (r
       if (mismatchCount > 0) {
         health.issues.push(`${mismatchCount} حساب لديه عدم تطابق في الرصيد`);
         health.recommendations.push('قم بتشغيل أداة إعادة حساب الأرصدة');
+        // Fetch top mismatched accounts (max 10)
+        const [details] = await sequelize.query(`
+          SELECT a.id, a.code, a.name,
+                 COALESCE(a.balance,0) AS account_balance,
+                 COALESCE(ge.gl_balance,0) AS gl_balance,
+                 COALESCE(a.balance,0) - COALESCE(ge.gl_balance,0) AS diff
+          FROM accounts a
+          LEFT JOIN (
+            SELECT "accountId", SUM(COALESCE(debit,0) - COALESCE(credit,0)) AS gl_balance
+            FROM gl_entries
+            GROUP BY "accountId"
+          ) ge ON a.id = ge."accountId"
+          WHERE ABS(COALESCE(a.balance,0) - COALESCE(ge.gl_balance,0)) > 0.01
+          ORDER BY ABS(COALESCE(a.balance,0) - COALESCE(ge.gl_balance,0)) DESC
+          LIMIT 10
+        `);
+        health.details = health.details || {};
+        health.details.mismatchedAccounts = details;
       }
     } catch (e) {
       // If the query fails, do not break the endpoint
       health.recommendations.push('تعذر التحقق من تكامل الأرصدة (جداول/صلاحيات)');
+    }
+
+    // 5) Invoices without journal entries (top 10)
+    try {
+      const [rows2] = await sequelize.query(`
+        SELECT si.id, si."invoiceNumber" AS invoice_number, si.date, si.totalAmount AS total
+        FROM sales_invoices si
+        LEFT JOIN journal_entries je ON je.description LIKE '%' || si."invoiceNumber" || '%'
+        WHERE je.id IS NULL
+        ORDER BY si.date DESC
+        LIMIT 10
+      `);
+      health.details = health.details || {};
+      health.details.invoicesWithoutJournalEntry = rows2;
+    } catch (e) {
+      // ignore if table names differ
     }
 
     health.status = health.issues.length === 0 ? 'healthy' : 'needs_attention';
@@ -181,6 +218,25 @@ router.post('/recalculate-balances', authenticateToken, requireRole(['admin']), 
     await transaction.rollback();
     console.error('Error recalculating balances:', error);
     res.status(500).json({ success: false, message: 'خطأ في إعادة حساب الأرصدة', error: error.message });
+  }
+});
+
+// POST /api/financial/install-triggers - تثبيت Triggers في قاعدة البيانات (إداري فقط)
+router.post('/install-triggers', authenticateToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const sqlPath = path.resolve(process.cwd(), 'server', 'database', 'triggers', 'account_balance_triggers.sql');
+    if (!fs.existsSync(sqlPath)) {
+      return res.status(404).json({ success: false, message: 'ملف SQL الخاص بالـTriggers غير موجود' });
+    }
+    const sqlContent = fs.readFileSync(sqlPath, 'utf8');
+    const statements = sqlContent.split(';').map(s => s.trim()).filter(Boolean);
+    for (const stmt of statements) {
+      await sequelize.query(stmt);
+    }
+    res.json({ success: true, message: 'تم تثبيت Triggers بنجاح', statementsExecuted: statements.length });
+  } catch (error) {
+    console.error('Error installing triggers:', error);
+    res.status(500).json({ success: false, message: 'فشل تثبيت Triggers', error: error.message });
   }
 });
 
