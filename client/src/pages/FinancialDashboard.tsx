@@ -312,6 +312,33 @@ const FinancialDashboard: React.FC = () => {
             </div>
           )}
 
+          {/* Invoices without journal entry */}
+          {health?.details?.invoicesWithoutJournalEntry && health.details.invoicesWithoutJournalEntry.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-gray-900 mb-2">فواتير بدون قيد محاسبي</p>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-600">
+                      <th className="py-2 pr-4 text-right">رقم الفاتورة</th>
+                      <th className="py-2 pr-4 text-right">التاريخ</th>
+                      <th className="py-2 pr-4 text-right">الإجمالي</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {health.details.invoicesWithoutJournalEntry.map((inv: any) => (
+                      <tr key={inv.id} className="border-t">
+                        <td className="py-2 pr-4">{inv.invoice_number}</td>
+                        <td className="py-2 pr-4">{inv.date}</td>
+                        <td className="py-2 pr-4">{Number(inv.total).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Issues list */}
           {health?.issues && health.issues.length > 0 && (
             <div className="mt-4">

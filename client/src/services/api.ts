@@ -385,6 +385,12 @@ export const financialAPI = {
     return response.data;
   },
 
+  // Invoices without journal entry
+  getInvoicesWithoutJournal: async (limit: number = 50) => {
+    const response = await api.get('/financial/invoices-without-journal', { params: { limit } });
+    return response.data;
+  },
+
   // Financial Summary
   getFinancialSummary: async () => {
     const response = await api.get('/financial/summary');
@@ -709,6 +715,16 @@ export const salesAPI = {
     } catch (e) {
       return { success: false, data: { statuses: {}, payments: {} } };
     }
+  },
+
+  // ETA Metrics and Top Delays
+  getShipmentsEtaMetrics: async () => {
+    const response = await api.get('/sales/shipments/eta-metrics');
+    return response.data;
+  },
+  getTopDelayedShipments: async (limit: number = 10) => {
+    const response = await api.get('/sales/shipments/top-delays', { params: { limit } });
+    return response.data;
   },
 
   // Analytics

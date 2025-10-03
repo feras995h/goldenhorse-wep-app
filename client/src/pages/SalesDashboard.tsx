@@ -69,7 +69,67 @@ const SalesDashboard: React.FC = () => {
   useEffect(() => {
     loadSalesData();
     loadShipmentsSummary();
+    loadEtaMetrics();
+    loadTopDelays();
   }, []);
+
+  const [etaMetrics, setEtaMetrics] = useState<{ delayedCount: number; avgDelayDays: number } | null>(null);
+  const [etaLoading, setEtaLoading] = useState(false);
+  const loadEtaMetrics = async () => {
+    try {
+      setEtaLoading(true);
+      const res = await salesAPI.getShipmentsEtaMetrics();
+      setEtaMetrics(res?.data || res);
+    } catch (e) {
+      // ignore
+    } finally {
+      setEtaLoading(false);
+    }
+  };
+
+  const [topDelays, setTopDelays] = useState<any[]>([]);
+  const [topDelaysLoading, setTopDelaysLoading] = useState(false);
+  const loadTopDelays = async () => {
+    try {
+      setTopDelaysLoading(true);
+      const res = await salesAPI.getTopDelayedShipments(10);
+      setTopDelays(res?.data || res || []);
+    } catch (e) {
+      setTopDelays([]);
+    } finally {
+      setTopDelaysLoading(false);
+    }
+  };
+    loadTopDelays();
+  }, []);
+
+  const [etaMetrics, setEtaMetrics] = useState<{ delayedCount: number; avgDelayDays: number } | null>(null);
+  const [etaLoading, setEtaLoading] = useState(false);
+  const loadEtaMetrics = async () => {
+    try {
+      setEtaLoading(true);
+      const res = await salesAPI.getShipmentsEtaMetrics();
+      setEtaMetrics(res?.data || res);
+    } catch (e) {
+      // ignore
+    } finally {
+      setEtaLoading(false);
+    }
+  };
+
+  const [topDelays, setTopDelays] = useState<any[]>([]);
+  const [topDelaysLoading, setTopDelaysLoading] = useState(false);
+  const loadTopDelays = async () => {
+    try {
+      setTopDelaysLoading(true);
+      const res = await salesAPI.getTopDelayedShipments(10);
+      setTopDelays(res?.data || res || []);
+    } catch (e) {
+      setTopDelays([]);
+    } finally {
+      setTopDelaysLoading(false);
+    }
+  };
 
   const [shipmentsSummary, setShipmentsSummary] = useState<{ statuses?: Record<string, number>, payments?: Record<string, number> } | null>(null);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
@@ -510,6 +570,134 @@ const SalesDashboard: React.FC = () => {
 
               {/* International Shipping KPIs */}
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 sm:p-6 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">مؤشرات الشحن الدولي</h4>
+                  <button onClick={() => { loadShipmentsSummary(); loadEtaMetrics(); loadTopDelays(); }} className="btn btn-secondary text-xs">تحديث</button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                  {[
+                    { key: 'pending', label: 'قيد الإعداد' },
+                    { key: 'in_transit', label: 'في الطريق' },
+                    { key: 'arrived', label: 'وصلت' },
+                    { key: 'customs_clearance', label: 'في الجمارك' },
+                    { key: 'cleared', label: 'مخلي' },
+                    { key: 'delivered', label: 'تم التسليم' }
+                  ].map((s) => (
+                    <div key={s.key} className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 text-center">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">{s.label}</p>
+                      <p className="text-lg sm:text-xl font-bold text-gray-900">
+                        {shipmentsLoading ? '...' : (shipmentsSummary?.statuses?.[s.key] ?? 0)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
+                  <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 text-center">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">الشحنات المتأخرة</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900">{etaLoading ? '...' : (etaMetrics?.delayedCount ?? 0)}</p>
+                  </div>
+                  <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 text-center">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">متوسط التأخير (أيام)</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900">{etaLoading ? '...' : (etaMetrics?.avgDelayDays ?? 0)}</p>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">أعلى الشحنات تأخيرًا</h5>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-xs sm:text-sm">
+                      <thead>
+                        <tr className="text-gray-600">
+                          <th className="py-2 pr-3 text-right">التتبع</th>
+                          <th className="py-2 pr-3 text-right">العميل</th>
+                          <th className="py-2 pr-3 text-right">ETA</th>
+                          <th className="py-2 pr-3 text-right">تاريخ التسليم</th>
+                          <th className="py-2 pr-3 text-right">التأخير (أيام)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(topDelaysLoading ? [] : topDelays).map((s: any) => (
+                          <tr key={s.id} className="border-t">
+                            <td className="py-2 pr-3">{s.trackingnumber || s.trackingNumber}</td>
+                            <td className="py-2 pr-3">{s.customername || s.customerName}</td>
+                            <td className="py-2 pr-3">{s.estimateddelivery || s.estimatedDelivery || '-'}</td>
+                            <td className="py-2 pr-3">{s.actualdeliverydate || s.actualDeliveryDate || '-'}</td>
+                            <td className="py-2 pr-3 font-semibold text-amber-700">{s.delay_days}</td>
+                          </tr>
+                        ))}
+                        {(!topDelaysLoading && topDelays.length === 0) && (
+                          <tr>
+                            <td className="py-3 pr-3 text-gray-500" colSpan={5}>لا توجد شحنات متأخرة</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">مؤشرات الشحن الدولي</h4>
+                  <button onClick={() => { loadShipmentsSummary(); loadEtaMetrics(); loadTopDelays(); }} className="btn btn-secondary text-xs">تحديث</button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                  {[
+                    { key: 'pending', label: 'قيد الإعداد' },
+                    { key: 'in_transit', label: 'في الطريق' },
+                    { key: 'arrived', label: 'وصلت' },
+                    { key: 'customs_clearance', label: 'في الجمارك' },
+                    { key: 'cleared', label: 'مخلي' },
+                    { key: 'delivered', label: 'تم التسليم' }
+                  ].map((s) => (
+                    <div key={s.key} className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 text-center">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">{s.label}</p>
+                      <p className="text-lg sm:text-xl font-bold text-gray-900">
+                        {shipmentsLoading ? '...' : (shipmentsSummary?.statuses?.[s.key] ?? 0)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
+                  <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 text-center">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">الشحنات المتأخرة</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900">{etaLoading ? '...' : (etaMetrics?.delayedCount ?? 0)}</p>
+                  </div>
+                  <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 text-center">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">متوسط التأخير (أيام)</p>
+                    <p className="text-lg sm:text-xl font-bold text-gray-900">{etaLoading ? '...' : (etaMetrics?.avgDelayDays ?? 0)}</p>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h5 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">أعلى الشحنات تأخيرًا</h5>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-xs sm:text-sm">
+                      <thead>
+                        <tr className="text-gray-600">
+                          <th className="py-2 pr-3 text-right">التتبع</th>
+                          <th className="py-2 pr-3 text-right">العميل</th>
+                          <th className="py-2 pr-3 text-right">ETA</th>
+                          <th className="py-2 pr-3 text-right">تاريخ التسليم</th>
+                          <th className="py-2 pr-3 text-right">التأخير (أيام)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(topDelaysLoading ? [] : topDelays).map((s: any) => (
+                          <tr key={s.id} className="border-t">
+                            <td className="py-2 pr-3">{s.trackingnumber || s.trackingNumber}</td>
+                            <td className="py-2 pr-3">{s.customername || s.customerName}</td>
+                            <td className="py-2 pr-3">{s.estimateddelivery || s.estimatedDelivery || '-'}</td>
+                            <td className="py-2 pr-3">{s.actualdeliverydate || s.actualDeliveryDate || '-'}</td>
+                            <td className="py-2 pr-3 font-semibold text-amber-700">{s.delay_days}</td>
+                          </tr>
+                        ))}
+                        {(!topDelaysLoading && topDelays.length === 0) && (
+                          <tr>
+                            <td className="py-3 pr-3 text-gray-500" colSpan={5}>لا توجد شحنات متأخرة</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
                 <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">مؤشرات الشحن الدولي</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                   {[

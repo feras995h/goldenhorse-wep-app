@@ -46,7 +46,7 @@ const sequelize = db;
 const likeOp = sequelize.getDialect && sequelize.getDialect() === 'sqlite' ? Op.like : Op.iLike;
 
 // ==================== SHIPMENTS SUMMARY (International shipping KPIs) ====================
-router.get('/shipments/summary', authenticateToken, requireSalesAccess, async (req, res) => {
+router.get('/shipments/summary', authenticateToken, requireSalesAccess, cache({ key: 'shipments_summary', ttl: 300 }), async (req, res) => {
   try {
     const statuses = ['pending','in_transit','arrived','customs_clearance','cleared','delivered'];
     const summary = {};
@@ -72,6 +72,70 @@ router.get('/shipments/summary', authenticateToken, requireSalesAccess, async (r
   } catch (error) {
     console.error('Error fetching shipments summary:', error);
     res.status(500).json({ success: false, message: 'خطأ في إحضار ملخص الشحنات' });
+  }
+});
+
+// ==================== ETA METRICS ====================
+router.get('/shipments/eta-metrics', authenticateToken, requireSalesAccess, async (req, res) => {
+  try {
+    // Delayed delivered shipments: actualDeliveryDate > estimatedDelivery
+    const [deliveredDelayed] = await sequelize.query(`
+      SELECT COUNT(*)::int AS count
+      FROM shipments
+      WHERE actualDeliveryDate IS NOT NULL
+        AND estimatedDelivery IS NOT NULL
+        AND actualDeliveryDate > estimatedDelivery
+    `);
+
+    // Overdue undelivered shipments: now > estimatedDelivery and not delivered
+    const [overdue] = await sequelize.query(`
+      SELECT COUNT(*)::int AS count
+      FROM shipments
+      WHERE actualDeliveryDate IS NULL
+        AND estimatedDelivery IS NOT NULL
+        AND estimatedDelivery < CURRENT_DATE
+    `);
+
+    // Average delay (days) for delivered shipments only
+    const [avgDelayRows] = await sequelize.query(`
+      SELECT COALESCE(AVG(EXTRACT(DAY FROM (actualDeliveryDate - estimatedDelivery))), 0) AS avg_days
+      FROM shipments
+      WHERE actualDeliveryDate IS NOT NULL
+        AND estimatedDelivery IS NOT NULL
+        AND actualDeliveryDate > estimatedDelivery
+    `);
+
+    const delayedCount = parseInt(deliveredDelayed?.[0]?.count || deliveredDelayed?.count || 0) + parseInt(overdue?.[0]?.count || overdue?.count || 0);
+    const avgDelayDays = parseFloat(avgDelayRows?.[0]?.avg_days || avgDelayRows?.avg_days || 0).toFixed(1);
+
+    res.json({ success: true, data: { delayedCount, avgDelayDays: Number(avgDelayDays) } });
+  } catch (error) {
+    console.error('Error computing ETA metrics:', error);
+    res.status(500).json({ success: false, message: 'خطأ في حساب مؤشرات ETA' });
+  }
+});
+
+// Top delayed shipments (limit 10)
+router.get('/shipments/top-delays', authenticateToken, requireSalesAccess, async (req, res) => {
+  try {
+    const limit = Math.max(1, Math.min(parseInt(req.query.limit) || 10, 50));
+    const [rows] = await sequelize.query(`
+      SELECT id, trackingNumber, customerName, estimatedDelivery, actualDeliveryDate,
+             CASE 
+               WHEN actualDeliveryDate IS NOT NULL AND estimatedDelivery IS NOT NULL AND actualDeliveryDate > estimatedDelivery THEN EXTRACT(DAY FROM (actualDeliveryDate - estimatedDelivery))
+               WHEN actualDeliveryDate IS NULL AND estimatedDelivery IS NOT NULL AND estimatedDelivery < CURRENT_DATE THEN EXTRACT(DAY FROM (CURRENT_DATE - estimatedDelivery))
+               ELSE 0
+             END AS delay_days
+      FROM shipments
+      WHERE (actualDeliveryDate IS NOT NULL AND estimatedDelivery IS NOT NULL AND actualDeliveryDate > estimatedDelivery)
+         OR (actualDeliveryDate IS NULL AND estimatedDelivery IS NOT NULL AND estimatedDelivery < CURRENT_DATE)
+      ORDER BY delay_days DESC NULLS LAST
+      LIMIT ${limit}
+    `);
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error('Error fetching top delayed shipments:', error);
+    res.status(500).json({ success: false, message: 'خطأ في جلب الشحنات المتأخرة' });
   }
 });
 

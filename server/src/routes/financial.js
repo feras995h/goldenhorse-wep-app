@@ -221,6 +221,25 @@ router.post('/recalculate-balances', authenticateToken, requireRole(['admin']), 
   }
 });
 
+// GET /api/financial/invoices-without-journal - إرجاع قائمة بأحدث الفواتير بدون قيد
+router.get('/invoices-without-journal', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const limit = Math.max(1, Math.min(parseInt(req.query.limit) || 50, 200));
+    const [rows] = await sequelize.query(`
+      SELECT si.id, si."invoiceNumber" AS invoice_number, si.date, si.totalAmount AS total
+      FROM sales_invoices si
+      LEFT JOIN journal_entries je ON je.description LIKE '%' || si."invoiceNumber" || '%'
+      WHERE je.id IS NULL
+      ORDER BY si.date DESC
+      LIMIT ${limit}
+    `);
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error('Error fetching invoices without journal:', error);
+    res.status(500).json({ success: false, message: 'خطأ في جلب الفواتير بدون قيد' });
+  }
+});
+
 // POST /api/financial/install-triggers - تثبيت Triggers في قاعدة البيانات (إداري فقط)
 router.post('/install-triggers', authenticateToken, requireRole(['admin']), async (req, res) => {
   try {
