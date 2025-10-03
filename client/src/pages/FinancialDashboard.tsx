@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFinancialData } from '../contexts/FinancialDataContext';
 import FinancialSummary from '../components/Financial/FinancialSummary';
+import { financialAPI } from '../services/api';
 import {
   FileText,
   Users,
@@ -28,6 +29,40 @@ const FinancialDashboard: React.FC = () => {
   const loading = financialLoading;
   const error = financialError;
   const handleRefresh = refreshFinancialData;
+
+  // System Health state
+  const [health, setHealth] = useState<any>(null);
+  const [healthLoading, setHealthLoading] = useState<boolean>(false);
+  const [healthError, setHealthError] = useState<string | null>(null);
+
+  const loadHealth = async () => {
+    try {
+      setHealthLoading(true);
+      setHealthError(null);
+      const res = await financialAPI.getSystemHealth();
+      setHealth(res?.data || res);
+    } catch (e: any) {
+      setHealthError(e?.message || 'تعذر تحميل صحة النظام');
+    } finally {
+      setHealthLoading(false);
+    }
+  };
+
+  const recalcBalances = async () => {
+    try {
+      setHealthLoading(true);
+      await financialAPI.recalculateBalances();
+      await loadHealth();
+    } catch (e: any) {
+      setHealthError(e?.message || 'تعذر إعادة احتساب الأرصدة');
+    } finally {
+      setHealthLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHealth();
+  }, []);
 
   const quickActions = [
     {
@@ -160,6 +195,68 @@ const FinancialDashboard: React.FC = () => {
           <RefreshCw className="h-4 w-4" />
           تحديث البيانات
         </button>
+      </div>
+
+      {/* System Health Card */}
+      <div className="grid grid-cols-1 gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">صحة النظام المحاسبي</h2>
+              <p className="text-sm text-gray-500">فحص سريع لتكامل الحسابات والقيود</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={loadHealth}
+                disabled={healthLoading}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-lg flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${healthLoading ? 'animate-spin' : ''}`} /> تحديث الحالة
+              </button>
+              <button
+                onClick={recalcBalances}
+                disabled={healthLoading}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg"
+              >
+                إعادة احتساب الأرصدة
+              </button>
+            </div>
+          </div>
+
+          {healthError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded mb-4">
+              <p className="text-red-600">{healthError}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500">الحالة العامة</p>
+              <p className={`text-lg font-semibold ${health?.healthy ? 'text-green-600' : 'text-amber-600'}`}>
+                {healthLoading ? '...' : (health?.status === 'healthy' ? 'جيدة' : 'تحتاج انتباه')}
+              </p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500">عدد الحسابات</p>
+              <p className="text-lg font-semibold text-gray-900">{healthLoading ? '...' : (health?.checks?.chartOfAccounts?.totalAccounts ?? '-')}</p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500">حسابات بها عدم تطابق</p>
+              <p className="text-lg font-semibold text-gray-900">{healthLoading ? '...' : (health?.checks?.balanceIntegrity?.accountsWithMismatch ?? '-')}</p>
+            </div>
+          </div>
+
+          {health?.issues && health.issues.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-gray-900 mb-2">المشاكل:</p>
+              <ul className="list-disc list-inside text-sm text-gray-700">
+                {health.issues.map((i: string, idx: number) => (
+                  <li key={idx}>{i}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Financial Summary Component */}

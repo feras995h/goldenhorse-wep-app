@@ -15,6 +15,7 @@ import balanceUpdateService from '../services/balanceUpdateService.js';
 import advancedFixedAssetManager from '../utils/advancedFixedAssetManager.js';
 import cacheService from '../services/cacheService.js';
 import realtimeService from '../services/realtimeService.js';
+import DepreciationService from '../services/depreciationService.js';
 import { cache, invalidateCache } from '../middleware/cacheMiddleware.js';
 
 import AccountingAuditService from '../services/AccountingAuditService.js';
@@ -2399,6 +2400,26 @@ router.post('/payments/:id/cancel', authenticateToken, requireFinancialAccess, a
   } catch (error) {
     console.error('Error cancelling payment:', error);
     res.status(500).json({ message: 'خطأ في إلغاء الدفعة' });
+  }
+});
+
+// ==================== FIXED ASSETS / DEPRECIATION ====================
+
+// POST /api/financial/fixed-assets/depreciation/run - تشغيل الإهلاك الشهري يدويًا
+router.post('/fixed-assets/depreciation/run', authenticateToken, requireFinancialAccess, async (req, res) => {
+  try {
+    const { date } = req.body || {};
+    const result = await DepreciationService.calculateMonthlyDepreciation({
+      date: date ? new Date(date) : new Date(),
+      createdBy: req.user?.id || 'system'
+    });
+    if (!result.success) {
+      return res.status(500).json({ success: false, message: 'فشل تشغيل الإهلاك', error: result.error });
+    }
+    res.json({ success: true, message: 'تم تشغيل الإهلاك الشهري', createdEntries: result.createdEntries });
+  } catch (error) {
+    console.error('Error running depreciation:', error);
+    res.status(500).json({ success: false, message: 'خطأ في تشغيل الإهلاك', error: error.message });
   }
 });
 

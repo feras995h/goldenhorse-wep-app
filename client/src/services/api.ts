@@ -364,6 +364,22 @@ export const financialAPI = {
     return response.data;
   },
 
+  // System Health
+  getSystemHealth: async () => {
+    const response = await api.get('/financial/system-health');
+    return response.data;
+  },
+
+  recalculateBalances: async () => {
+    const response = await api.post('/financial/recalculate-balances');
+    return response.data;
+  },
+
+  runMonthlyDepreciation: async (date?: string) => {
+    const response = await api.post('/financial/fixed-assets/depreciation/run', { date });
+    return response.data;
+  },
+
   // Financial Summary
   getFinancialSummary: async () => {
     const response = await api.get('/financial/summary');

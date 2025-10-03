@@ -534,13 +534,29 @@ const FixedAssetsManagement: React.FC = () => {
             <p className="text-sm sm:text-base text-gray-600">تسجيل الأصول وحساب الاستهلاك</p>
           </div>
         </div>
-        <button
-          onClick={() => openModal('create')}
-          className="btn-primary flex items-center justify-center w-full sm:w-auto"
-        >
-          <Plus className="h-5 w-5 ml-2" />
-          أصل جديد
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button
+            onClick={async () => {
+              try {
+                const res = await financialAPI.runMonthlyDepreciation();
+                alert(res?.message || 'تم تشغيل الإهلاك الشهري');
+                loadAssets();
+              } catch (e) {
+                alert('تعذر تشغيل الإهلاك الشهري');
+              }
+            }}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
+          >
+            تشغيل الإهلاك الشهري
+          </button>
+          <button
+            onClick={() => openModal('create')}
+            className="btn-primary flex items-center justify-center"
+          >
+            <Plus className="h-5 w-5 ml-2" />
+            أصل جديد
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters */}
