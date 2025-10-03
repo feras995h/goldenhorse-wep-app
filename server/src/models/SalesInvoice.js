@@ -290,6 +290,23 @@ export default (sequelize) => {
           const paidAmount = parseFloat(invoice.paidAmount || 0);
           invoice.outstandingAmount = Math.max(0, total - paidAmount);
         }
+      },
+      // Automatically create accounting entries after creation
+      afterCreate: async (invoice, options) => {
+        // Automatic and strict: fail the creation if accounting fails
+        await invoice.createJournalEntryAndAffectBalance(invoice.createdBy, { transaction: options.transaction });
+      },
+      // If status changes to a posted/paid-like state and no JE exists, ensure creation
+      afterUpdate: async (invoice, options) => {
+        const postedStates = ['sent', 'paid'];
+        if ((invoice.changed('status') && postedStates.includes(invoice.status)) || invoice.changed('total')) {
+          try {
+            await invoice.createJournalEntryAndAffectBalance(invoice.createdBy, { transaction: options.transaction });
+          } catch (e) {
+            // Strict policy: rethrow to prevent silent inconsistency
+            throw e;
+          }
+        }
       }
     }
   });

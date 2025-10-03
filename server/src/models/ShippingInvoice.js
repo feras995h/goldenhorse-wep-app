@@ -82,6 +82,20 @@ export default (sequelize) => {
         // You can add custom logic here if needed
       }
     }
+  ,
+    hooks: {
+      afterCreate: async (invoice, options) => {
+        if (!invoice.totalAmount || parseFloat(invoice.totalAmount) <= 0) return;
+        // Attempt to auto-post accounting entries; fail if accounting engine fails to avoid silent inconsistencies
+        try {
+          if (typeof invoice.createJournalEntryAndAffectBalance === 'function') {
+            await invoice.createJournalEntryAndAffectBalance(invoice.createdBy, { transaction: options.transaction });
+          }
+        } catch (e) {
+          throw e;
+        }
+      }
+    }
   });
 
   // Associations
@@ -94,6 +108,82 @@ export default (sequelize) => {
       foreignKey: { name: 'shipmentId', field: 'shipment_id' }, 
       as: 'shipment' 
     });
+  };
+
+  // Instance method to create JE for shipping invoice
+  ShippingInvoice.prototype.createJournalEntryAndAffectBalance = async function(userId, options = {}) {
+    const t = options.transaction || await sequelize.transaction();
+    const shouldCommit = !options.transaction;
+    try {
+      const { JournalEntry, JournalEntryDetail, GLEntry, AccountMapping, Account } = sequelize.models;
+      const total = parseFloat(this.totalAmount || 0);
+      if (!userId) throw new Error('User ID is required for shipping invoice accounting');
+      if (!this.invoiceNumber) throw new Error('Invoice number is required');
+      if (total <= 0) throw new Error('Shipping invoice total must be greater than zero');
+
+      // Avoid duplicates
+      const existing = await JournalEntry.findOne({ where: { type: 'shipping_invoice', voucherNo: this.invoiceNumber }, transaction: t });
+      if (existing) return existing;
+
+      const mapping = await AccountMapping.getActiveMapping();
+      if (!mapping) throw new Error('No active account mapping');
+      const arId = mapping.accountsReceivableAccount;
+      const revenueId = mapping.shippingRevenueAccount || mapping.salesRevenueAccount;
+      if (!arId || !revenueId) throw new Error('Missing AR or Revenue account in mapping');
+
+      // Validate accounts
+      const accounts = await Account.findAll({ where: { id: { [sequelize.Sequelize.Op.in]: [arId, revenueId] } }, transaction: t });
+      if (accounts.length < 2) throw new Error('Required accounts not found for shipping invoice');
+
+      // Create JE
+      const last = await JournalEntry.findOne({ order: [['createdAt', 'DESC']], transaction: t });
+      const next = last ? (parseInt(String(last.entryNumber).replace(/\D/g, ''), 10) + 1) : 1;
+      const entryNumber = `SHN-${String(next).padStart(6, '0')}`;
+      const je = await JournalEntry.create({
+        entryNumber,
+        date: this.date || new Date(),
+        description: `Shipping Invoice ${this.invoiceNumber}`,
+        totalDebit: total,
+        totalCredit: total,
+        status: 'posted',
+        type: 'shipping_invoice',
+        voucherType: 'Shipping Invoice',
+        voucherNo: this.invoiceNumber,
+        currency: 'LYD',
+        exchangeRate: 1,
+        createdBy: userId
+      }, { transaction: t });
+
+      const details = [
+        { journalEntryId: je.id, accountId: arId, debit: total, credit: 0, description: `AR - Shipping ${this.invoiceNumber}` },
+        { journalEntryId: je.id, accountId: revenueId, debit: 0, credit: total, description: `Revenue - Shipping ${this.invoiceNumber}` }
+      ];
+      await JournalEntryDetail.bulkCreate(details, { transaction: t });
+
+      // GL
+      const gls = details.map(d => ({
+        postingDate: this.date || new Date(), accountId: d.accountId, debit: d.debit, credit: d.credit,
+        voucherType: 'Shipping Invoice', voucherNo: this.invoiceNumber, journalEntryId: je.id, remarks: d.description,
+        currency: 'LYD', exchangeRate: 1, createdBy: userId, postingStatus: 'posted'
+      }));
+      await GLEntry.bulkCreate(gls, { transaction: t });
+
+      // Update balances
+      for (const d of details) {
+        const acc = await Account.findByPk(d.accountId, { transaction: t, lock: t.LOCK.UPDATE });
+        if (!acc) throw new Error(`Account not found: ${d.accountId}`);
+        const cur = parseFloat(acc.balance || 0);
+        const newBal = acc.nature === 'debit' ? (cur + d.debit - d.credit) : (cur + d.credit - d.debit);
+        await acc.update({ balance: newBal, updatedAt: new Date() }, { transaction: t });
+      }
+
+      await this.update({ journalEntryId: je.id }, { transaction: t });
+      if (shouldCommit) await t.commit();
+      return je;
+    } catch (error) {
+      if (shouldCommit) await t.rollback();
+      throw error;
+    }
   };
 
   return ShippingInvoice;
