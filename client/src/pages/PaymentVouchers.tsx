@@ -15,7 +15,7 @@ import {
 import DataTable from '../components/Financial/DataTable';
 import SearchFilter from '../components/Financial/SearchFilter';
 import Modal from '../components/Financial/Modal';
-import { salesAPI } from '../services/api';
+import { financialAPI, salesAPI } from '../services/api';
 
 // Types
 interface Supplier {
@@ -77,25 +77,19 @@ const PaymentVouchers: React.FC = () => {
   const fetchVouchers = async () => {
     try {
       setLoading(true);
-      const response = await salesAPI.get('/vouchers/payments', {
-        params: {
-          page: 1,
-          limit: 100,
-          search: searchTerm,
-          status: statusFilter,
-          dateFrom,
-          dateTo
-        }
+      const resp = await financialAPI.getPaymentVouchers({
+        page: 1,
+        limit: 100,
+        search: searchTerm || undefined,
+        status: statusFilter || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
       });
-      
-      if (response.data.success) {
-        setVouchers(response.data.data);
-      } else {
-        setError('فشل في جلب إيصالات الصرف');
-      }
+      const list = resp?.data || resp?.items || resp || [];
+      setVouchers(Array.isArray(list) ? list : []);
     } catch (err: any) {
       console.error('Error fetching payment vouchers:', err);
-      setError(err.response?.data?.message || 'خطأ في جلب إيصالات الصرف');
+      setError(err?.message || 'خطأ في جلب إيصالات الصرف');
     } finally {
       setLoading(false);
     }
@@ -103,23 +97,24 @@ const PaymentVouchers: React.FC = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await salesAPI.get('/suppliers');
-      if (response.data.success) {
-        setSuppliers(response.data.data);
-      }
+      const res = await salesAPI.getCustomers({ limit: 100, type: 'company' as any });
+      const data = (res as any)?.data || res || [];
+      const mapped: Supplier[] = (Array.isArray(data) ? data : []).map((c: any) => ({ id: c.id, name: c.name, phone: c.phone, email: c.email }));
+      setSuppliers(mapped);
     } catch (err) {
       console.error('Error fetching suppliers:', err);
+      setSuppliers([]);
     }
   };
 
   const fetchAccounts = async () => {
     try {
-      const response = await salesAPI.get('/financial/accounts');
-      if (response.data.success) {
-        setAccounts(response.data.data);
-      }
+      const resp = await financialAPI.getAccounts({ limit: 100 });
+      const list = (resp as any)?.data || resp || [];
+      setAccounts(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error('Error fetching accounts:', err);
+      setAccounts([]);
     }
   };
 
@@ -131,55 +126,46 @@ const PaymentVouchers: React.FC = () => {
 
   const handleCreateVoucher = async (voucherData: Partial<PaymentVoucher>) => {
     try {
-      const response = await salesAPI.post('/vouchers/payments', voucherData);
-      if (response.data.success) {
-        await fetchVouchers();
-        setShowCreateModal(false);
-      } else {
-        setError('فشل في إنشاء إيصال الصرف');
-      }
+      await financialAPI.createPaymentVoucher(voucherData);
+      await fetchVouchers();
+      setShowCreateModal(false);
     } catch (err: any) {
       console.error('Error creating payment voucher:', err);
-      setError(err.response?.data?.message || 'خطأ في إنشاء إيصال الصرف');
+      setError(err?.message || 'خطأ في إنشاء إيصال الصرف');
     }
   };
 
   const handleEditVoucher = async (voucherData: Partial<PaymentVoucher>) => {
     if (!editingVoucher) return;
-    
     try {
-      const response = await salesAPI.put(`/vouchers/payments/${editingVoucher.id}`, voucherData);
-      if (response.data.success) {
-        await fetchVouchers();
-        setEditingVoucher(null);
-      } else {
-        setError('فشل في تحديث إيصال الصرف');
-      }
+      await financialAPI.updatePaymentVoucher(editingVoucher.id, voucherData);
+      await fetchVouchers();
+      setEditingVoucher(null);
     } catch (err: any) {
       console.error('Error updating payment voucher:', err);
-      setError(err.response?.data?.message || 'خطأ في تحديث إيصال الصرف');
+      setError(err?.message || 'خطأ في تحديث إيصال الصرف');
     }
   };
 
   const columns = [
     {
       key: 'voucherNumber',
-      label: 'رقم الإيصال',
-      render: (voucher: PaymentVoucher) => (
+      title: 'رقم الإيصال',
+      render: (_: any, voucher: PaymentVoucher) => (
         <span className="font-medium text-blue-600">{voucher.voucherNumber}</span>
       )
     },
     {
       key: 'date',
-      label: 'التاريخ',
-      render: (voucher: PaymentVoucher) => (
+      title: 'التاريخ',
+      render: (_: any, voucher: PaymentVoucher) => (
         <span>{new Date(voucher.date).toLocaleDateString('ar-LY')}</span>
       )
     },
     {
       key: 'beneficiaryName',
-      label: 'المستفيد',
-      render: (voucher: PaymentVoucher) => (
+      title: 'المستفيد',
+      render: (_: any, voucher: PaymentVoucher) => (
         <div>
           <div className="font-medium">{voucher.beneficiaryName}</div>
           {voucher.supplier && (
@@ -190,8 +176,8 @@ const PaymentVouchers: React.FC = () => {
     },
     {
       key: 'amount',
-      label: 'المبلغ',
-      render: (voucher: PaymentVoucher) => (
+      title: 'المبلغ',
+      render: (_: any, voucher: PaymentVoucher) => (
         <div className="text-right">
           <div className="font-medium">
             {voucher.amount.toLocaleString('ar-LY')} {voucher.currency}
@@ -206,8 +192,8 @@ const PaymentVouchers: React.FC = () => {
     },
     {
       key: 'paymentMethod',
-      label: 'طريقة الدفع',
-      render: (voucher: PaymentVoucher) => {
+      title: 'طريقة الدفع',
+      render: (_: any, voucher: PaymentVoucher) => {
         const methods = {
           cash: 'كاش',
           bank_transfer: 'حوالة بنكية',
@@ -219,8 +205,8 @@ const PaymentVouchers: React.FC = () => {
     },
     {
       key: 'purpose',
-      label: 'الغرض',
-      render: (voucher: PaymentVoucher) => {
+      title: 'الغرض',
+      render: (_: any, voucher: PaymentVoucher) => {
         const purposes = {
           invoice_payment: 'دفع فاتورة',
           operating_expense: 'مصاريف تشغيلية',
@@ -240,8 +226,8 @@ const PaymentVouchers: React.FC = () => {
     },
     {
       key: 'status',
-      label: 'الحالة',
-      render: (voucher: PaymentVoucher) => {
+      title: 'الحالة',
+      render: (_: any, voucher: PaymentVoucher) => {
         const statusColors = {
           draft: 'bg-gray-100 text-gray-800',
           posted: 'bg-green-100 text-green-800',
@@ -261,8 +247,8 @@ const PaymentVouchers: React.FC = () => {
     },
     {
       key: 'actions',
-      label: 'الإجراءات',
-      render: (voucher: PaymentVoucher) => (
+      title: 'الإجراءات',
+      render: (_: any, voucher: PaymentVoucher) => (
         <div className="flex space-x-2">
           <button
             onClick={() => setEditingVoucher(voucher)}
@@ -301,9 +287,9 @@ const PaymentVouchers: React.FC = () => {
         </div>
 
         <SearchFilter
-          searchTerm={searchTerm}
+          searchValue={searchTerm}
           onSearchChange={setSearchTerm}
-          onRefresh={fetchVouchers}
+          onClearFilters={() => { setStatusFilter(''); }}
           filters={[
             {
               key: 'status',
@@ -316,20 +302,6 @@ const PaymentVouchers: React.FC = () => {
                 { value: 'posted', label: 'مرحل' },
                 { value: 'cancelled', label: 'ملغي' }
               ]
-            },
-            {
-              key: 'dateFrom',
-              label: 'من تاريخ',
-              value: dateFrom,
-              onChange: setDateFrom,
-              type: 'date'
-            },
-            {
-              key: 'dateTo',
-              label: 'إلى تاريخ',
-              value: dateTo,
-              onChange: setDateTo,
-              type: 'date'
             }
           ]}
         />
@@ -345,7 +317,7 @@ const PaymentVouchers: React.FC = () => {
         data={vouchers}
         columns={columns}
         loading={loading}
-        emptyMessage="لا توجد إيصالات صرف"
+        emptyText="لا توجد إيصالات صرف"
       />
 
       {/* Create/Edit Modal */}
@@ -395,12 +367,24 @@ const PaymentVoucherForm: React.FC<PaymentVoucherFormProps> = ({
   mode,
   voucher
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{ 
+    supplierId: string;
+    beneficiaryName: string;
+    purpose: PaymentVoucher['purpose'];
+    purposeDescription: string;
+    paymentMethod: PaymentVoucher['paymentMethod'];
+    currency: string;
+    amount: number;
+    debitAccountId: string;
+    creditAccountId: string;
+    exchangeRate: number;
+    notes: string;
+  }>({
     supplierId: '',
     beneficiaryName: '',
-    purpose: 'invoice_payment' as const,
+    purpose: 'invoice_payment',
     purposeDescription: '',
-    paymentMethod: 'cash' as const,
+    paymentMethod: 'cash',
     currency: 'LYD',
     amount: 0,
     debitAccountId: '',
@@ -448,7 +432,7 @@ const PaymentVoucherForm: React.FC<PaymentVoucherFormProps> = ({
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} title={mode === 'create' ? 'إيصال صرف جديد' : 'تعديل إيصال الصرف'}>
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">

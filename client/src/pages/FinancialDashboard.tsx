@@ -282,68 +282,69 @@ const FinancialDashboard: React.FC = () => {
           )}
 
           {currentPeriod && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">السنة</p>
-                <p className="text-lg font-semibold text-gray-900">{currentPeriod.year}</p>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">السنة</p>
+                  <p className="text-lg font-semibold text-gray-900">{currentPeriod.year}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">الشهر</p>
+                  <p className="text-lg font-semibold text-gray-900">{currentPeriod.month}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">البداية</p>
+                  <p className="text-lg font-semibold text-gray-900">{currentPeriod.startDate}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">النهاية</p>
+                  <p className="text-lg font-semibold text-gray-900">{currentPeriod.endDate}</p>
+                </div>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">الشهر</p>
-                <p className="text-lg font-semibold text-gray-900">{currentPeriod.month}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">البداية</p>
-                <p className="text-lg font-semibold text-gray-900">{currentPeriod.startDate}</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">النهاية</p>
-                <p className="text-lg font-semibold text-gray-900">{currentPeriod.endDate}</p>
-              </div>
-            </div>
 
-            {/* Period actions */}
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              {currentPeriod.status === 'open' && (
-                <button
-                  onClick={async () => {
-                    try {
-                      setPeriodLoading(true);
-                      await financialAPI.closeAccountingPeriod(currentPeriod.id, true);
-                      showToast('success', 'تم إقفال الفترة بنجاح');
-                      await loadCurrentPeriod();
-                    } catch (e: any) {
-                      showToast('error', 'فشل إقفال الفترة', e?.message);
-                    } finally {
-                      setPeriodLoading(false);
-                    }
-                  }}
-                  disabled={periodLoading}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg"
-                >
-                  إقفال الفترة
-                </button>
-              )}
-              {currentPeriod.status === 'closed' && (
-                <button
-                  onClick={async () => {
-                    try {
-                      setPeriodLoading(true);
-                      await financialAPI.archiveAccountingPeriod(currentPeriod.id);
-                      showToast('success', 'تم أرشفة الفترة بنجاح');
-                      await loadCurrentPeriod();
-                    } catch (e: any) {
-                      showToast('error', 'فشل أرشفة الفترة', e?.message);
-                    } finally {
-                      setPeriodLoading(false);
-                    }
-                  }}
-                  disabled={periodLoading}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg"
-                >
-                  أرشفة الفترة
-                </button>
-              )}
-            </div>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                {currentPeriod.status === 'open' && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        setPeriodLoading(true);
+                        await financialAPI.closeAccountingPeriod(currentPeriod.id, true);
+                        showToast('success', 'تم إقفال الفترة بنجاح');
+                        await loadCurrentPeriod();
+                      } catch (e: any) {
+                        showToast('error', 'فشل إقفال الفترة', e?.message);
+                      } finally {
+                        setPeriodLoading(false);
+                      }
+                    }}
+                    disabled={periodLoading}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg"
+                  >
+                    إقفال الفترة
+                  </button>
+                )}
+                {currentPeriod.status === 'closed' && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        setPeriodLoading(true);
+                        await financialAPI.archiveAccountingPeriod(currentPeriod.id);
+                        showToast('success', 'تم أرشفة الفترة بنجاح');
+                        await loadCurrentPeriod();
+                      } catch (e: any) {
+                        showToast('error', 'فشل أرشفة الفترة', e?.message);
+                      } finally {
+                        setPeriodLoading(false);
+                      }
+                    }}
+                    disabled={periodLoading}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg"
+                  >
+                    أرشفة الفترة
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>

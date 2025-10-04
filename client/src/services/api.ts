@@ -460,13 +460,29 @@ export const financialAPI = {
   },
 
   // Vouchers
+  getReceiptVouchers: async (params?: { page?: number; limit?: number; search?: string; status?: string; dateFrom?: string; dateTo?: string }) => {
+    const response = await api.get('/financial/vouchers/receipts', { params });
+    return response.data;
+  },
   createReceiptVoucher: async (data: any) => {
     const response = await api.post('/financial/vouchers/receipts', data);
     return response.data;
   },
+  updateReceiptVoucher: async (id: string, data: any) => {
+    const response = await api.put(`/financial/vouchers/receipts/${id}`, data);
+    return response.data;
+  },
 
+  getPaymentVouchers: async (params?: { page?: number; limit?: number; search?: string; status?: string; dateFrom?: string; dateTo?: string }) => {
+    const response = await api.get('/financial/vouchers/payments', { params });
+    return response.data;
+  },
   createPaymentVoucher: async (data: any) => {
     const response = await api.post('/financial/vouchers/payments', data);
+    return response.data;
+  },
+  updatePaymentVoucher: async (id: string, data: any) => {
+    const response = await api.put(`/financial/vouchers/payments/${id}`, data);
     return response.data;
   },
 

@@ -15,7 +15,7 @@ import {
 import DataTable from '../components/Financial/DataTable';
 import SearchFilter from '../components/Financial/SearchFilter';
 import Modal from '../components/Financial/Modal';
-import { salesAPI } from '../services/api';
+import { financialAPI, salesAPI } from '../services/api';
 
 // Types
 interface Customer {
@@ -80,25 +80,19 @@ const ReceiptVouchers: React.FC = () => {
   const fetchVouchers = async () => {
     try {
       setLoading(true);
-      const response = await salesAPI.get('/vouchers/receipts', {
-        params: {
-          page: 1,
-          limit: 100,
-          search: searchTerm,
-          status: statusFilter,
-          dateFrom,
-          dateTo
-        }
+      const resp = await financialAPI.getReceiptVouchers({
+        page: 1,
+        limit: 100,
+        search: searchTerm || undefined,
+        status: statusFilter || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
       });
-      
-      if (response.data.success) {
-        setVouchers(response.data.data);
-      } else {
-        setError('فشل في جلب إيصالات القبض');
-      }
+      const list = resp?.data || resp?.items || resp || [];
+      setVouchers(Array.isArray(list) ? list : []);
     } catch (err: any) {
       console.error('Error fetching receipt vouchers:', err);
-      setError(err.response?.data?.message || 'خطأ في جلب إيصالات القبض');
+      setError(err?.message || 'خطأ في جلب إيصالات القبض');
     } finally {
       setLoading(false);
     }
@@ -106,23 +100,23 @@ const ReceiptVouchers: React.FC = () => {
 
   const fetchCustomers = async () => {
     try {
-      const response = await salesAPI.get('/sales/customers');
-      if (response.data.success) {
-        setCustomers(response.data.data);
-      }
+      const res = await salesAPI.getCustomers({ limit: 100 });
+      const data = (res as any)?.data || res || [];
+      setCustomers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching customers:', err);
+      setCustomers([]);
     }
   };
 
   const fetchAccounts = async () => {
     try {
-      const response = await salesAPI.get('/financial/accounts');
-      if (response.data.success) {
-        setAccounts(response.data.data);
-      }
+      const resp = await financialAPI.getAccounts({ limit: 100 });
+      const list = (resp as any)?.data || resp || [];
+      setAccounts(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error('Error fetching accounts:', err);
+      setAccounts([]);
     }
   };
 
@@ -134,55 +128,46 @@ const ReceiptVouchers: React.FC = () => {
 
   const handleCreateVoucher = async (voucherData: Partial<ReceiptVoucher>) => {
     try {
-      const response = await salesAPI.post('/vouchers/receipts', voucherData);
-      if (response.data.success) {
-        await fetchVouchers();
-        setShowCreateModal(false);
-      } else {
-        setError('فشل في إنشاء إيصال القبض');
-      }
+      await financialAPI.createReceiptVoucher(voucherData);
+      await fetchVouchers();
+      setShowCreateModal(false);
     } catch (err: any) {
       console.error('Error creating receipt voucher:', err);
-      setError(err.response?.data?.message || 'خطأ في إنشاء إيصال القبض');
+      setError(err?.message || 'خطأ في إنشاء إيصال القبض');
     }
   };
 
   const handleEditVoucher = async (voucherData: Partial<ReceiptVoucher>) => {
     if (!editingVoucher) return;
-    
     try {
-      const response = await salesAPI.put(`/vouchers/receipts/${editingVoucher.id}`, voucherData);
-      if (response.data.success) {
-        await fetchVouchers();
-        setEditingVoucher(null);
-      } else {
-        setError('فشل في تحديث إيصال القبض');
-      }
+      await financialAPI.updateReceiptVoucher(editingVoucher.id, voucherData);
+      await fetchVouchers();
+      setEditingVoucher(null);
     } catch (err: any) {
       console.error('Error updating receipt voucher:', err);
-      setError(err.response?.data?.message || 'خطأ في تحديث إيصال القبض');
+      setError(err?.message || 'خطأ في تحديث إيصال القبض');
     }
   };
 
   const columns = [
     {
       key: 'voucherNumber',
-      label: 'رقم الإيصال',
-      render: (voucher: ReceiptVoucher) => (
+      title: 'رقم الإيصال',
+      render: (_: any, voucher: ReceiptVoucher) => (
         <span className="font-medium text-blue-600">{voucher.voucherNumber}</span>
       )
     },
     {
       key: 'date',
-      label: 'التاريخ',
-      render: (voucher: ReceiptVoucher) => (
+      title: 'التاريخ',
+      render: (_: any, voucher: ReceiptVoucher) => (
         <span>{new Date(voucher.date).toLocaleDateString('ar-LY')}</span>
       )
     },
     {
       key: 'customerName',
-      label: 'اسم العميل',
-      render: (voucher: ReceiptVoucher) => (
+      title: 'اسم العميل',
+      render: (_: any, voucher: ReceiptVoucher) => (
         <div>
           <div className="font-medium">{voucher.customerName}</div>
           {voucher.customer && (
@@ -193,8 +178,8 @@ const ReceiptVouchers: React.FC = () => {
     },
     {
       key: 'amount',
-      label: 'المبلغ',
-      render: (voucher: ReceiptVoucher) => (
+      title: 'المبلغ',
+      render: (_: any, voucher: ReceiptVoucher) => (
         <div className="text-right">
           <div className="font-medium">
             {voucher.amount.toLocaleString('ar-LY')} {voucher.currency}
@@ -209,8 +194,8 @@ const ReceiptVouchers: React.FC = () => {
     },
     {
       key: 'paymentMethod',
-      label: 'طريقة الدفع',
-      render: (voucher: ReceiptVoucher) => {
+      title: 'طريقة الدفع',
+      render: (_: any, voucher: ReceiptVoucher) => {
         const methods = {
           cash: 'كاش',
           bank_transfer: 'حوالة بنكية',
@@ -223,8 +208,8 @@ const ReceiptVouchers: React.FC = () => {
     },
     {
       key: 'purpose',
-      label: 'الغرض',
-      render: (voucher: ReceiptVoucher) => {
+      title: 'الغرض',
+      render: (_: any, voucher: ReceiptVoucher) => {
         const purposes = {
           invoice_payment: 'دفع فاتورة',
           advance_payment: 'دفعة مقدمة',
@@ -244,8 +229,8 @@ const ReceiptVouchers: React.FC = () => {
     },
     {
       key: 'status',
-      label: 'الحالة',
-      render: (voucher: ReceiptVoucher) => {
+      title: 'الحالة',
+      render: (_: any, voucher: ReceiptVoucher) => {
         const statusColors = {
           draft: 'bg-gray-100 text-gray-800',
           posted: 'bg-green-100 text-green-800',
@@ -265,8 +250,8 @@ const ReceiptVouchers: React.FC = () => {
     },
     {
       key: 'actions',
-      label: 'الإجراءات',
-      render: (voucher: ReceiptVoucher) => (
+      title: 'الإجراءات',
+      render: (_: any, voucher: ReceiptVoucher) => (
         <div className="flex space-x-2">
           <button
             onClick={() => setEditingVoucher(voucher)}
@@ -305,9 +290,9 @@ const ReceiptVouchers: React.FC = () => {
         </div>
 
         <SearchFilter
-          searchTerm={searchTerm}
+          searchValue={searchTerm}
           onSearchChange={setSearchTerm}
-          onRefresh={fetchVouchers}
+          onClearFilters={() => { setStatusFilter(''); }}
           filters={[
             {
               key: 'status',
@@ -320,20 +305,6 @@ const ReceiptVouchers: React.FC = () => {
                 { value: 'posted', label: 'مرحل' },
                 { value: 'cancelled', label: 'ملغي' }
               ]
-            },
-            {
-              key: 'dateFrom',
-              label: 'من تاريخ',
-              value: dateFrom,
-              onChange: setDateFrom,
-              type: 'date'
-            },
-            {
-              key: 'dateTo',
-              label: 'إلى تاريخ',
-              value: dateTo,
-              onChange: setDateTo,
-              type: 'date'
             }
           ]}
         />
@@ -349,7 +320,7 @@ const ReceiptVouchers: React.FC = () => {
         data={vouchers}
         columns={columns}
         loading={loading}
-        emptyMessage="لا توجد إيصالات قبض"
+        emptyText="لا توجد إيصالات قبض"
       />
 
       {/* Create/Edit Modal */}
@@ -399,14 +370,27 @@ const ReceiptVoucherForm: React.FC<ReceiptVoucherFormProps> = ({
   mode,
   voucher
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    customerId: string;
+    customerName: string;
+    shipmentId: string;
+    paymentMethod: ReceiptVoucher['paymentMethod'];
+    currency: string;
+    amount: number;
+    purpose: ReceiptVoucher['purpose'];
+    purposeDescription: string;
+    debitAccountId: string;
+    creditAccountId: string;
+    exchangeRate: number;
+    notes: string;
+  }>({
     customerId: '',
     customerName: '',
     shipmentId: '',
-    paymentMethod: 'cash' as const,
+    paymentMethod: 'cash',
     currency: 'LYD',
     amount: 0,
-    purpose: 'invoice_payment' as const,
+    purpose: 'invoice_payment',
     purposeDescription: '',
     debitAccountId: '',
     creditAccountId: '',
@@ -454,7 +438,7 @@ const ReceiptVoucherForm: React.FC<ReceiptVoucherFormProps> = ({
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} title={mode === 'create' ? 'إيصال قبض جديد' : 'تعديل إيصال القبض'}>
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">
