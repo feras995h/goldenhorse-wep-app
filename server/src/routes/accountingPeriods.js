@@ -4,10 +4,10 @@
 
 import express from 'express';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
-import db from '../config/database.cjs';
+import models from '../models/index.js';
 
 const router = express.Router();
-const { AccountingPeriod, User } = db;
+const { AccountingPeriod, User } = models;
 
 /**
  * GET /api/accounting-periods

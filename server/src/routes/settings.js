@@ -320,61 +320,71 @@ router.get('/logo/:filename', async (req, res) => {
 
 // GET /api/settings/logo - Serve current logo from database
 router.get('/logo', async (req, res) => {
+  // Helper function to return default logo
+  const returnDefaultLogo = () => {
+    const defaultLogo = `<svg width="200" height="80" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#B8860B;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect width="200" height="80" fill="url(#goldGradient)" rx="10"/>
+      <text x="100" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2C3E50" text-anchor="middle">Golden Horse</text>
+      <text x="100" y="50" font-family="Arial, sans-serif" font-size="12" fill="#34495E" text-anchor="middle">Shipping Services</text>
+      <text x="100" y="65" font-family="Arial, sans-serif" font-size="8" fill="#7F8C8D" text-anchor="middle">خدمات الشحن الذهبية</text>
+    </svg>`;
+
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.send(defaultLogo);
+  };
+
   try {
     console.log('📁 Current logo request');
 
-    // Use imported sequelize
-    
-    // Get current logo from database
-    const [logoResults] = await sequelize.query(`
-      SELECT filename, original_name, mimetype, size, data, upload_date
-      FROM company_logo 
-      ORDER BY upload_date DESC 
-      LIMIT 1;
-    `);
+    // Try to get current logo from database
+    try {
+      const [logoResults] = await sequelize.query(`
+        SELECT filename, original_name, mimetype, size, data, upload_date
+        FROM company_logo 
+        ORDER BY upload_date DESC 
+        LIMIT 1;
+      `);
 
-    if (logoResults.length === 0) {
-      console.log('❌ No logo found in database');
-      
-      // Return default logo
-      const defaultLogo = `<svg width="200" height="80" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#B8860B;stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <rect width="200" height="80" fill="url(#goldGradient)" rx="10"/>
-        <text x="100" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2C3E50" text-anchor="middle">Golden Horse</text>
-        <text x="100" y="50" font-family="Arial, sans-serif" font-size="12" fill="#34495E" text-anchor="middle">Shipping Services</text>
-        <text x="100" y="65" font-family="Arial, sans-serif" font-size="8" fill="#7F8C8D" text-anchor="middle">خدمات الشحن الذهبية</text>
-      </svg>`;
+      if (logoResults.length === 0) {
+        console.log('ℹ️ No logo found in database, returning default');
+        return returnDefaultLogo();
+      }
 
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-      return res.send(defaultLogo);
+      const logo = logoResults[0];
+      console.log('✅ Current logo found:', logo.filename);
+
+      // Set CORS headers
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+
+      // Set appropriate headers
+      res.setHeader('Content-Type', logo.mimetype);
+      res.setHeader('Content-Length', logo.data.length);
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.setHeader('Last-Modified', new Date(logo.upload_date).toUTCString());
+
+      // Send the logo data
+      return res.send(logo.data);
+    } catch (dbError) {
+      // Database error (table doesn't exist, query error, etc.)
+      console.warn('⚠️ Database error fetching logo:', dbError.message);
+      console.log('ℹ️ Returning default logo instead');
+      return returnDefaultLogo();
     }
 
-    const logo = logoResults[0];
-    console.log('✅ Current logo found:', logo.filename);
-
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-
-    // Set appropriate headers
-    res.setHeader('Content-Type', logo.mimetype);
-    res.setHeader('Content-Length', logo.data.length);
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
-    res.setHeader('Last-Modified', new Date(logo.upload_date).toUTCString());
-
-    // Send the logo data
-    res.send(logo.data);
-
   } catch (error) {
-    console.error('❌ Error serving current logo:', error);
-    res.status(500).json({ message: 'Error serving logo' });
+    console.error('❌ Error serving logo:', error);
+    // Even if there's an error, return the default logo instead of 500
+    return returnDefaultLogo();
   }
 });
 
