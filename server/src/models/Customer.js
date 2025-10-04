@@ -164,12 +164,13 @@ export default (sequelize) => {
           let customersParentAccount;
           
           if (customer.customerType === 'foreign') {
-            // Look for foreign customers account first
+            // Prefer dot-style receivables parent or name-based match
             customersParentAccount = await Account.findOne({
               where: {
                 [Op.or]: [
-                  { code: '1202' }, // Foreign customers receivables
-                  { name: { [Op.like]: '%عملاء أجانب%' } },
+                  { code: '1.2.1' },
+                  { name: { [Op.like]: '%ذمم العملاء%' } },
+                  { name: { [Op.like]: '%عملاء%' } },
                   { name: { [Op.like]: '%foreign customers%' } }
                 ],
                 type: 'asset'
@@ -179,17 +180,16 @@ export default (sequelize) => {
           }
           
           if (!customersParentAccount) {
-            // Fallback to main receivables account
+            // Fallback to main receivables account (dot-style)
             customersParentAccount = await Account.findOne({
               where: {
                 [Op.or]: [
-                  { code: '1201' }, // Main accounts receivable
+                  { code: '1.2.1' },
                   { name: { [Op.like]: '%ذمم العملاء%' } },
                   { name: { [Op.like]: '%عملاء%' } },
                   { name: { [Op.like]: '%receivable%' } }
                 ],
-                type: 'asset',
-                isGroup: true
+                type: 'asset'
               },
               transaction: options.transaction
             });

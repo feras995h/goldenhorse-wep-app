@@ -81,6 +81,7 @@ import cacheManager from './utils/cacheManager.js';
 import webSocketService from './services/websocketService.js';
 import balanceUpdateService from './services/balanceUpdateService.js';
 import AccountingInitializer from './utils/accountingInitializer.js';
+import depreciationScheduler from './utils/depreciationScheduler.js';
 
 // Load environment variables from the correct path (only if not in test mode)
 // In test mode, environment variables are already loaded at the top of the file

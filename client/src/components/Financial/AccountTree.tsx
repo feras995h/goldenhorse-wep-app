@@ -93,7 +93,7 @@ const AccountTree: React.FC<AccountTreeProps> = ({ accounts, onAccountSelect }) 
   const getAccountTypeLabel = (type: string) => {
     const types = {
       asset: 'أصول',
-      liability: 'خصوم',
+      liability: 'التزامات',
       equity: 'حقوق ملكية',
       revenue: 'إيرادات',
       expense: 'مصروفات'

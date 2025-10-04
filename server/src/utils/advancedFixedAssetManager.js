@@ -77,15 +77,15 @@ class AdvancedFixedAssetManager {
    * Create accumulated depreciation account
    */
   async createAccumulatedDepreciationAccount(fixedAsset, categoryAccount, transaction) {
-    // Find or create accumulated depreciation parent account (1.2.5)
+    // Find or create accumulated depreciation parent account (1.3.5 under Fixed Assets)
     let accDepParent = await Account.findOne({
-      where: { code: '1.2.5' }
+      where: { code: '1.3.5' }
     });
     
     if (!accDepParent) {
       // Create accumulated depreciation parent
       const fixedAssetsParent = await Account.findOne({
-        where: { code: '1.2' }
+        where: { code: '1.3' }
       });
       
       accDepParent = await Account.create({

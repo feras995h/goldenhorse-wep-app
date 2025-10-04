@@ -7,13 +7,13 @@ class DepreciationService {
    * Calculate monthly depreciation for all active fixed assets and create journal entries.
    * This is a scaffold; adjust account mapping and posting logic as needed.
    */
-  static async calculateMonthlyDepreciation({ date = new Date(), createdBy = 'system' } = {}) {
+  static async calculateMonthlyDepreciation({ date = new Date(), createdBy = null } = {}) {
     const t = await sequelize.transaction();
     try {
       const postingDate = new Date(date);
 
       // Fetch active assets with required fields
-      const assets = await FixedAsset.findAll({ where: { isActive: true } });
+      const assets = await FixedAsset.findAll({ where: { status: 'active' } });
       if (!assets || assets.length === 0) {
         await t.commit();
         return { success: true, message: 'No active assets found', createdEntries: 0 };
@@ -25,26 +25,38 @@ class DepreciationService {
         // Basic straight-line: monthly = (cost - salvage) / usefulLifeMonths
         const cost = Number(asset.purchaseCost || asset.cost || 0);
         const salvage = Number(asset.salvageValue || 0);
-        const usefulLifeMonths = Number(asset.usefulLifeMonths || 0) || 60; // default 5 years
+        const lifeYears = Number(asset.usefulLife || 0);
+        const usefulLifeMonths = lifeYears > 0 ? lifeYears * 12 : 60; // default 5 years
         const monthly = Math.max(0, (cost - salvage) / usefulLifeMonths);
         if (!isFinite(monthly) || monthly <= 0) continue;
 
-        // Determine accounts — customize to your chart
-        // Expect these IDs to be configured on asset or via mapping
-        const expenseAccountId = asset.expenseAccountId || null;
-        const accumulatedAccountId = asset.accumulatedDepAccountId || null;
+        // Determine accounts from DB-linked columns (model may not define them)
+        const [accRow] = await sequelize.query(
+          'SELECT "depreciationExpenseAccountId" as depExp, "accumulatedDepreciationAccountId" as accDep FROM fixed_assets WHERE id = :id',
+          { replacements: { id: asset.id }, type: sequelize.QueryTypes.SELECT }
+        );
+        const expenseAccountId = accRow?.depExp || null;
+        const accumulatedAccountId = accRow?.accDep || null;
         if (!expenseAccountId || !accumulatedAccountId) continue;
 
         // Create Journal Entry
+        const assetKey = asset.assetNumber || (asset.id || '').slice(0,6);
+        const ym = postingDate.toISOString().slice(0,7);
+        const entryNo = `DEP-${ym}-${assetKey}`;
+
+        // Skip if already posted
+        const existing = await GLEntry.count({ where: { voucherType: 'Depreciation', voucherNo: entryNo, isCancelled: false } });
+        if (existing > 0) continue;
+
         const je = await JournalEntry.create({
-          entryNumber: `DEP-${postingDate.toISOString().slice(0,10)}-${asset.id.slice(0,6)}`,
+          entryNumber: entryNo,
           date: postingDate,
           description: `Monthly depreciation for asset ${asset.name || asset.code || asset.id}`,
           totalDebit: monthly,
           totalCredit: monthly,
           status: 'posted',
           type: 'depreciation',
-          createdBy
+          createdBy: createdBy || 'system'
         }, { transaction: t });
 
         // Details: Dr Expense, Cr Accumulated Depreciation
@@ -72,7 +84,7 @@ class DepreciationService {
             debit: monthly,
             credit: 0,
             voucherType: 'Depreciation',
-            voucherNo: je.entryNumber,
+            voucherNo: entryNo,
             journalEntryId: je.id,
             remarks: 'Depreciation expense',
             currency: 'LYD',
@@ -85,7 +97,7 @@ class DepreciationService {
             debit: 0,
             credit: monthly,
             voucherType: 'Depreciation',
-            voucherNo: je.entryNumber,
+            voucherNo: entryNo,
             journalEntryId: je.id,
             remarks: 'Accumulated depreciation',
             currency: 'LYD',

@@ -5770,39 +5770,72 @@ router.get('/fixed-assets/categories', authenticateToken, requireFinancialAccess
       });
     }
     
-    // Find all sub-groups under Fixed Assets (like 1.2.1, 1.2.2, etc.)
-    const subGroups = await Account.findAll({
+    // Try immediate child groups under Fixed Assets as categories
+    const immediateGroups = await Account.findAll({
       where: {
         parentId: fixedAssetsParent.id,
         type: 'asset',
         isActive: true,
         isGroup: true
       },
-      attributes: ['id']
-    });
-    
-    console.log(`🔍 Found ${subGroups.length} sub-groups under Fixed Assets`);
-    
-    // Find categories under these sub-groups (non-group accounts)
-    const categories = await Account.findAll({
-      where: {
-        parentId: {
-          [Op.in]: subGroups.map(group => group.id)
-        },
-        type: 'asset',
-        isActive: true,
-        isGroup: false
-      },
       attributes: ['id', 'code', 'name', 'nameEn', 'type', 'level', 'parentId'],
       order: [['code', 'ASC']]
     });
 
-    console.log(`✅ Found ${categories.length} fixed asset categories (under Fixed Assets)`);
+    let categories = immediateGroups;
+    console.log(`🔍 Immediate child groups under Fixed Assets: ${immediateGroups.length}`);
+
+    if (!categories || categories.length === 0) {
+      // Fallback: find leaf categories under any sub-groups
+      const subGroups = await Account.findAll({
+        where: {
+          parentId: fixedAssetsParent.id,
+          type: 'asset',
+          isActive: true,
+          isGroup: true
+        },
+        attributes: ['id']
+      });
+
+      console.log(`🔍 Found ${subGroups.length} sub-groups under Fixed Assets`);
+
+      categories = await Account.findAll({
+        where: {
+          parentId: {
+            [Op.in]: subGroups.map(group => group.id)
+          },
+          type: 'asset',
+          isActive: true,
+          isGroup: false
+        },
+        attributes: ['id', 'code', 'name', 'nameEn', 'type', 'level', 'parentId'],
+        order: [['code', 'ASC']]
+      });
+    }
+
+    // Secondary fallback: older structure under 1.2
+    if (!categories || categories.length === 0) {
+      const oldParent = await Account.findOne({ where: { code: '1.2', type: 'asset' } });
+      if (oldParent) {
+        categories = await Account.findAll({
+          where: {
+            parentId: oldParent.id,
+            type: 'asset',
+            isActive: true,
+            isGroup: true
+          },
+          attributes: ['id', 'code', 'name', 'nameEn', 'type', 'level', 'parentId'],
+          order: [['code', 'ASC']]
+        });
+      }
+    }
+
+    console.log(`✅ Found ${categories?.length || 0} fixed asset categories`);
     // Return consistent response format with data property
     res.json({
       success: true,
-      data: categories,
-      total: categories.length
+      data: categories || [],
+      total: categories?.length || 0
     });
   } catch (error) {
     console.error('❌ Error fetching fixed asset categories:', error);
@@ -6193,6 +6226,70 @@ router.post('/fixed-assets/:id/post-depreciation', authenticateToken, requireFin
       message: 'حدث خطأ أثناء ترحيل قيد الإهلاك',
       error: process.env.NODE_ENV === 'development' ? error.message : 'خطأ داخلي في الخادم'
     });
+  }
+});
+
+// POST /api/financial/fixed-assets/run-monthly-depreciation - Run due depreciation for all assets (admin only)
+router.post('/fixed-assets/run-monthly-depreciation', authenticateToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const { asOfDate } = req.body || {};
+
+    // Prefer DB-side batch to ensure consistency
+    const [pending] = await sequelize.query(`
+      SELECT id
+      FROM depreciation_schedules
+      WHERE status = 'pending'
+        AND "scheduleDate" <= COALESCE(:asOfDate::date, CURRENT_DATE)
+      ORDER BY "scheduleDate" ASC
+    `, {
+      replacements: { asOfDate: asOfDate ? String(asOfDate).slice(0,10) : null },
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    const rows = Array.isArray(pending) ? pending : (pending ? [pending] : []);
+    if (rows.length === 0) {
+      return res.json({ success: true, posted: 0, message: 'لا توجد قيود إهلاك مستحقة' });
+    }
+
+    let posted = 0;
+    const journalEntries = [];
+
+    // Run in a transaction per-batch for resilience
+    const t = await sequelize.transaction();
+    try {
+      for (const row of rows) {
+        const scheduleId = row.id || row?.schedule_id;
+        const [result] = await sequelize.query(
+          'SELECT create_depreciation_entry(:scheduleId, :userId) AS journal_entry_id',
+          {
+            replacements: { scheduleId, userId: req.user?.id || 'system' },
+            type: sequelize.QueryTypes.SELECT,
+            transaction: t
+          }
+        );
+        if (result?.journal_entry_id) {
+          journalEntries.push(result.journal_entry_id);
+        }
+        posted += 1;
+      }
+      await t.commit();
+    } catch (e) {
+      await t.rollback();
+      throw e;
+    }
+
+    // Notify
+    try {
+      await realtimeService.notifyFinancialUpdate('depreciation_batch_created', {
+        posted,
+        journalEntries
+      });
+    } catch (_) {}
+
+    return res.json({ success: true, posted, journalEntries });
+  } catch (error) {
+    console.error('Error running monthly depreciation:', error);
+    res.status(500).json({ success: false, message: 'فشل تشغيل الإهلاك الشهري', error: error.message });
   }
 });
 
