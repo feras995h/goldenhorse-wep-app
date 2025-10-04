@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { Trees, Search, Filter, Download, Eye, Edit, Plus, ChevronDown, Shield, Trash2, Settings } from 'lucide-react';
 import { financialAPI } from '../services/api';
 import AccountTree from '../components/Financial/AccountTree';
@@ -13,6 +14,9 @@ const ChartOfAccounts: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [onlyNonZero, setOnlyNonZero] = useState(false);
+  const { user } = useAuth();
+  const role = user?.role;
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'create'>('view');
@@ -43,7 +47,7 @@ const ChartOfAccounts: React.FC = () => {
 
   useEffect(() => {
     filterAccounts();
-  }, [accounts, searchValue, typeFilter]);
+  }, [accounts, searchValue, typeFilter, onlyNonZero]);
 
   const loadAccounts = async () => {
     try {
@@ -124,6 +128,11 @@ const ChartOfAccounts: React.FC = () => {
     // Apply type filter
     if (typeFilter) {
       filtered = filtered.filter(account => account.type === typeFilter);
+    }
+
+    // Filter non-zero balances if required
+    if (onlyNonZero) {
+      filtered = filtered.filter(account => parseFloat((account as any).balance || 0) !== 0);
     }
 
     setFilteredAccounts(filtered);
@@ -481,26 +490,30 @@ const ChartOfAccounts: React.FC = () => {
                 <Download className="h-4 w-4 ml-2" />
                 تصدير
               </button>
-              <button
-                onClick={handleCreateAccount}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
-              >
-                <Plus className="h-4 w-4 ml-2" />
-                إضافة حساب جديد
-              </button>
-              <a
-                href="/financial/accounts-management"
-                className="inline-flex items-center justify-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                <Settings className="h-4 w-4 ml-2" />
-                إدارة متقدمة
-              </a>
+              {(role === 'admin' || role === 'financial') && (
+                <button
+                  onClick={handleCreateAccount}
+                  className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-golden-600 hover:bg-golden-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-golden-500"
+                >
+                  <Plus className="h-4 w-4 ml-2" />
+                  إضافة حساب جديد
+                </button>
+              )}
             </div>
           </div>
         </div>
 
         {/* Search and Filters */}
         <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm text-gray-600">
+              {onlyNonZero ? 'عرض الحسابات ذات الأرصدة فقط' : 'عرض جميع الحسابات'}
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={onlyNonZero} onChange={(e) => setOnlyNonZero(e.target.checked)} />
+              إظهار الأرصدة غير الصفرية فقط
+            </label>
+          </div>
           <SearchFilter
             searchValue={searchValue}
             onSearchChange={setSearchValue}
@@ -648,20 +661,24 @@ const ChartOfAccounts: React.FC = () => {
               <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse">
                 {!selectedAccount.isSystemAccount && (
                   <>
-                    <button
-                      onClick={() => handleEditAccount(selectedAccount)}
-                      className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      <Edit className="h-4 w-4 ml-2" />
-                      تعديل
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAccount(selectedAccount)}
-                      className="inline-flex items-center justify-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4 ml-2" />
-                      حذف
-                    </button>
+                    {(role === 'admin' || role === 'financial') && (
+                      <button
+                        onClick={() => handleEditAccount(selectedAccount)}
+                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      >
+                        <Edit className="h-4 w-4 ml-2" />
+                        تعديل
+                      </button>
+                    )}
+                    {(role === 'admin' || role === 'financial') && (
+                      <button
+                        onClick={() => handleDeleteAccount(selectedAccount)}
+                        className="inline-flex items-center justify-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 ml-2" />
+                        حذف
+                      </button>
+                    )}
                   </>
                 )}
                 <button

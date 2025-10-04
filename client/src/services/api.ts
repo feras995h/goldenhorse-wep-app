@@ -112,6 +112,12 @@ export const financialAPI = {
     return response.data;
   },
 
+  // Force delete account (admin only)
+  forceDeleteAccount: async (id: string) => {
+    const response = await api.delete(`/financial/accounts/${id}/force-delete`);
+    return response.data;
+  },
+
 
   // Accounts Autocomplete
   getAccountsAutocomplete: async (params?: { search?: string; limit?: number }) => {
@@ -423,6 +429,16 @@ export const financialAPI = {
   // Financial Summary
   getFinancialSummary: async () => {
     const response = await api.get('/financial/summary');
+    return response.data;
+  },
+
+  // Invoice required accounts helpers
+  checkInvoiceAccounts: async () => {
+    const response = await api.get('/financial/check-invoice-accounts');
+    return response.data;
+  },
+  autoCreateInvoiceAccounts: async () => {
+    const response = await api.post('/financial/auto-create-invoice-accounts');
     return response.data;
   },
 

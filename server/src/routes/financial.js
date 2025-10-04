@@ -19,6 +19,7 @@ import DepreciationService from '../services/depreciationService.js';
 import { cache, invalidateCache } from '../middleware/cacheMiddleware.js';
 
 import AccountingAuditService from '../services/AccountingAuditService.js';
+import AccountingHealthMonitor from '../services/accountingHealthMonitor.js';
 
 // Import fixed asset helpers
 import { generateHierarchicalAssetNumber, createFixedAssetAccounts, ensureFixedAssetsStructure } from '../utils/fixedAssetHelpers.js';
@@ -498,6 +499,8 @@ router.put('/accounts/:id', authenticateToken, requireFinancialAccess, async (re
       return res.status(404).json({ message: 'الحساب غير موجود' });
     }
 
+    const preUpdate = account.toJSON();
+
     // Derive rootType and reportType from type field if type is being updated
     let updateData = {
       ...req.body,
@@ -525,6 +528,33 @@ router.put('/accounts/:id', authenticateToken, requireFinancialAccess, async (re
 
     await account.update(updateData);
 
+    // Run quick post-operation health check (logged only)
+    try {
+      const health = await AccountingHealthMonitor.performComprehensiveHealthCheck();
+      if (health.issues?.length) {
+        console.warn(`⚠️ Post-update health check found ${health.issues.length} issue(s). Overall: ${health.overallHealth}`);
+      }
+    } catch (e) {
+      console.warn('Health check failed after account update:', e.message);
+    }
+
+    // Audit log
+    try {
+      await models.AuditLog.logAction({
+        tableName: 'accounts',
+        recordId: account.id,
+        action: 'UPDATE',
+        userId: req.user.id,
+        oldValues: preUpdate,
+        newValues: account.toJSON(),
+        description: `تم تحديث الحساب ${account.code} - ${account.name}`,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent') || null
+      });
+    } catch (e) {
+      console.warn('Audit log failed (UPDATE account):', e.message);
+    }
+
     res.json(account);
   } catch (error) {
     console.error('Error updating account:', error);
@@ -542,6 +572,7 @@ router.delete('/accounts/:id', authenticateToken, requireFinancialAccess, asyncH
         message: 'الحساب غير موجود'
       });
     }
+    const preDelete = account.toJSON();
 
     // Check if account has children
     const childrenCount = await Account.count({ where: { parentId: req.params.id } });
@@ -573,9 +604,37 @@ router.delete('/accounts/:id', authenticateToken, requireFinancialAccess, asyncH
     // Delete account
     await account.destroy();
 
+    // Run quick post-operation health check (logged only)
+    try {
+      const health = await AccountingHealthMonitor.performComprehensiveHealthCheck();
+      if (health.issues?.length) {
+        console.warn(`⚠️ Post-delete health check found ${health.issues.length} issue(s). Overall: ${health.overallHealth}`);
+      }
+    } catch (e) {
+      console.warn('Health check failed after account delete:', e.message);
+    }
+
+    // Audit log
+    try {
+      await models.AuditLog.logAction({
+        tableName: 'accounts',
+        recordId: preDelete.id,
+        action: 'DELETE',
+        userId: req.user.id,
+        oldValues: preDelete,
+        newValues: null,
+        description: `تم حذف الحساب ${preDelete.code} - ${preDelete.name}`,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent') || null,
+        severity: 'HIGH'
+      });
+    } catch (e) {
+      console.warn('Audit log failed (DELETE account):', e.message);
+    }
+
     res.json({
       success: true,
-      message: `تم حذف الحساب '${account.name}' بنجاح`
+      message: `تم حذف الحساب '${preDelete.name}' بنجاح`
     });
 
   } catch (error) {
@@ -589,7 +648,7 @@ router.delete('/accounts/:id', authenticateToken, requireFinancialAccess, asyncH
 }));
 
 // DELETE /api/financial/accounts/:id/force-delete - Force delete account (bypasses some validations)
-router.delete('/accounts/:id/force-delete', authenticateToken, requireFinancialAccess, asyncHandler(async (req, res) => {
+router.delete('/accounts/:id/force-delete', authenticateToken, requireRole(['admin']), asyncHandler(async (req, res) => {
   try {
     const account = await Account.findByPk(req.params.id);
     if (!account) {
@@ -614,6 +673,35 @@ router.delete('/accounts/:id/force-delete', authenticateToken, requireFinancialA
 
     // Now delete the account
     await account.destroy();
+
+    // Run quick post-operation health check (logged only)
+    try {
+      const health = await AccountingHealthMonitor.performComprehensiveHealthCheck();
+      if (health.issues?.length) {
+        console.warn(`⚠️ Post-force-delete health check found ${health.issues.length} issue(s). Overall: ${health.overallHealth}`);
+      }
+    } catch (e) {
+      console.warn('Health check failed after force delete:', e.message);
+    }
+
+    // Audit log (force delete)
+    try {
+      await models.AuditLog.logAction({
+        tableName: 'accounts',
+        recordId: account.id,
+        action: 'DELETE',
+        userId: req.user.id,
+        oldValues: null,
+        newValues: null,
+        description: `حذف قسري للحساب ${account.code} - ${account.name}`,
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent') || null,
+        severity: 'CRITICAL',
+        complianceFlags: ['FORCE_DELETE']
+      });
+    } catch (e) {
+      console.warn('Audit log failed (FORCE DELETE account):', e.message);
+    }
 
     res.json({
       success: true,
@@ -10180,6 +10268,33 @@ router.post('/auto-create-invoice-accounts', authenticateToken, requireFinancial
         createdBy: req.user.id
       });
       createdAccounts.push(account);
+
+      // Audit log for CREATE
+      try {
+        await models.AuditLog.logAction({
+          tableName: 'accounts',
+          recordId: account.id,
+          action: 'CREATE',
+          userId: req.user.id,
+          oldValues: null,
+          newValues: account.toJSON(),
+          description: `إنشاء حساب مطلوب للفواتير: ${account.code} - ${account.name}`,
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent') || null
+        });
+      } catch (e) {
+        console.warn('Audit log failed (CREATE invoice account):', e.message);
+      }
+    }
+
+    // Run quick post-operation health check (logged only)
+    try {
+      const health = await AccountingHealthMonitor.performComprehensiveHealthCheck();
+      if (health.issues?.length) {
+        console.warn(`⚠️ Post-auto-create health check found ${health.issues.length} issue(s). Overall: ${health.overallHealth}`);
+      }
+    } catch (e) {
+      console.warn('Health check failed after auto-create accounts:', e.message);
     }
 
     res.json({

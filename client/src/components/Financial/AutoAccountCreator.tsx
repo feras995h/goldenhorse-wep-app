@@ -125,20 +125,8 @@ const AutoAccountCreator: React.FC<AutoAccountCreatorProps> = ({
 
   const loadExistingAccounts = async () => {
     try {
-      const response = await fetch('/api/financial/check-invoice-accounts', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setExistingAccounts(data.existingAccounts || []);
-      } else {
-        console.error('Error loading accounts:', response.statusText);
-        setExistingAccounts([]);
-      }
+      const data = await (await import('../../services/api')).financialAPI.checkInvoiceAccounts();
+      setExistingAccounts(data.existingAccounts || []);
     } catch (error) {
       console.error('Error loading accounts:', error);
       setExistingAccounts([]);
@@ -150,47 +138,31 @@ const AutoAccountCreator: React.FC<AutoAccountCreatorProps> = ({
     setMessage(null);
 
     try {
-      const response = await fetch('/api/financial/auto-create-invoice-accounts', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const data = await (await import('../../services/api')).financialAPI.autoCreateInvoiceAccounts();
 
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.createdAccounts === 0) {
-          setMessage({
-            type: 'info',
-            text: data.message || 'جميع الحسابات المطلوبة موجودة بالفعل في دليل الحسابات'
-          });
-        } else {
-          setCreatedAccounts(data.accounts || []);
-          setMessage({
-            type: 'success',
-            text: data.message || `تم إنشاء ${data.createdAccounts} حساب جديد بنجاح في دليل الحسابات`
-          });
-
-          // إشعار المكون الأب
-          onAccountsCreated?.(data.accounts || []);
-
-          // إعادة تحميل الحسابات الموجودة
-          await loadExistingAccounts();
-        }
-      } else {
-        const errorData = await response.json();
+      if (data.createdAccounts === 0) {
         setMessage({
-          type: 'error',
-          text: errorData.message || 'حدث خطأ أثناء إنشاء الحسابات'
+          type: 'info',
+          text: data.message || 'جميع الحسابات المطلوبة موجودة بالفعل في دليل الحسابات'
         });
+      } else {
+        setCreatedAccounts(data.accounts || []);
+        setMessage({
+          type: 'success',
+          text: data.message || `تم إنشاء ${data.createdAccounts} حساب جديد بنجاح في دليل الحسابات`
+        });
+
+        // إشعار المكون الأب
+        onAccountsCreated?.(data.accounts || []);
+
+        // إعادة تحميل الحسابات الموجودة
+        await loadExistingAccounts();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating accounts:', error);
       setMessage({
         type: 'error',
-        text: 'حدث خطأ في الاتصال بالخادم'
+        text: error?.response?.data?.message || 'حدث خطأ في الاتصال بالخادم'
       });
     } finally {
       setLoading(false);

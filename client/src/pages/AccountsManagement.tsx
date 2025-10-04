@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Edit, AlertTriangle, Shield, Database, RefreshCw } from 'lucide-react';
+import { Trash2, Edit, AlertTriangle, Shield, Database, RefreshCw, Lock } from 'lucide-react';
 import { financialAPI } from '../services/api';
 import { Account } from '../types/financial';
+import { useAuth } from '../contexts/AuthContext';
 
 interface AccountsManagementProps {}
 
 const AccountsManagement: React.FC<AccountsManagementProps> = () => {
+  const { user } = useAuth();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
@@ -13,8 +15,10 @@ const AccountsManagement: React.FC<AccountsManagementProps> = () => {
   const [deleteMode, setDeleteMode] = useState<'normal' | 'force'>('normal');
 
   useEffect(() => {
-    loadAccounts();
-  }, []);
+    if (user?.role === 'admin') {
+      loadAccounts();
+    }
+  }, [user]);
 
   const loadAccounts = async () => {
     try {
@@ -28,6 +32,22 @@ const AccountsManagement: React.FC<AccountsManagementProps> = () => {
       setLoading(false);
     }
   };
+
+  if (user && user.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="bg-white border border-red-200 rounded-xl p-8 max-w-md text-center shadow-sm">
+          <Lock className="h-10 w-10 text-red-600 mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-red-700 mb-2">غير مصرح لك بالوصول</h2>
+          <p className="text-gray-600">هذه الصفحة متاحة لمدراء النظام فقط.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // سيقوم ProtectedRoute بإعادة التوجيه لتسجيل الدخول
+  }
 
   const handleDeleteAccount = async (account: Account, force = false) => {
     try {
@@ -74,18 +94,8 @@ const AccountsManagement: React.FC<AccountsManagementProps> = () => {
         // If regular delete fails, try to use a force delete endpoint
         console.warn('Regular delete failed, attempting force delete:', deleteError);
 
-        // Create a custom delete request that bypasses some validations
-        const response = await fetch(`/api/financial/accounts/${account.id}/force-delete`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Force delete failed: ${response.statusText}`);
-        }
+        // Use API wrapper for force delete
+        await financialAPI.forceDeleteAccount(account.id);
       }
     } catch (error) {
       throw error;

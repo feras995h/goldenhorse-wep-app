@@ -115,7 +115,11 @@ function App() {
                 <Route index element={<FinancialDashboard />} />
                 <Route path="accounts" element={<ChartOfAccounts />} />
                 <Route path="chart-of-accounts" element={<ChartOfAccounts />} />
-                <Route path="accounts-management" element={<AccountsManagement />} />
+                <Route path="accounts-management" element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <AccountsManagement />
+                  </ProtectedRoute>
+                } />
                 <Route path="account-statement" element={<AccountStatement />} />
                 <Route path="instant-reports" element={<InstantReports />} />
                 <Route path="journal" element={<JournalEntries />} />
