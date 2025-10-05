@@ -1,7 +1,4 @@
-'use strict';
-
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
+export const up = async (queryInterface, Sequelize) => {
     // Update status enum to include new values
     await queryInterface.changeColumn('invoices', 'status', {
       type: Sequelize.ENUM('draft', 'sent', 'paid', 'partially_paid', 'unpaid', 'overdue', 'cancelled'),
@@ -34,7 +31,7 @@ module.exports = {
     });
 
     await queryInterface.addColumn('invoices', 'createdBy', {
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: 'users',
@@ -53,9 +50,9 @@ module.exports = {
       SET outstandingAmount = total - paidAmount 
       WHERE outstandingAmount IS NULL OR outstandingAmount = 0
     `);
-  },
+};
 
-  down: async (queryInterface, Sequelize) => {
+export const down = async (queryInterface, Sequelize) => {
     // Remove indexes
     await queryInterface.removeIndex('invoices', ['outstandingAmount']);
     await queryInterface.removeIndex('invoices', ['accountId']);
@@ -73,5 +70,4 @@ module.exports = {
       type: Sequelize.ENUM('draft', 'sent', 'paid', 'overdue', 'cancelled'),
       defaultValue: 'draft'
     });
-  }
 };

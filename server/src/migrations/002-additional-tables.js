@@ -608,35 +608,69 @@ export async function up(queryInterface, Sequelize) {
     }
   });
 
-  // Add indexes
-  await queryInterface.addIndex('suppliers', ['code']);
-  await queryInterface.addIndex('suppliers', ['name']);
-  await queryInterface.addIndex('invoices', ['invoiceNumber']);
-  await queryInterface.addIndex('invoices', ['customerId']);
-  await queryInterface.addIndex('invoices', ['date']);
-  await queryInterface.addIndex('invoices', ['status']);
-  await queryInterface.addIndex('invoice_items', ['invoiceId']);
-  await queryInterface.addIndex('payments', ['paymentNumber']);
-  await queryInterface.addIndex('payments', ['customerId']);
-  await queryInterface.addIndex('payments', ['date']);
-  await queryInterface.addIndex('receipts', ['receiptNumber']);
-  await queryInterface.addIndex('receipts', ['supplierId']);
-  await queryInterface.addIndex('receipts', ['date']);
-  await queryInterface.addIndex('journal_entries', ['entryNumber']);
-  await queryInterface.addIndex('journal_entries', ['date']);
-  await queryInterface.addIndex('journal_entries', ['status']);
-  await queryInterface.addIndex('journal_entry_details', ['journalEntryId']);
-  await queryInterface.addIndex('journal_entry_details', ['accountId']);
-  await queryInterface.addIndex('payroll_entries', ['entryNumber']);
-  await queryInterface.addIndex('payroll_entries', ['employeeId']);
-  await queryInterface.addIndex('payroll_entries', ['date']);
-  await queryInterface.addIndex('employee_advances', ['advanceNumber']);
-  await queryInterface.addIndex('employee_advances', ['employeeId']);
-  await queryInterface.addIndex('employee_advances', ['date']);
-  await queryInterface.addIndex('fixed_assets', ['assetNumber']);
-  await queryInterface.addIndex('fixed_assets', ['name']);
-  await queryInterface.addIndex('fixed_assets', ['category']);
-  await queryInterface.addIndex('fixed_assets', ['status']);
+  // Add indexes safely (skip if existing or columns missing)
+  const indexExists = async (name) => {
+    const [rows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname = :name",
+      { replacements: { name } }
+    );
+    return rows.length > 0;
+  };
+
+  const columnExists = async (table, column) => {
+    const [rows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = :table AND column_name = :column",
+      { replacements: { table, column } }
+    );
+    return rows.length > 0;
+  };
+
+  const ensureIndex = async (table, columns, name) => {
+    const cols = Array.isArray(columns) ? columns : [String(columns)];
+    for (const col of cols) {
+      if (!(await columnExists(table, col))) return;
+    }
+    if (await indexExists(name)) return;
+    await queryInterface.addIndex(table, cols, { name });
+  };
+
+  await ensureIndex('suppliers', ['code'], 'suppliers_code');
+  await ensureIndex('suppliers', ['name'], 'suppliers_name');
+
+  await ensureIndex('invoices', ['invoiceNumber'], 'invoices_invoiceNumber');
+  await ensureIndex('invoices', ['customerId'], 'invoices_customerId');
+  await ensureIndex('invoices', ['date'], 'invoices_date');
+  await ensureIndex('invoices', ['status'], 'invoices_status');
+
+  await ensureIndex('invoice_items', ['invoiceId'], 'invoice_items_invoiceId');
+
+  await ensureIndex('payments', ['paymentNumber'], 'payments_paymentNumber');
+  await ensureIndex('payments', ['customerId'], 'payments_customerId');
+  await ensureIndex('payments', ['date'], 'payments_date');
+
+  await ensureIndex('receipts', ['receiptNumber'], 'receipts_receiptNumber');
+  await ensureIndex('receipts', ['supplierId'], 'receipts_supplierId');
+  await ensureIndex('receipts', ['date'], 'receipts_date');
+
+  await ensureIndex('journal_entries', ['entryNumber'], 'journal_entries_entryNumber');
+  await ensureIndex('journal_entries', ['date'], 'journal_entries_date');
+  await ensureIndex('journal_entries', ['status'], 'journal_entries_status');
+
+  await ensureIndex('journal_entry_details', ['journalEntryId'], 'journal_entry_details_journalEntryId');
+  await ensureIndex('journal_entry_details', ['accountId'], 'journal_entry_details_accountId');
+
+  await ensureIndex('payroll_entries', ['entryNumber'], 'payroll_entries_entryNumber');
+  await ensureIndex('payroll_entries', ['employeeId'], 'payroll_entries_employeeId');
+  await ensureIndex('payroll_entries', ['date'], 'payroll_entries_date');
+
+  await ensureIndex('employee_advances', ['advanceNumber'], 'employee_advances_advanceNumber');
+  await ensureIndex('employee_advances', ['employeeId'], 'employee_advances_employeeId');
+  await ensureIndex('employee_advances', ['date'], 'employee_advances_date');
+
+  await ensureIndex('fixed_assets', ['assetNumber'], 'fixed_assets_assetNumber');
+  await ensureIndex('fixed_assets', ['name'], 'fixed_assets_name');
+  await ensureIndex('fixed_assets', ['category'], 'fixed_assets_category');
+  await ensureIndex('fixed_assets', ['status'], 'fixed_assets_status');
 }
 
 export async function down(queryInterface, Sequelize) {

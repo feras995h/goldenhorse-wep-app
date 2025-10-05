@@ -1,7 +1,4 @@
-'use strict';
-
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
+export const up = async (queryInterface, Sequelize) => {
     await queryInterface.createTable('account_provisions', {
       id: {
         type: Sequelize.UUID,
@@ -88,7 +85,7 @@ module.exports = {
         allowNull: true
       },
       createdBy: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'users',
@@ -96,7 +93,7 @@ module.exports = {
         }
       },
       lastUpdatedBy: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: 'users',
@@ -126,9 +123,8 @@ module.exports = {
       unique: true,
       name: 'unique_account_provision_type'
     });
-  },
+};
 
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('account_provisions');
-  }
+export const down = async (queryInterface, Sequelize) => {
+  await queryInterface.dropTable('account_provisions');
 };

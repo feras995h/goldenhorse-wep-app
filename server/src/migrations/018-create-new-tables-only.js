@@ -1,7 +1,4 @@
-'use strict';
-
-module.exports = {
-  async up(queryInterface, Sequelize) {
+export const up = async (queryInterface, Sequelize) => {
     // Check if suppliers table exists
     const suppliersExists = await queryInterface.describeTable('suppliers').catch(() => null);
     if (!suppliersExists) {
@@ -78,7 +75,7 @@ module.exports = {
           allowNull: true
         },
         createdBy: {
-          type: Sequelize.UUID,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: 'users',
@@ -195,7 +192,7 @@ module.exports = {
           defaultValue: 'draft'
         },
         createdBy: {
-          type: Sequelize.UUID,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: 'users',
@@ -203,7 +200,7 @@ module.exports = {
           }
         },
         approvedBy: {
-          type: Sequelize.UUID,
+          type: Sequelize.INTEGER,
           allowNull: true,
           references: {
             model: 'users',
@@ -316,7 +313,7 @@ module.exports = {
           defaultValue: 'draft'
         },
         createdBy: {
-          type: Sequelize.UUID,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: 'users',
@@ -324,7 +321,7 @@ module.exports = {
           }
         },
         approvedBy: {
-          type: Sequelize.UUID,
+          type: Sequelize.INTEGER,
           allowNull: true,
           references: {
             model: 'users',
@@ -472,7 +469,7 @@ module.exports = {
           defaultValue: []
         },
         createdBy: {
-          type: Sequelize.UUID,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: 'users',
@@ -587,7 +584,7 @@ module.exports = {
           allowNull: true
         },
         createdBy: {
-          type: Sequelize.UUID,
+          type: Sequelize.INTEGER,
           allowNull: false,
           references: {
             model: 'users',
@@ -668,23 +665,22 @@ module.exports = {
     }
 
     console.log('🎉 All new tables and columns created successfully!');
-  },
+};
 
-  async down(queryInterface, Sequelize) {
-    // Drop tables in reverse order
-    await queryInterface.dropTable('warehouse');
-    await queryInterface.dropTable('purchase_invoices');
-    await queryInterface.dropTable('payment_vouchers');
-    await queryInterface.dropTable('receipt_vouchers');
-    await queryInterface.dropTable('suppliers');
+export const down = async (queryInterface, Sequelize) => {
+  // Drop tables in reverse order
+  await queryInterface.dropTable('warehouse');
+  await queryInterface.dropTable('purchase_invoices');
+  await queryInterface.dropTable('payment_vouchers');
+  await queryInterface.dropTable('receipt_vouchers');
+  await queryInterface.dropTable('suppliers');
 
-    // Remove added columns from sales_invoices
-    await queryInterface.removeColumn('sales_invoices', 'serviceDescription');
-    await queryInterface.removeColumn('sales_invoices', 'serviceDescriptionEn');
-    await queryInterface.removeColumn('sales_invoices', 'shipmentNumbers');
-    await queryInterface.removeColumn('sales_invoices', 'serviceType');
-    await queryInterface.removeColumn('sales_invoices', 'weight');
-    await queryInterface.removeColumn('sales_invoices', 'volume');
-    await queryInterface.removeColumn('sales_invoices', 'cbm');
-  }
+  // Remove added columns from sales_invoices
+  await queryInterface.removeColumn('sales_invoices', 'serviceDescription');
+  await queryInterface.removeColumn('sales_invoices', 'serviceDescriptionEn');
+  await queryInterface.removeColumn('sales_invoices', 'shipmentNumbers');
+  await queryInterface.removeColumn('sales_invoices', 'serviceType');
+  await queryInterface.removeColumn('sales_invoices', 'weight');
+  await queryInterface.removeColumn('sales_invoices', 'volume');
+  await queryInterface.removeColumn('sales_invoices', 'cbm');
 };

@@ -1,7 +1,4 @@
-'use strict';
-
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
+export const up = async (queryInterface, Sequelize) => {
     // Make customerId nullable
     await queryInterface.changeColumn('payments', 'customerId', {
       type: Sequelize.UUID,
@@ -50,7 +47,7 @@ module.exports = {
     });
 
     await queryInterface.addColumn('payments', 'createdBy', {
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: 'users',
@@ -64,7 +61,7 @@ module.exports = {
     });
 
     await queryInterface.addColumn('payments', 'completedBy', {
-      type: Sequelize.UUID,
+      type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: 'users',
@@ -78,9 +75,9 @@ module.exports = {
     await queryInterface.addIndex('payments', ['partyId']);
     await queryInterface.addIndex('payments', ['voucherType']);
     await queryInterface.addIndex('payments', ['createdBy']);
-  },
+};
 
-  down: async (queryInterface, Sequelize) => {
+export const down = async (queryInterface, Sequelize) => {
     // Remove indexes
     await queryInterface.removeIndex('payments', ['accountId']);
     await queryInterface.removeIndex('payments', ['partyType']);
@@ -108,5 +105,4 @@ module.exports = {
         key: 'id'
       }
     });
-  }
 };

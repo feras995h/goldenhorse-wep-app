@@ -608,35 +608,65 @@ export async function up(queryInterface, Sequelize) {
     }
   });
 
-  // Add all indexes
-  await queryInterface.addIndex('users', ['username']);
-  await queryInterface.addIndex('users', ['role']);
-  await queryInterface.addIndex('accounts', ['code']);
-  await queryInterface.addIndex('accounts', ['type']);
-  await queryInterface.addIndex('accounts', ['parentId']);
-  await queryInterface.addIndex('accounts', ['isActive']);
-  await queryInterface.addIndex('gl_entries', ['entryNumber']);
-  await queryInterface.addIndex('gl_entries', ['date']);
-  await queryInterface.addIndex('gl_entries', ['status']);
-  await queryInterface.addIndex('gl_entry_details', ['glEntryId']);
-  await queryInterface.addIndex('gl_entry_details', ['accountId']);
-  await queryInterface.addIndex('vouchers', ['voucherNumber']);
-  await queryInterface.addIndex('vouchers', ['type']);
-  await queryInterface.addIndex('vouchers', ['date']);
-  await queryInterface.addIndex('vouchers', ['isActive']);
-  await queryInterface.addIndex('customers', ['code']);
-  await queryInterface.addIndex('customers', ['name']);
-  await queryInterface.addIndex('customers', ['isActive']);
-  await queryInterface.addIndex('invoices', ['invoiceNumber']);
-  await queryInterface.addIndex('invoices', ['customerId']);
-  await queryInterface.addIndex('invoices', ['date']);
-  await queryInterface.addIndex('invoices', ['status']);
-  await queryInterface.addIndex('sales_invoices', ['invoiceNumber']);
-  await queryInterface.addIndex('sales_invoices', ['customerId']);
-  await queryInterface.addIndex('sales_invoices', ['isActive']);
-  await queryInterface.addIndex('shipping_invoices', ['invoice_number']);
-  await queryInterface.addIndex('shipping_invoices', ['customer_id']);
-  await queryInterface.addIndex('shipping_invoices', ['status']);
+  // Add all indexes safely (skip if they already exist)
+  const indexExists = async (indexName) => {
+    const [rows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname = :name",
+      { replacements: { name: indexName } }
+    );
+    return rows.length > 0;
+  };
+
+  const columnExists = async (table, column) => {
+    const [rows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = :table AND column_name = :column",
+      { replacements: { table, column } }
+    );
+    return rows.length > 0;
+  };
+
+  const ensureIndex = async (table, columns, name) => {
+    const cols = Array.isArray(columns) ? columns : [String(columns)];
+    // Skip if any target column does not exist (handles partially created tables)
+    for (const col of cols) {
+      if (!(await columnExists(table, col))) {
+        return; // Column missing; do not attempt to add index
+      }
+    }
+    const indexName = name || `${table}_${cols.join('_')}`;
+    if (!(await indexExists(indexName))) {
+      await queryInterface.addIndex(table, cols, { name: indexName });
+    }
+  };
+
+  await ensureIndex('users', ['username']);
+  await ensureIndex('users', ['role']);
+  await ensureIndex('accounts', ['code']);
+  await ensureIndex('accounts', ['type']);
+  await ensureIndex('accounts', ['parentId']);
+  await ensureIndex('accounts', ['isActive']);
+  await ensureIndex('gl_entries', ['entryNumber']);
+  await ensureIndex('gl_entries', ['date']);
+  await ensureIndex('gl_entries', ['status']);
+  await ensureIndex('gl_entry_details', ['glEntryId']);
+  await ensureIndex('gl_entry_details', ['accountId']);
+  await ensureIndex('vouchers', ['voucherNumber']);
+  await ensureIndex('vouchers', ['type']);
+  await ensureIndex('vouchers', ['date']);
+  await ensureIndex('vouchers', ['isActive']);
+  await ensureIndex('customers', ['code']);
+  await ensureIndex('customers', ['name']);
+  await ensureIndex('customers', ['isActive']);
+  await ensureIndex('invoices', ['invoiceNumber']);
+  await ensureIndex('invoices', ['customerId']);
+  await ensureIndex('invoices', ['date']);
+  await ensureIndex('invoices', ['status']);
+  await ensureIndex('sales_invoices', ['invoiceNumber']);
+  await ensureIndex('sales_invoices', ['customerId']);
+  await ensureIndex('sales_invoices', ['isActive']);
+  await ensureIndex('shipping_invoices', ['invoice_number']);
+  await ensureIndex('shipping_invoices', ['customer_id']);
+  await ensureIndex('shipping_invoices', ['status']);
 }
 
 export async function down(queryInterface, Sequelize) {

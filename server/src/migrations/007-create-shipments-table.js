@@ -1,6 +1,12 @@
 import { DataTypes } from 'sequelize';
 
 export async function up(queryInterface, Sequelize) {
+  // Determine users.id data type to match FK type
+  const [rows] = await queryInterface.sequelize.query(
+    "SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'id'"
+  );
+  const usersIdType = (rows && rows[0] && rows[0].data_type === 'uuid') ? DataTypes.UUID : DataTypes.INTEGER;
+
   // Create shipments table
   await queryInterface.createTable('shipments', {
     id: {
@@ -165,7 +171,7 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true
     },
     createdBy: {
-      type: DataTypes.UUID,
+      type: usersIdType,
       allowNull: false,
       references: {
         model: 'users',
@@ -186,12 +192,35 @@ export async function up(queryInterface, Sequelize) {
     }
   });
 
-  // Add indexes
-  await queryInterface.addIndex('shipments', ['trackingNumber']);
-  await queryInterface.addIndex('shipments', ['customerId']);
-  await queryInterface.addIndex('shipments', ['status']);
-  await queryInterface.addIndex('shipments', ['receivedDate']);
-  await queryInterface.addIndex('shipments', ['createdBy']);
+  // Add indexes safely
+  const indexExists = async (name) => {
+    const [rows2] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname = :name",
+      { replacements: { name } }
+    );
+    return rows2.length > 0;
+  };
+  const columnExists = async (table, column) => {
+    const [rows3] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = :table AND column_name = :column",
+      { replacements: { table, column } }
+    );
+    return rows3.length > 0;
+  };
+  const ensureIndex = async (table, columns, name) => {
+    const cols = Array.isArray(columns) ? columns : [String(columns)];
+    for (const col of cols) {
+      if (!(await columnExists(table, col))) return;
+    }
+    if (await indexExists(name)) return;
+    await queryInterface.addIndex(table, cols, { name });
+  };
+
+  await ensureIndex('shipments', ['trackingNumber'], 'shipments_trackingNumber');
+  await ensureIndex('shipments', ['customerId'], 'shipments_customerId');
+  await ensureIndex('shipments', ['status'], 'shipments_status');
+  await ensureIndex('shipments', ['receivedDate'], 'shipments_receivedDate');
+  await ensureIndex('shipments', ['createdBy'], 'shipments_createdBy');
 }
 
 export async function down(queryInterface, Sequelize) {

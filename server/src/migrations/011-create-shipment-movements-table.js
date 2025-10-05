@@ -1,6 +1,18 @@
 import { DataTypes } from 'sequelize';
 
 export async function up(queryInterface, Sequelize) {
+  // Determine users.id data type to match FK type
+  const [rows] = await queryInterface.sequelize.query(
+    "SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'id'"
+  );
+  const usersIdType = (rows && rows[0] && rows[0].data_type === 'uuid') ? DataTypes.UUID : DataTypes.INTEGER;
+
+  // Detect optional dependencies
+  const [wroRes] = await queryInterface.sequelize.query(
+    "SELECT (to_regclass(current_schema() || '.warehouse_release_orders') IS NULL) AS missing"
+  );
+  const warehouseReleaseOrdersMissing = wroRes && wroRes[0] && wroRes[0].missing === true;
+
   // Create shipment_movements table
   await queryInterface.createTable('shipment_movements', {
     id: {
@@ -56,7 +68,7 @@ export async function up(queryInterface, Sequelize) {
       allowNull: true
     },
     createdBy: {
-      type: DataTypes.UUID,
+      type: usersIdType,
       allowNull: false,
       references: {
         model: 'users',
@@ -66,16 +78,9 @@ export async function up(queryInterface, Sequelize) {
       onDelete: 'RESTRICT'
     },
     // Additional fields for warehouse release tracking
-    warehouseReleaseOrderId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'warehouse_release_orders',
-        key: 'id'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL'
-    },
+    warehouseReleaseOrderId: Object.assign({ type: DataTypes.UUID, allowNull: true },
+      warehouseReleaseOrdersMissing ? {} : { references: { model: 'warehouse_release_orders', key: 'id' }, onUpdate: 'CASCADE', onDelete: 'SET NULL' }
+    ),
     isSystemGenerated: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
@@ -92,14 +97,37 @@ export async function up(queryInterface, Sequelize) {
     }
   });
 
-  // Add indexes
-  await queryInterface.addIndex('shipment_movements', ['shipmentId']);
-  await queryInterface.addIndex('shipment_movements', ['trackingNumber']);
-  await queryInterface.addIndex('shipment_movements', ['type']);
-  await queryInterface.addIndex('shipment_movements', ['newStatus']);
-  await queryInterface.addIndex('shipment_movements', ['date']);
-  await queryInterface.addIndex('shipment_movements', ['createdBy']);
-  await queryInterface.addIndex('shipment_movements', ['warehouseReleaseOrderId']);
+  // Add indexes safely
+  const indexExists = async (name) => {
+    const [idxRows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname = :name",
+      { replacements: { name } }
+    );
+    return idxRows.length > 0;
+  };
+  const columnExists = async (table, column) => {
+    const [colRows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = :table AND column_name = :column",
+      { replacements: { table, column } }
+    );
+    return colRows.length > 0;
+  };
+  const ensureIndex = async (table, columns, name) => {
+    const cols = Array.isArray(columns) ? columns : [String(columns)];
+    for (const col of cols) {
+      if (!(await columnExists(table, col))) return;
+    }
+    if (await indexExists(name)) return;
+    await queryInterface.addIndex(table, cols, { name });
+  };
+
+  await ensureIndex('shipment_movements', ['shipmentId'], 'shipment_movements_shipmentId');
+  await ensureIndex('shipment_movements', ['trackingNumber'], 'shipment_movements_trackingNumber');
+  await ensureIndex('shipment_movements', ['type'], 'shipment_movements_type');
+  await ensureIndex('shipment_movements', ['newStatus'], 'shipment_movements_newStatus');
+  await ensureIndex('shipment_movements', ['date'], 'shipment_movements_date');
+  await ensureIndex('shipment_movements', ['createdBy'], 'shipment_movements_createdBy');
+  await ensureIndex('shipment_movements', ['warehouseReleaseOrderId'], 'shipment_movements_warehouseReleaseOrderId');
 }
 
 export async function down(queryInterface, Sequelize) {

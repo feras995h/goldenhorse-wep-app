@@ -1,0 +1,29 @@
+Found (0):
+
+
+Missing (23):
+account_mappings
+account_provisions
+accounts
+customers
+employees
+fixed_assets
+invoice_payments
+invoice_receipts
+invoices
+journal_entries
+journal_entry_lines
+notifications
+payment_vouchers
+payments
+purchase_invoices
+receipt_vouchers
+receipts
+sales_invoices
+shipment_movements
+shipments
+suppliers
+users
+warehouse
+
+Extra (1):

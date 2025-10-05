@@ -1,7 +1,4 @@
-'use strict';
-
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
+export const up = async (queryInterface, Sequelize) => {
     await queryInterface.createTable('invoice_receipts', {
       id: {
         type: Sequelize.UUID,
@@ -61,7 +58,7 @@ module.exports = {
         allowNull: true
       },
       createdBy: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'users',
@@ -77,7 +74,7 @@ module.exports = {
         allowNull: true
       },
       reversedBy: {
-        type: Sequelize.UUID,
+        type: Sequelize.INTEGER,
         allowNull: true,
         references: {
           model: 'users',
@@ -111,9 +108,8 @@ module.exports = {
       unique: true,
       name: 'unique_invoice_receipt_settlement'
     });
-  },
+};
 
-  down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('invoice_receipts');
-  }
+export const down = async (queryInterface, Sequelize) => {
+  await queryInterface.dropTable('invoice_receipts');
 };

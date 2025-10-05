@@ -1,6 +1,12 @@
 import { DataTypes } from 'sequelize';
 
 export async function up(queryInterface, Sequelize) {
+  // Determine users.id data type to match FK type
+  const [rows] = await queryInterface.sequelize.query(
+    "SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'id'"
+  );
+  const usersIdType = (rows && rows[0] && rows[0].data_type === 'uuid') ? DataTypes.UUID : DataTypes.INTEGER;
+
   // Create notifications table
   await queryInterface.createTable('notifications', {
     id: {
@@ -29,7 +35,7 @@ export async function up(queryInterface, Sequelize) {
       defaultValue: 'system'
     },
     userId: {
-      type: DataTypes.UUID,
+      type: usersIdType,
       allowNull: true,
       references: {
         model: 'users',
@@ -78,33 +84,63 @@ export async function up(queryInterface, Sequelize) {
     }
   });
 
+  // Helpers for idempotency
+  const indexExists = async (name) => {
+    const [idxRows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname = :name",
+      { replacements: { name } }
+    );
+    return idxRows.length > 0;
+  };
+  const columnExists = async (table, column) => {
+    const [colRows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = :table AND column_name = :column",
+      { replacements: { table, column } }
+    );
+    return colRows.length > 0;
+  };
+  const ensureIndex = async (table, columns, name) => {
+    const cols = Array.isArray(columns) ? columns : [String(columns)];
+    for (const col of cols) {
+      if (!(await columnExists(table, col))) return;
+    }
+    if (await indexExists(name)) return;
+    await queryInterface.addIndex(table, cols, { name });
+  };
+
   // Create indexes for better performance
-  await queryInterface.addIndex('notifications', ['userId']);
-  await queryInterface.addIndex('notifications', ['type']);
-  await queryInterface.addIndex('notifications', ['category']);
-  await queryInterface.addIndex('notifications', ['read']);
-  await queryInterface.addIndex('notifications', ['createdAt']);
-  await queryInterface.addIndex('notifications', ['isActive']);
-  await queryInterface.addIndex('notifications', ['expiresAt']);
+  await ensureIndex('notifications', ['userId'], 'notifications_userId');
+  await ensureIndex('notifications', ['type'], 'notifications_type');
+  await ensureIndex('notifications', ['category'], 'notifications_category');
+  await ensureIndex('notifications', ['read'], 'notifications_read');
+  await ensureIndex('notifications', ['createdAt'], 'notifications_createdAt');
+  await ensureIndex('notifications', ['isActive'], 'notifications_isActive');
+  await ensureIndex('notifications', ['expiresAt'], 'notifications_expiresAt');
 
   // Create composite indexes
-  await queryInterface.addIndex('notifications', ['userId', 'read']);
-  await queryInterface.addIndex('notifications', ['userId', 'isActive']);
-  await queryInterface.addIndex('notifications', ['type', 'category']);
+  await ensureIndex('notifications', ['userId', 'read'], 'notifications_userId_read');
+  await ensureIndex('notifications', ['userId', 'isActive'], 'notifications_userId_isActive');
+  await ensureIndex('notifications', ['type', 'category'], 'notifications_type_category');
 }
 
 export async function down(queryInterface, Sequelize) {
-  // Drop indexes first
-  await queryInterface.removeIndex('notifications', ['userId']);
-  await queryInterface.removeIndex('notifications', ['type']);
-  await queryInterface.removeIndex('notifications', ['category']);
-  await queryInterface.removeIndex('notifications', ['read']);
-  await queryInterface.removeIndex('notifications', ['createdAt']);
-  await queryInterface.removeIndex('notifications', ['isActive']);
-  await queryInterface.removeIndex('notifications', ['expiresAt']);
-  await queryInterface.removeIndex('notifications', ['userId', 'read']);
-  await queryInterface.removeIndex('notifications', ['userId', 'isActive']);
-  await queryInterface.removeIndex('notifications', ['type', 'category']);
+  // Drop indexes first (best-effort)
+  const safeRemove = async (name) => {
+    try { await queryInterface.removeIndex('notifications', name); } catch (_) {}
+  };
+  const indexes = [
+    'notifications_userId',
+    'notifications_type',
+    'notifications_category',
+    'notifications_read',
+    'notifications_createdAt',
+    'notifications_isActive',
+    'notifications_expiresAt',
+    'notifications_userId_read',
+    'notifications_userId_isActive',
+    'notifications_type_category'
+  ];
+  for (const idx of indexes) { await safeRemove(idx); }
 
   // Drop table
   await queryInterface.dropTable('notifications');

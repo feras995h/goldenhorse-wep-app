@@ -1603,7 +1603,7 @@ router.get('/summary',
       SELECT
         COALESCE(COUNT(DISTINCT si.id), 0) as total_invoices,
         COALESCE(SUM(si.total), 0) as total_sales,
-        COALESCE(COUNT(DISTINCT si.customer_id), 0) as active_customers,
+        COALESCE(COUNT(DISTINCT si."customerId"), 0) as active_customers,
         COALESCE(COUNT(DISTINCT s.id), 0) as total_shipments,
         COALESCE(SUM(s."shippingCost"), 0) as shipping_revenue
       FROM sales_invoices si

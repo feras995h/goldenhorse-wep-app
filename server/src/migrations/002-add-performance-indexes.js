@@ -1,236 +1,108 @@
 export async function up(queryInterface, Sequelize) {
   console.log('🚀 Adding performance indexes...');
 
+  // Helpers for idempotency
+  const columnExists = async (table, column) => {
+    const [rows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = :table AND column_name = :column",
+      { replacements: { table, column } }
+    );
+    return rows.length > 0;
+  };
+
+  const indexExists = async (name) => {
+    const [rows] = await queryInterface.sequelize.query(
+      "SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname = :name",
+      { replacements: { name } }
+    );
+    return rows.length > 0;
+  };
+
+  const ensureIndex = async (table, columns, name, options = {}) => {
+    const cols = Array.isArray(columns) ? columns : [String(columns)];
+    // Verify all columns exist
+    for (const col of cols) {
+      if (!(await columnExists(table, col))) return;
+    }
+    if (await indexExists(name)) return;
+    await queryInterface.addIndex(table, cols, { name, ...options });
+  };
+
   // Financial tables indexes
-  await queryInterface.addIndex('accounts', ['code'], {
-    name: 'idx_accounts_code',
-    unique: true
-  });
-
-  await queryInterface.addIndex('accounts', ['type'], {
-    name: 'idx_accounts_type'
-  });
-
-  await queryInterface.addIndex('accounts', ['isActive'], {
-    name: 'idx_accounts_isActive'
-  });
-
-  await queryInterface.addIndex('accounts', ['parentId'], {
-    name: 'idx_accounts_parentId'
-  });
+  await ensureIndex('accounts', ['code'], 'idx_accounts_code', { unique: true });
+  await ensureIndex('accounts', ['type'], 'idx_accounts_type');
+  await ensureIndex('accounts', ['isActive'], 'idx_accounts_isActive');
+  await ensureIndex('accounts', ['parentId'], 'idx_accounts_parentId');
 
   // GL Entries indexes
-  await queryInterface.addIndex('gl_entries', ['postingDate'], {
-    name: 'idx_gl_entries_postingDate'
-  });
-
-  await queryInterface.addIndex('gl_entries', ['accountId'], {
-    name: 'idx_gl_entries_accountId'
-  });
-
-  await queryInterface.addIndex('gl_entries', ['voucherType'], {
-    name: 'idx_gl_entries_voucherType'
-  });
-
-  await queryInterface.addIndex('gl_entries', ['voucherNo'], {
-    name: 'idx_gl_entries_voucherNo'
-  });
-
-  await queryInterface.addIndex('gl_entries', ['createdAt'], {
-    name: 'idx_gl_entries_createdAt'
-  });
+  await ensureIndex('gl_entries', ['postingDate'], 'idx_gl_entries_postingDate');
+  await ensureIndex('gl_entries', ['accountId'], 'idx_gl_entries_accountId');
+  await ensureIndex('gl_entries', ['voucherType'], 'idx_gl_entries_voucherType');
+  await ensureIndex('gl_entries', ['voucherNo'], 'idx_gl_entries_voucherNo');
+  await ensureIndex('gl_entries', ['createdAt'], 'idx_gl_entries_createdAt');
 
   // Journal Entries indexes
-  await queryInterface.addIndex('journal_entries', ['date'], {
-    name: 'idx_journal_entries_date'
-  });
-
-  await queryInterface.addIndex('journal_entries', ['status'], {
-    name: 'idx_journal_entries_status'
-  });
-
-  await queryInterface.addIndex('journal_entries', ['type'], {
-    name: 'idx_journal_entries_type'
-  });
-
-  await queryInterface.addIndex('journal_entries', ['createdBy'], {
-    name: 'idx_journal_entries_createdBy'
-  });
+  await ensureIndex('journal_entries', ['date'], 'idx_journal_entries_date');
+  await ensureIndex('journal_entries', ['status'], 'idx_journal_entries_status');
+  await ensureIndex('journal_entries', ['type'], 'idx_journal_entries_type');
+  await ensureIndex('journal_entries', ['createdBy'], 'idx_journal_entries_createdBy');
 
   // Customers indexes
-  await queryInterface.addIndex('customers', ['code'], {
-    name: 'idx_customers_code',
-    unique: true
-  });
-
-  await queryInterface.addIndex('customers', ['name'], {
-    name: 'idx_customers_name'
-  });
-
-  await queryInterface.addIndex('customers', ['isActive'], {
-    name: 'idx_customers_isActive'
-  });
-
-  await queryInterface.addIndex('customers', ['customerType'], {
-    name: 'idx_customers_customerType'
-  });
-
-  await queryInterface.addIndex('customers', ['balance'], {
-    name: 'idx_customers_balance'
-  });
+  await ensureIndex('customers', ['code'], 'idx_customers_code', { unique: true });
+  await ensureIndex('customers', ['name'], 'idx_customers_name');
+  await ensureIndex('customers', ['isActive'], 'idx_customers_isActive');
+  await ensureIndex('customers', ['customerType'], 'idx_customers_customerType');
+  await ensureIndex('customers', ['balance'], 'idx_customers_balance');
 
   // Suppliers indexes
-  await queryInterface.addIndex('suppliers', ['code'], {
-    name: 'idx_suppliers_code',
-    unique: true
-  });
-
-  await queryInterface.addIndex('suppliers', ['name'], {
-    name: 'idx_suppliers_name'
-  });
-
-  await queryInterface.addIndex('suppliers', ['isActive'], {
-    name: 'idx_suppliers_isActive'
-  });
+  await ensureIndex('suppliers', ['code'], 'idx_suppliers_code', { unique: true });
+  await ensureIndex('suppliers', ['name'], 'idx_suppliers_name');
+  await ensureIndex('suppliers', ['isActive'], 'idx_suppliers_isActive');
 
   // Sales Invoices indexes
-  await queryInterface.addIndex('sales_invoices', ['invoiceNumber'], {
-    name: 'idx_sales_invoices_invoiceNumber',
-    unique: true
-  });
+  await ensureIndex('sales_invoices', ['invoiceNumber'], 'idx_sales_invoices_invoiceNumber', { unique: true });
+  await ensureIndex('sales_invoices', ['date'], 'idx_sales_invoices_date');
+  await ensureIndex('sales_invoices', ['customerId'], 'idx_sales_invoices_customerId');
+  await ensureIndex('sales_invoices', ['status'], 'idx_sales_invoices_status');
+  await ensureIndex('sales_invoices', ['paymentStatus'], 'idx_sales_invoices_paymentStatus');
+  await ensureIndex('sales_invoices', ['total'], 'idx_sales_invoices_total');
+  await ensureIndex('sales_invoices', ['createdAt'], 'idx_sales_invoices_createdAt');
 
-  await queryInterface.addIndex('sales_invoices', ['date'], {
-    name: 'idx_sales_invoices_date'
-  });
-
-  await queryInterface.addIndex('sales_invoices', ['customerId'], {
-    name: 'idx_sales_invoices_customerId'
-  });
-
-  await queryInterface.addIndex('sales_invoices', ['status'], {
-    name: 'idx_sales_invoices_status'
-  });
-
-  await queryInterface.addIndex('sales_invoices', ['paymentStatus'], {
-    name: 'idx_sales_invoices_paymentStatus'
-  });
-
-  await queryInterface.addIndex('sales_invoices', ['total'], {
-    name: 'idx_sales_invoices_total'
-  });
-
-  await queryInterface.addIndex('sales_invoices', ['createdAt'], {
-    name: 'idx_sales_invoices_createdAt'
-  });
-
-  // Shipping Invoices indexes
-  await queryInterface.addIndex('shipping_invoices', ['invoiceNumber'], {
-    name: 'idx_shipping_invoices_invoiceNumber',
-    unique: true
-  });
-
-  await queryInterface.addIndex('shipping_invoices', ['date'], {
-    name: 'idx_shipping_invoices_date'
-  });
-
-  await queryInterface.addIndex('shipping_invoices', ['customerId'], {
-    name: 'idx_shipping_invoices_customerId'
-  });
-
-  await queryInterface.addIndex('shipping_invoices', ['shipmentId'], {
-    name: 'idx_shipping_invoices_shipmentId'
-  });
-
-  await queryInterface.addIndex('shipping_invoices', ['total'], {
-    name: 'idx_shipping_invoices_total'
-  });
+  // Shipping Invoices indexes (guard against snake_case variants)
+  await ensureIndex('shipping_invoices', ['invoiceNumber'], 'idx_shipping_invoices_invoiceNumber', { unique: true });
+  await ensureIndex('shipping_invoices', ['date'], 'idx_shipping_invoices_date');
+  await ensureIndex('shipping_invoices', ['customerId'], 'idx_shipping_invoices_customerId');
+  await ensureIndex('shipping_invoices', ['shipmentId'], 'idx_shipping_invoices_shipmentId');
+  await ensureIndex('shipping_invoices', ['total'], 'idx_shipping_invoices_total');
 
   // Payments indexes
-  await queryInterface.addIndex('payments', ['date'], {
-    name: 'idx_payments_date'
-  });
-
-  await queryInterface.addIndex('payments', ['supplierId'], {
-    name: 'idx_payments_supplierId'
-  });
-
-  await queryInterface.addIndex('payments', ['amount'], {
-    name: 'idx_payments_amount'
-  });
-
-  await queryInterface.addIndex('payments', ['createdAt'], {
-    name: 'idx_payments_createdAt'
-  });
+  await ensureIndex('payments', ['date'], 'idx_payments_date');
+  await ensureIndex('payments', ['supplierId'], 'idx_payments_supplierId');
+  await ensureIndex('payments', ['amount'], 'idx_payments_amount');
+  await ensureIndex('payments', ['createdAt'], 'idx_payments_createdAt');
 
   // Receipts indexes
-  await queryInterface.addIndex('receipts', ['date'], {
-    name: 'idx_receipts_date'
-  });
-
-  await queryInterface.addIndex('receipts', ['customerId'], {
-    name: 'idx_receipts_customerId'
-  });
-
-  await queryInterface.addIndex('receipts', ['amount'], {
-    name: 'idx_receipts_amount'
-  });
-
-  await queryInterface.addIndex('receipts', ['createdAt'], {
-    name: 'idx_receipts_createdAt'
-  });
+  await ensureIndex('receipts', ['date'], 'idx_receipts_date');
+  await ensureIndex('receipts', ['customerId'], 'idx_receipts_customerId');
+  await ensureIndex('receipts', ['amount'], 'idx_receipts_amount');
+  await ensureIndex('receipts', ['createdAt'], 'idx_receipts_createdAt');
 
   // Users indexes
-  await queryInterface.addIndex('users', ['username'], {
-    name: 'idx_users_username',
-    unique: true
-  });
-
-  await queryInterface.addIndex('users', ['email'], {
-    name: 'idx_users_email',
-    unique: true
-  });
-
-  await queryInterface.addIndex('users', ['isActive'], {
-    name: 'idx_users_isActive'
-  });
-
-  await queryInterface.addIndex('users', ['role'], {
-    name: 'idx_users_role'
-  });
-
+  await ensureIndex('users', ['username'], 'idx_users_username', { unique: true });
+  await ensureIndex('users', ['email'], 'idx_users_email', { unique: true });
+  await ensureIndex('users', ['isActive'], 'idx_users_isActive');
+  await ensureIndex('users', ['role'], 'idx_users_role');
   // Shipments indexes
-  await queryInterface.addIndex('shipments', ['trackingNumber'], {
-    name: 'idx_shipments_trackingNumber'
-  });
-
-  await queryInterface.addIndex('shipments', ['date'], {
-    name: 'idx_shipments_date'
-  });
-
-  await queryInterface.addIndex('shipments', ['status'], {
-    name: 'idx_shipments_status'
-  });
-
-  await queryInterface.addIndex('shipments', ['shippingCost'], {
-    name: 'idx_shipments_shippingCost'
-  });
+  await ensureIndex('shipments', ['trackingNumber'], 'idx_shipments_trackingNumber');
+  await ensureIndex('shipments', ['date'], 'idx_shipments_date');
+  await ensureIndex('shipments', ['status'], 'idx_shipments_status');
+  await ensureIndex('shipments', ['shippingCost'], 'idx_shipments_shippingCost');
 
   // Composite indexes for common queries
-  await queryInterface.addIndex('gl_entries', ['accountId', 'postingDate'], {
-    name: 'idx_gl_entries_accountId_postingDate'
-  });
-
-  await queryInterface.addIndex('sales_invoices', ['customerId', 'date'], {
-    name: 'idx_sales_invoices_customerId_date'
-  });
-
-  await queryInterface.addIndex('sales_invoices', ['status', 'paymentStatus'], {
-    name: 'idx_sales_invoices_status_paymentStatus'
-  });
-
-  await queryInterface.addIndex('customers', ['isActive', 'customerType'], {
-    name: 'idx_customers_isActive_customerType'
-  });
+  await ensureIndex('gl_entries', ['accountId', 'postingDate'], 'idx_gl_entries_accountId_postingDate');
+  await ensureIndex('sales_invoices', ['customerId', 'date'], 'idx_sales_invoices_customerId_date');
+  await ensureIndex('sales_invoices', ['status', 'paymentStatus'], 'idx_sales_invoices_status_paymentStatus');
+  await ensureIndex('customers', ['isActive', 'customerType'], 'idx_customers_isActive_customerType');
 
   console.log('✅ Performance indexes added successfully');
 }

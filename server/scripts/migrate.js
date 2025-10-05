@@ -84,6 +84,9 @@ async function run() {
         console.log(`✅ Applied: ${file}`);
       } catch (err) {
         console.error(`❌ Failed applying ${file}:`, err.message);
+        console.error('Full error:', err);
+        if (err.sql) console.error('SQL:', err.sql);
+        if (err.original) console.error('Original error:', err.original);
         throw err;
       }
     }

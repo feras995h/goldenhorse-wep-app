@@ -1,0 +1,244 @@
+﻿ظ£à Connected to database
+ظصي╕  Skipping already applied: 001-initial-schema.js
+ظصي╕  Skipping already applied: 001-updated-complete-schema.js
+ظصي╕  Skipping already applied: 002-add-missing-columns.js
+ظصي╕  Skipping already applied: 002-add-performance-indexes.js
+ظصي╕  Skipping already applied: 002-additional-tables.js
+ظصي╕  Skipping already applied: 002-create-notifications.js
+ظصي╕  Skipping already applied: 003-add-user-columns.js
+ظصي╕  Skipping already applied: 004-add-account-columns.js
+ظصي╕  Skipping already applied: 005-add-account-balance-columns.js
+ظصي╕  Skipping already applied: 006-add-account-description.js
+ظصي╕  Skipping already applied: 007-create-shipments-table.js
+ظصي╕  Skipping already applied: 008-add-performance-indexes.js
+ظصي╕  Skipping already applied: 009-add-customer-missing-fields.js
+ظصي╕  Skipping already applied: 010-add-employee-missing-fields.js
+ظصي╕  Skipping already applied: 011-create-shipment-movements-table.js
+ظصي╕  Skipping already applied: 012-alter-shipments-table.js
+ظصي╕  Skipping already applied: 013-alter-shipment-movements-table.js
+ظصي╕  Skipping already applied: 015-add-category-to-fixed-assets.js
+ظصي╕  Skipping already applied: 016-add-outstanding-amount-to-sales-invoices.js
+ظصي╕  Skipping already applied: 017-create-new-financial-models.js
+≡اأ Applying: 018-create-new-tables-only.js
+node : ظإî Failed applying 
+018-create-new-tables-only.js: foreign key 
+constraint "receipt_vouchers_createdBy_fkey" 
+cannot be implemented
+At line:1 char:1
++ node scripts/migrate.js 2>&1 | Out-File 
+-FilePath migration-output.tx ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ظ 
+   إî Failed appl... be implemented:String) [  
+  ], RemoteException
+    + FullyQualifiedErrorId : NativeCommandErr 
+   or
+ 
+≡اْح Migration failed: Error
+    at Query.run (C:\Users\dell\Desktop\┘à┘╪╢┘
+ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (2)\server\node_mod
+ules\sequelize\lib\dialects\postgres\query.js:5
+0:25)
+    at C:\Users\dell\Desktop\┘à┘╪╢┘ê┘à╪د╪ز┘è\┘
+à╪ش┘╪» ╪ش╪»┘è╪» (2)\server\node_modules\sequel
+ize\lib\sequelize.js:315:28
+    at process.processTicksAndRejections 
+(node:internal/process/task_queues:105:5)
+    at async 
+PostgresQueryInterface.createTable (C:\Users\de
+ll\Desktop\┘à┘╪╢┘ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (
+2)\server\node_modules\sequelize\lib\dialects\a
+bstract\query-interface.js:98:12)
+    at async up (file:///C:/Users/dell/Desktop/
+%D9%85%D9%86%D8%B6%D9%88%D9%85%D8%A7%D8%AA%D9%8
+A/%D9%85%D8%AC%D9%84%D8%AF%20%D8%AC%D8%AF%D9%8A
+%D8%AF%20(2)/server/src/migrations/018-create-n
+ew-tables-only.js:101:7)
+    at async run (file:///C:/Users/dell/Desktop
+/%D9%85%D9%86%D8%B6%D9%88%D9%85%D8%A7%D8%AA%D9%
+8A/%D9%85%D8%AC%D9%84%D8%AF%20%D8%AC%D8%AF%D9%8
+A%D8%AF%20(2)/server/scripts/migrate.js:82:9) {
+  name: 'SequelizeDatabaseError',
+  parent: error: foreign key constraint 
+"receipt_vouchers_createdBy_fkey" cannot be 
+implemented
+      at Parser.parseErrorMessage (C:\Users\del
+l\Desktop\┘à┘╪╢┘ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (2
+)\server\node_modules\pg-protocol\dist\parser.j
+s:285:98)
+      at Parser.handlePacket (C:\Users\dell\Des
+ktop\┘à┘╪╢┘ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (2)\ser
+ver\node_modules\pg-protocol\dist\parser.js:122
+:29)
+      at Parser.parse (C:\Users\dell\Desktop\┘à
+┘╪╢┘ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (2)\server\nod
+e_modules\pg-protocol\dist\parser.js:35:38)
+      at Socket.<anonymous> (C:\Users\dell\Desk
+top\┘à┘╪╢┘ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (2)\serv
+er\node_modules\pg-protocol\dist\index.js:11:42
+)
+      at Socket.emit (node:events:519:28)
+      at addChunk 
+(node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode 
+(node:internal/streams/readable:512:3)
+      at Readable.push 
+(node:internal/streams/readable:392:5)
+      at TCP.onStreamRead 
+(node:internal/stream_base_commons:189:23) {
+    length: 231,
+    severity: 'ERROR',
+    code: '42804',
+    detail: 'Key columns "createdBy" and "id" 
+are of incompatible types: uuid and integer.',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'tablecmds.c',
+    line: '9896',
+    routine: 'ATAddForeignKeyConstraint',
+    sql: `CREATE TABLE IF NOT EXISTS 
+"receipt_vouchers" ("id" UUID , 
+"voucherNumber" VARCHAR(50) NOT NULL UNIQUE, 
+"date" DATE NOT NULL, "customerId" UUID 
+REFERENCES "customers" ("id"), "customerName" 
+VARCHAR(200) NOT NULL, "shipmentId" UUID 
+REFERENCES "shipments" ("id"), "paymentMethod" 
+"public"."enum_receipt_vouchers_paymentMethod" 
+NOT NULL DEFAULT 'cash', "currency" 
+"public"."enum_receipt_vouchers_currency" NOT 
+NULL DEFAULT 'LYD', "amount" DECIMAL(15,2) NOT 
+NULL, "purpose" 
+"public"."enum_receipt_vouchers_purpose" NOT 
+NULL DEFAULT 'invoice_payment', 
+"purposeDescription" VARCHAR(500), 
+"debitAccountId" UUID NOT NULL REFERENCES 
+"accounts" ("id"), "creditAccountId" UUID NOT 
+NULL REFERENCES "accounts" ("id"), 
+"exchangeRate" DECIMAL(10,4) NOT NULL DEFAULT 
+1, "notes" TEXT, "attachments" JSON DEFAULT 
+'[]', "status" 
+"public"."enum_receipt_vouchers_status" NOT 
+NULL DEFAULT 'draft', "createdBy" UUID NOT 
+NULL REFERENCES "users" ("id"), "approvedBy" 
+UUID REFERENCES "users" ("id"), "approvedAt" 
+TIMESTAMP WITH TIME ZONE, "createdAt" 
+TIMESTAMP WITH TIME ZONE NOT NULL, "updatedAt" 
+TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY 
+("id"));`,
+    parameters: undefined
+  },
+  original: error: foreign key constraint 
+"receipt_vouchers_createdBy_fkey" cannot be 
+implemented
+      at Parser.parseErrorMessage (C:\Users\del
+l\Desktop\┘à┘╪╢┘ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (2
+)\server\node_modules\pg-protocol\dist\parser.j
+s:285:98)
+      at Parser.handlePacket (C:\Users\dell\Des
+ktop\┘à┘╪╢┘ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (2)\ser
+ver\node_modules\pg-protocol\dist\parser.js:122
+:29)
+      at Parser.parse (C:\Users\dell\Desktop\┘à
+┘╪╢┘ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (2)\server\nod
+e_modules\pg-protocol\dist\parser.js:35:38)
+      at Socket.<anonymous> (C:\Users\dell\Desk
+top\┘à┘╪╢┘ê┘à╪د╪ز┘è\┘à╪ش┘╪» ╪ش╪»┘è╪» (2)\serv
+er\node_modules\pg-protocol\dist\index.js:11:42
+)
+      at Socket.emit (node:events:519:28)
+      at addChunk 
+(node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode 
+(node:internal/streams/readable:512:3)
+      at Readable.push 
+(node:internal/streams/readable:392:5)
+      at TCP.onStreamRead 
+(node:internal/stream_base_commons:189:23) {
+    length: 231,
+    severity: 'ERROR',
+    code: '42804',
+    detail: 'Key columns "createdBy" and "id" 
+are of incompatible types: uuid and integer.',
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'tablecmds.c',
+    line: '9896',
+    routine: 'ATAddForeignKeyConstraint',
+    sql: `CREATE TABLE IF NOT EXISTS 
+"receipt_vouchers" ("id" UUID , 
+"voucherNumber" VARCHAR(50) NOT NULL UNIQUE, 
+"date" DATE NOT NULL, "customerId" UUID 
+REFERENCES "customers" ("id"), "customerName" 
+VARCHAR(200) NOT NULL, "shipmentId" UUID 
+REFERENCES "shipments" ("id"), "paymentMethod" 
+"public"."enum_receipt_vouchers_paymentMethod" 
+NOT NULL DEFAULT 'cash', "currency" 
+"public"."enum_receipt_vouchers_currency" NOT 
+NULL DEFAULT 'LYD', "amount" DECIMAL(15,2) NOT 
+NULL, "purpose" 
+"public"."enum_receipt_vouchers_purpose" NOT 
+NULL DEFAULT 'invoice_payment', 
+"purposeDescription" VARCHAR(500), 
+"debitAccountId" UUID NOT NULL REFERENCES 
+"accounts" ("id"), "creditAccountId" UUID NOT 
+NULL REFERENCES "accounts" ("id"), 
+"exchangeRate" DECIMAL(10,4) NOT NULL DEFAULT 
+1, "notes" TEXT, "attachments" JSON DEFAULT 
+'[]', "status" 
+"public"."enum_receipt_vouchers_status" NOT 
+NULL DEFAULT 'draft', "createdBy" UUID NOT 
+NULL REFERENCES "users" ("id"), "approvedBy" 
+UUID REFERENCES "users" ("id"), "approvedAt" 
+TIMESTAMP WITH TIME ZONE, "createdAt" 
+TIMESTAMP WITH TIME ZONE NOT NULL, "updatedAt" 
+TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY 
+("id"));`,
+    parameters: undefined
+  },
+  sql: `CREATE TABLE IF NOT EXISTS 
+"receipt_vouchers" ("id" UUID , 
+"voucherNumber" VARCHAR(50) NOT NULL UNIQUE, 
+"date" DATE NOT NULL, "customerId" UUID 
+REFERENCES "customers" ("id"), "customerName" 
+VARCHAR(200) NOT NULL, "shipmentId" UUID 
+REFERENCES "shipments" ("id"), "paymentMethod" 
+"public"."enum_receipt_vouchers_paymentMethod" 
+NOT NULL DEFAULT 'cash', "currency" 
+"public"."enum_receipt_vouchers_currency" NOT 
+NULL DEFAULT 'LYD', "amount" DECIMAL(15,2) NOT 
+NULL, "purpose" 
+"public"."enum_receipt_vouchers_purpose" NOT 
+NULL DEFAULT 'invoice_payment', 
+"purposeDescription" VARCHAR(500), 
+"debitAccountId" UUID NOT NULL REFERENCES 
+"accounts" ("id"), "creditAccountId" UUID NOT 
+NULL REFERENCES "accounts" ("id"), 
+"exchangeRate" DECIMAL(10,4) NOT NULL DEFAULT 
+1, "notes" TEXT, "attachments" JSON DEFAULT 
+'[]', "status" 
+"public"."enum_receipt_vouchers_status" NOT 
+NULL DEFAULT 'draft', "createdBy" UUID NOT 
+NULL REFERENCES "users" ("id"), "approvedBy" 
+UUID REFERENCES "users" ("id"), "approvedAt" 
+TIMESTAMP WITH TIME ZONE, "createdAt" 
+TIMESTAMP WITH TIME ZONE NOT NULL, "updatedAt" 
+TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY 
+("id"));`,
+  parameters: {}
+}
