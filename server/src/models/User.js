@@ -49,13 +49,10 @@ export default (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     },
-    lastLoginAt: {
+    lastLogin: {
       type: DataTypes.DATE,
-      allowNull: true
-    },
-    passwordChangedAt: {
-      type: DataTypes.DATE,
-      allowNull: true
+      allowNull: true,
+      field: 'lastLogin'
     }
   }, {
     tableName: 'users',
@@ -71,7 +68,6 @@ export default (sequelize) => {
       beforeUpdate: async (user) => {
         if (user.changed('password')) {
           user.password = await bcrypt.hash(user.password, 12);
-          user.passwordChangedAt = new Date();
         }
       }
     }
