@@ -176,10 +176,10 @@ export default (sequelize) => {
     }
   }, {
     tableName: 'sales_invoices',
-    underscored: true,
+    underscored: false,  // Changed to false because table uses camelCase for customerId
     timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
     indexes: [
       {
         unique: true,
