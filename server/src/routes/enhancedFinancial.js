@@ -2,7 +2,6 @@ import express from 'express';
 import { Account, AccountMapping, JournalEntry, GLEntry, Customer } from '../models/index.js';
 import { authenticateToken } from '../middleware/auth.js';
 import AccountingHealthMonitor from '../services/accountingHealthMonitor.js';
-import AccountingInitializer from '../utils/accountingInitializer.js';
 import { Op } from 'sequelize';
 
 const router = express.Router();
@@ -73,26 +72,15 @@ router.get('/comprehensive-health', authenticateToken, async (req, res) => {
 /**
  * POST /api/enhanced-financial/initialize-system
  * تهيئة النظام المحاسبي تلقائياً
+ * Note: This endpoint is deprecated. Use create-all-tables.js script instead.
  */
 router.post('/initialize-system', authenticateToken, async (req, res) => {
-  try {
-    console.log('🚀 System initialization requested by:', req.user.username);
-    
-    const initializationResult = await AccountingInitializer.initialize();
-    
-    res.json({
-      success: true,
-      message: 'نظام المحاسبة تم تهيئته بنجاح',
-      data: initializationResult
-    });
-  } catch (error) {
-    console.error('Error during system initialization:', error);
-    res.status(500).json({
-      success: false,
-      message: 'فشل في تهيئة النظام المحاسبي',
-      error: error.message
-    });
-  }
+  res.status(410).json({
+    success: false,
+    message: 'هذه الوظيفة لم تعد متاحة. استخدم سكريبت create-all-tables.js لإنشاء قاعدة البيانات',
+    deprecated: true,
+    alternative: 'Run: node create-all-tables.js'
+  });
 });
 
 // ==================== ADVANCED ACCOUNT MAPPING ENDPOINTS ====================

@@ -80,7 +80,6 @@ import monitoringManager from './utils/monitoringManager.js';
 import cacheManager from './utils/cacheManager.js';
 import webSocketService from './services/websocketService.js';
 import balanceUpdateService from './services/balanceUpdateService.js';
-import AccountingInitializer from './utils/accountingInitializer.js';
 import depreciationScheduler from './utils/depreciationScheduler.js';
 
 // Load environment variables from the correct path (only if not in test mode)
@@ -685,14 +684,9 @@ async function startServer() {
   try {
     console.log('🚀 Starting Golden Horse Shipping Server...');
 
-    // Initialize accounting system
-    try {
-      await AccountingInitializer.initialize();
-    } catch (error) {
-      console.error('❌ Failed to initialize accounting system:', error);
-      console.warn('⚠️  Accounting system may not function correctly');
-      // لا نوقف السيرفر، لكن نحذر
-    }
+    // Note: Accounting system initialization removed
+    // Use create-all-tables.js to setup database schema
+    // Use create-admin-user.js to create admin user
 
     // Initialize backup system
     try {
