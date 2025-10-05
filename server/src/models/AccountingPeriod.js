@@ -47,7 +47,7 @@ export default (sequelize) => {
       allowNull: true
     },
     closedBy: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
       references: {
         model: 'users',
@@ -59,7 +59,7 @@ export default (sequelize) => {
       allowNull: true
     },
     archivedBy: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
       references: {
         model: 'users',
