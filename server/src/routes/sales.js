@@ -3852,83 +3852,130 @@ router.get('/reports', authenticateToken, requireSalesAccess, async (req, res) =
       limit = 50
     } = req.query;
 
-    // Use the database function for reports
-    const reportsQuery = `
-      SELECT get_sales_reports($1, $2, $3) as report
-    `;
-
-    const result = await db.query(reportsQuery, {
-      bind: [
-        reportType,
-        dateFrom || null,
-        dateTo || null
-      ],
-      type: db.QueryTypes.SELECT
-    });
-
-    const reportData = result[0].report;
+    // Build date filter
+    let dateFilter = '';
+    if (dateFrom && dateTo) {
+      dateFilter = `AND si.date BETWEEN '${dateFrom}' AND '${dateTo}'`;
+    } else if (dateFrom) {
+      dateFilter = `AND si.date >= '${dateFrom}'`;
+    } else if (dateTo) {
+      dateFilter = `AND si.date <= '${dateTo}'`;
+    }
 
     if (reportType === 'summary') {
+      const summaryQuery = `
+        SELECT 
+          COUNT(DISTINCT si.id) as total_invoices,
+          COALESCE(SUM(si.total), 0) as total_sales,
+          COALESCE(AVG(si.total), 0) as average_sale,
+          COUNT(DISTINCT si."customerId") as unique_customers
+        FROM sales_invoices si
+        WHERE si."isActive" = true
+        ${dateFilter}
+      `;
+
+      const [result] = await db.query(summaryQuery, { type: db.QueryTypes.SELECT });
+
       return res.json({
         reportType,
-        summary: reportData
+        summary: {
+          totalInvoices: parseInt(result.total_invoices) || 0,
+          totalSales: parseFloat(result.total_sales) || 0,
+          averageSale: parseFloat(result.average_sale) || 0,
+          uniqueCustomers: parseInt(result.unique_customers) || 0
+        }
       });
     }
 
     if (reportType === 'customer') {
+      const customerQuery = `
+        SELECT 
+          c.id,
+          c.code,
+          c.name,
+          COUNT(si.id) as invoice_count,
+          COALESCE(SUM(si.total), 0) as total_sales
+        FROM customers c
+        LEFT JOIN sales_invoices si ON c.id = si."customerId" AND si."isActive" = true
+        WHERE 1=1 ${dateFilter.replace('si.date', 'si.date')}
+        GROUP BY c.id, c.code, c.name
+        HAVING COUNT(si.id) > 0
+        ORDER BY total_sales DESC
+        LIMIT 100
+      `;
+
+      const customers = await db.query(customerQuery, { type: db.QueryTypes.SELECT });
+
       return res.json({
         reportType,
-        data: reportData.customers || []
+        data: customers.map(c => ({
+          customerId: c.id,
+          customerCode: c.code,
+          customerName: c.name,
+          invoiceCount: parseInt(c.invoice_count),
+          totalSales: parseFloat(c.total_sales)
+        }))
       });
     }
 
     if (reportType === 'detailed') {
-      // For detailed reports, use the sales invoices function
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+      let customerFilter = customerId ? `AND si."customerId" = '${customerId}'` : '';
+
       const detailedQuery = `
-        SELECT get_sales_invoices_final($1, $2, NULL, NULL, $3) as result
+        SELECT 
+          si.id,
+          si."invoiceNumber",
+          si.date,
+          si.total,
+          si.status,
+          c.code as customer_code,
+          c.name as customer_name
+        FROM sales_invoices si
+        LEFT JOIN customers c ON si."customerId" = c.id
+        WHERE si."isActive" = true
+        ${dateFilter}
+        ${customerFilter}
+        ORDER BY si.date DESC
+        LIMIT ${parseInt(limit)} OFFSET ${offset}
       `;
 
-      const detailedResult = await db.query(detailedQuery, {
-        bind: [
-          parseInt(page),
-          parseInt(limit),
-          customerId || null
-        ],
-        type: db.QueryTypes.SELECT
-      });
+      const countQuery = `
+        SELECT COUNT(*) as count
+        FROM sales_invoices si
+        WHERE si."isActive" = true
+        ${dateFilter}
+        ${customerFilter}
+      `;
 
-      const detailedData = detailedResult[0].result;
+      const [invoices, countResult] = await Promise.all([
+        db.query(detailedQuery, { type: db.QueryTypes.SELECT }),
+        db.query(countQuery, { type: db.QueryTypes.SELECT })
+      ]);
 
-      // Apply date filters if needed
-      let filteredData = detailedData.data || [];
-
-      if (dateFrom || dateTo) {
-        filteredData = filteredData.filter(invoice => {
-          const invoiceDate = new Date(invoice.invoiceDate);
-          if (dateFrom && dateTo) {
-            return invoiceDate >= new Date(dateFrom) && invoiceDate <= new Date(dateTo);
-          } else if (dateFrom) {
-            return invoiceDate >= new Date(dateFrom);
-          } else if (dateTo) {
-            return invoiceDate <= new Date(dateTo);
-          }
-          return true;
-        });
-      }
+      const total = parseInt(countResult[0].count);
 
       return res.json({
         reportType,
-        data: filteredData,
+        data: invoices.map(inv => ({
+          id: inv.id,
+          invoiceNumber: inv.invoiceNumber,
+          date: inv.date,
+          total: parseFloat(inv.total),
+          status: inv.status,
+          customerCode: inv.customer_code,
+          customerName: inv.customer_name
+        })),
         pagination: {
-          ...detailedData.pagination,
-          total: filteredData.length
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(total / parseInt(limit))
         }
       });
     }
 
     if (reportType === 'product') {
-      // Product reports would need additional implementation
-      // For now, return a placeholder
       return res.json({
         reportType,
         data: [],

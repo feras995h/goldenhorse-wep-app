@@ -366,15 +366,15 @@ export default (sequelize) => {
   // Associations
   SalesInvoice.associate = (models) => {
     SalesInvoice.belongsTo(models.Customer, { 
-      foreignKey: { name: 'customerId', field: 'customer_id' }, 
+      foreignKey: 'customerId', 
       as: 'customer' 
     });
     SalesInvoice.belongsTo(models.User, { 
-      foreignKey: { name: 'createdBy', field: 'created_by' }, 
+      foreignKey: 'createdBy', 
       as: 'creator' 
     });
     SalesInvoice.hasMany(models.SalesInvoiceItem, { 
-      foreignKey: { name: 'invoiceId', field: 'invoice_id' }, 
+      foreignKey: 'invoiceId', 
       as: 'items' 
     });
   };

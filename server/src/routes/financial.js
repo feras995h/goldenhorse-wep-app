@@ -10788,7 +10788,7 @@ router.get('/system-health', authenticateToken, requireFinancialAccess, async (r
         COALESCE(SUM(si.total), 0) - COALESCE(SUM(p.amount), 0) as calculated_balance,
         ABS(c.balance - (COALESCE(SUM(si.total), 0) - COALESCE(SUM(p.amount), 0))) as difference
       FROM customers c
-      LEFT JOIN sales_invoices si ON c.id = si."customer_id" AND si."isActive" = true
+      LEFT JOIN sales_invoices si ON c.id = si."customerId" AND si."isActive" = true
       LEFT JOIN receipts p ON c.id = p."customerId" AND p.status = 'approved'
       GROUP BY c.id, c.code, c.name, c.balance
       HAVING ABS(c.balance - (COALESCE(SUM(si.total), 0) - COALESCE(SUM(p.amount), 0))) > 0.01
@@ -10898,7 +10898,7 @@ router.post('/recalculate-balances', authenticateToken, requireRole('admin'), as
         c.balance as old_balance,
         COALESCE(SUM(si.total), 0) - COALESCE(SUM(r.amount), 0) as new_balance
       FROM customers c
-      LEFT JOIN sales_invoices si ON c.id = si."customer_id" AND si."isActive" = true
+      LEFT JOIN sales_invoices si ON c.id = si."customerId" AND si."isActive" = true
       LEFT JOIN receipts r ON c.id = r."customerId" AND r.status = 'approved'
       GROUP BY c.id, c.code, c.name, c.balance;
     `, { type: sequelize.QueryTypes.SELECT, transaction });
