@@ -4,8 +4,8 @@ import bcrypt from 'bcryptjs';
 export default (sequelize) => {
   const User = sequelize.define('User', {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
     username: {
@@ -30,7 +30,6 @@ export default (sequelize) => {
       unique: true,
       validate: {
         isEmail: function(value) {
-          // Only validate if email is provided and not empty
           if (value && value.trim() !== '') {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(value)) {
@@ -41,18 +40,24 @@ export default (sequelize) => {
       }
     },
     role: {
-      type: DataTypes.ENUM('admin', 'financial', 'sales', 'customer_service', 'operations'),
+      // Align with DB enum: ('admin','financial_manager','sales_manager','user')
+      type: DataTypes.ENUM('admin', 'financial_manager', 'sales_manager', 'user'),
       allowNull: false,
-      defaultValue: 'operations'
+      defaultValue: 'user'
     },
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     },
-    lastLogin: {
+    lastLoginAt: {
       type: DataTypes.DATE,
       allowNull: true,
-      field: 'lastLogin'
+      field: 'lastLoginAt'
+    },
+    passwordChangedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'passwordChangedAt'
     }
   }, {
     tableName: 'users',

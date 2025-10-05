@@ -58,7 +58,7 @@ export const up = async (queryInterface, Sequelize) => {
         allowNull: true
       },
       createdBy: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: false,
         references: {
           model: 'users',
@@ -74,7 +74,7 @@ export const up = async (queryInterface, Sequelize) => {
         allowNull: true
       },
       reversedBy: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         allowNull: true,
         references: {
           model: 'users',

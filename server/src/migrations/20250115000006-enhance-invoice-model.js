@@ -1,9 +1,21 @@
 export const up = async (queryInterface, Sequelize) => {
-    // Update status enum to include new values
-    await queryInterface.changeColumn('invoices', 'status', {
-      type: Sequelize.ENUM('draft', 'sent', 'paid', 'partially_paid', 'unpaid', 'overdue', 'cancelled'),
-      defaultValue: 'draft'
-    });
+    // Ensure enum type exists and convert status safely from TEXT to ENUM with mapping
+    await queryInterface.sequelize.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_invoices_status') THEN
+          CREATE TYPE "enum_invoices_status" AS ENUM ('draft','sent','paid','partially_paid','unpaid','overdue','cancelled');
+        END IF;
+      END$$;
+    `);
+
+    // Normalize existing values (map legacy 'pending' -> 'unpaid') and drop default temporarily
+    await queryInterface.sequelize.query(`
+      ALTER TABLE invoices ALTER COLUMN "status" DROP DEFAULT;
+      UPDATE invoices SET "status" = 'unpaid' WHERE "status" NOT IN ('draft','sent','paid','partially_paid','unpaid','overdue','cancelled');
+      ALTER TABLE invoices ALTER COLUMN "status" TYPE "enum_invoices_status" USING ("status"::text::"enum_invoices_status");
+      ALTER TABLE invoices ALTER COLUMN "status" SET DEFAULT 'draft';
+    `);
 
     // Add new fields for enhanced invoice management
     await queryInterface.addColumn('invoices', 'outstandingAmount', {
@@ -31,7 +43,7 @@ export const up = async (queryInterface, Sequelize) => {
     });
 
     await queryInterface.addColumn('invoices', 'createdBy', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       allowNull: true,
       references: {
         model: 'users',
@@ -46,9 +58,9 @@ export const up = async (queryInterface, Sequelize) => {
 
     // Update existing invoices to set outstandingAmount
     await queryInterface.sequelize.query(`
-      UPDATE invoices 
-      SET outstandingAmount = total - paidAmount 
-      WHERE outstandingAmount IS NULL OR outstandingAmount = 0
+      UPDATE "invoices"
+      SET "outstandingAmount" = COALESCE("totalAmount", 0) - COALESCE("paidAmount", 0)
+      WHERE "outstandingAmount" IS NULL OR "outstandingAmount" = 0
     `);
 };
 

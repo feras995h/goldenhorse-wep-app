@@ -75,7 +75,7 @@ export const up = async (queryInterface, Sequelize) => {
           allowNull: true
         },
         createdBy: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           references: {
             model: 'users',
@@ -192,7 +192,7 @@ export const up = async (queryInterface, Sequelize) => {
           defaultValue: 'draft'
         },
         createdBy: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           references: {
             model: 'users',
@@ -200,7 +200,7 @@ export const up = async (queryInterface, Sequelize) => {
           }
         },
         approvedBy: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: true,
           references: {
             model: 'users',
@@ -313,7 +313,7 @@ export const up = async (queryInterface, Sequelize) => {
           defaultValue: 'draft'
         },
         createdBy: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           references: {
             model: 'users',
@@ -321,7 +321,7 @@ export const up = async (queryInterface, Sequelize) => {
           }
         },
         approvedBy: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: true,
           references: {
             model: 'users',
@@ -469,7 +469,7 @@ export const up = async (queryInterface, Sequelize) => {
           defaultValue: []
         },
         createdBy: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           references: {
             model: 'users',
@@ -584,7 +584,7 @@ export const up = async (queryInterface, Sequelize) => {
           allowNull: true
         },
         createdBy: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.UUID,
           allowNull: false,
           references: {
             model: 'users',

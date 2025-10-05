@@ -47,7 +47,7 @@ export const up = async (queryInterface, Sequelize) => {
     });
 
     await queryInterface.addColumn('payments', 'createdBy', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       allowNull: true,
       references: {
         model: 'users',
@@ -61,7 +61,7 @@ export const up = async (queryInterface, Sequelize) => {
     });
 
     await queryInterface.addColumn('payments', 'completedBy', {
-      type: Sequelize.INTEGER,
+      type: Sequelize.UUID,
       allowNull: true,
       references: {
         model: 'users',
