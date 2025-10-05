@@ -149,9 +149,14 @@ export const requireTreasuryAccess = (req, res, next) => {
     return res.status(401).json({ message: 'Authentication required' });
   }
 
-  // Admin, treasury, and manager roles can access treasury functions
-  if (!['admin', 'treasury', 'manager', 'accountant'].includes(req.user.role)) {
-    return res.status(403).json({ message: 'Treasury access required' });
+  // Admin, treasury, manager, accountant, financial, and sales roles can access treasury functions
+  const allowedRoles = ['admin', 'treasury', 'manager', 'accountant', 'financial', 'sales'];
+  if (!allowedRoles.includes(req.user.role)) {
+    return res.status(403).json({ 
+      message: 'Treasury access required',
+      userRole: req.user.role,
+      allowedRoles 
+    });
   }
 
   next();

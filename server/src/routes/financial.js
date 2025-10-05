@@ -8748,7 +8748,7 @@ router.get('/vouchers/receipts', authenticateToken, requireTreasuryAccess, async
     // Get total count
     const countQuery = `
       SELECT COUNT(*) as count
-      FROM receipts r
+      FROM receipt_vouchers r
       WHERE ${whereClause}
     `;
 
@@ -8763,31 +8763,30 @@ router.get('/vouchers/receipts', authenticateToken, requireTreasuryAccess, async
     const dataQuery = `
       SELECT
         r.id,
-        r."receiptNo",
-        r."receiptDate",
+        r."voucherNumber" as "receiptNo",
+        r.date as "receiptDate",
         r.amount,
         r.status,
         r."paymentMethod",
-        r.remarks,
-        r."partyType",
-        r."partyId",
+        r.description as remarks,
+        r."customerId" as "partyId",
         r."createdAt",
         r."updatedAt",
         a.id as "account_id",
         a.code as "account_code",
         a.name as "account_name",
-        s.id as "supplier_id",
-        s.name as "supplier_name",
-        s.code as "supplier_code",
+        c.id as "customer_id",
+        c.name as "customer_name",
+        c.code as "customer_code",
         u.id as "creator_id",
         u.name as "creator_name",
         u.username as "creator_username"
-      FROM receipts r
+      FROM receipt_vouchers r
       LEFT JOIN accounts a ON r."accountId" = a.id
-      LEFT JOIN suppliers s ON r."supplierId" = s.id
+      LEFT JOIN customers c ON r."customerId" = c.id
       LEFT JOIN users u ON r."createdBy" = u.id
       WHERE ${whereClause}
-      ORDER BY r."receiptDate" DESC
+      ORDER BY r.date DESC
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
@@ -9111,7 +9110,7 @@ router.get('/vouchers/payments', authenticateToken, requireTreasuryAccess, async
     // Get total count
     const countQuery = `
       SELECT COUNT(*) as count
-      FROM payments p
+      FROM payment_vouchers p
       WHERE ${whereClause}
     `;
 
@@ -9126,31 +9125,27 @@ router.get('/vouchers/payments', authenticateToken, requireTreasuryAccess, async
     const dataQuery = `
       SELECT
         p.id,
-        p."paymentNumber",
+        p."voucherNumber" as "paymentNumber",
         p.date,
         p.amount,
         p.status,
         p."paymentMethod",
-        p.notes,
-        p."partyType",
-        p."partyId",
+        p.description as notes,
+        'supplier' as "partyType",
+        p."supplierId" as "partyId",
         p."createdAt",
         p."updatedAt",
         a.id as "account_id",
         a.code as "account_code",
         a.name as "account_name",
-        c.id as "customer_id",
-        c.name as "customer_name",
-        c.code as "customer_code",
         s.id as "supplier_id",
         s.name as "supplier_name",
         s.code as "supplier_code",
         u.id as "creator_id",
         u.name as "creator_name",
         u.username as "creator_username"
-      FROM payments p
+      FROM payment_vouchers p
       LEFT JOIN accounts a ON p."accountId" = a.id
-      LEFT JOIN customers c ON p."customerId" = c.id
       LEFT JOIN suppliers s ON p."supplierId" = s.id
       LEFT JOIN users u ON p."createdBy" = u.id
       WHERE ${whereClause}
