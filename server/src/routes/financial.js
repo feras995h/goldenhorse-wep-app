@@ -8709,12 +8709,12 @@ router.get('/vouchers/receipts', authenticateToken, requireTreasuryAccess, async
     const offset = (page - 1) * limit;
 
     // Build WHERE conditions for SQL query
-    let whereConditions = ['r."isActive" = true'];
+    let whereConditions = ['1=1'];  // receipt_vouchers doesn't have isActive column
     let queryParams = [];
     let paramIndex = 1;
 
     if (search) {
-      whereConditions.push(`(r."receiptNo" ILIKE $${paramIndex} OR r.remarks ILIKE $${paramIndex + 1})`);
+      whereConditions.push(`(r."voucherNumber" ILIKE $${paramIndex} OR r.description ILIKE $${paramIndex + 1})`);
       queryParams.push(`%${search}%`, `%${search}%`);
       paramIndex += 2;
     }
@@ -8725,20 +8725,14 @@ router.get('/vouchers/receipts', authenticateToken, requireTreasuryAccess, async
       paramIndex++;
     }
 
-    if (partyType) {
-      whereConditions.push(`r."partyType" = $${paramIndex}`);
-      queryParams.push(partyType);
-      paramIndex++;
-    }
-
     if (partyId) {
-      whereConditions.push(`r."partyId" = $${paramIndex}`);
+      whereConditions.push(`r."customerId" = $${paramIndex}`);
       queryParams.push(partyId);
       paramIndex++;
     }
 
     if (startDate && endDate) {
-      whereConditions.push(`r."receiptDate" BETWEEN $${paramIndex} AND $${paramIndex + 1}`);
+      whereConditions.push(`r.date BETWEEN $${paramIndex} AND $${paramIndex + 1}`);
       queryParams.push(startDate, endDate);
       paramIndex += 2;
     }
@@ -9071,12 +9065,12 @@ router.get('/vouchers/payments', authenticateToken, requireTreasuryAccess, async
     const offset = (page - 1) * limit;
 
     // Build WHERE conditions for SQL query
-    let whereConditions = ['p."isActive" = true'];
+    let whereConditions = ['1=1'];  // payment_vouchers doesn't have isActive column
     let queryParams = [];
     let paramIndex = 1;
 
     if (search) {
-      whereConditions.push(`(p."paymentNumber" ILIKE $${paramIndex} OR p.notes ILIKE $${paramIndex + 1})`);
+      whereConditions.push(`(p."voucherNumber" ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex + 1})`);
       queryParams.push(`%${search}%`, `%${search}%`);
       paramIndex += 2;
     }
@@ -9087,14 +9081,8 @@ router.get('/vouchers/payments', authenticateToken, requireTreasuryAccess, async
       paramIndex++;
     }
 
-    if (partyType) {
-      whereConditions.push(`p."partyType" = $${paramIndex}`);
-      queryParams.push(partyType);
-      paramIndex++;
-    }
-
     if (partyId) {
-      whereConditions.push(`p."partyId" = $${paramIndex}`);
+      whereConditions.push(`p."supplierId" = $${paramIndex}`);
       queryParams.push(partyId);
       paramIndex++;
     }
