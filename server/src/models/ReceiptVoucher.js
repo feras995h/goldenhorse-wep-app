@@ -34,6 +34,15 @@ export default (sequelize) => {
         len: [1, 200]
       }
     },
+    accountId: {
+      type: DataTypes.UUID,
+      allowNull: true, // Temporarily nullable to resolve immediate query issues. Should be properly linked in future migrations.
+      references: {
+        model: 'accounts',
+        key: 'id'
+      },
+      comment: 'Account associated with this receipt voucher'
+    },
     shipmentId: {
       type: DataTypes.UUID,
       allowNull: true,

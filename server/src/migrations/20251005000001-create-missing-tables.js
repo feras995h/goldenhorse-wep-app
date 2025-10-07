@@ -411,7 +411,7 @@ export default {
           defaultValue: 'pending'
         },
         approvedBy: {
-          type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
           allowNull: true,
           references: {
             model: 'users',
@@ -555,7 +555,7 @@ export default {
           allowNull: true
         },
         approvedBy: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: {
             model: 'users',

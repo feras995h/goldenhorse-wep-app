@@ -287,7 +287,7 @@ export default {
       
       if (!glEntriesColumns.cancelledBy) {
         await queryInterface.addColumn('gl_entries', 'cancelledBy', {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: { model: 'users', key: 'id' }
         }, { transaction });
@@ -295,7 +295,7 @@ export default {
       
       if (!glEntriesColumns.createdBy) {
         await queryInterface.addColumn('gl_entries', 'createdBy', {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: { model: 'users', key: 'id' }
         }, { transaction });
@@ -401,7 +401,7 @@ export default {
       
       if (!salesInvoicesColumns.postedBy) {
         await queryInterface.addColumn('sales_invoices', 'postedBy', {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: { model: 'users', key: 'id' }
         }, { transaction });
@@ -437,7 +437,7 @@ export default {
       
       if (!salesInvoicesColumns.createdBy) {
         await queryInterface.addColumn('sales_invoices', 'createdBy', {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: { model: 'users', key: 'id' }
         }, { transaction });
@@ -510,7 +510,7 @@ export default {
       
       if (!receiptsColumns.createdBy) {
         await queryInterface.addColumn('receipts', 'createdBy', {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: { model: 'users', key: 'id' }
         }, { transaction });
@@ -525,7 +525,7 @@ export default {
       
       if (!receiptsColumns.completedBy) {
         await queryInterface.addColumn('receipts', 'completedBy', {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: { model: 'users', key: 'id' }
         }, { transaction });
@@ -575,7 +575,7 @@ export default {
       
       if (!suppliersColumns.createdBy) {
         await queryInterface.addColumn('suppliers', 'createdBy', {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: { model: 'users', key: 'id' }
         }, { transaction });
