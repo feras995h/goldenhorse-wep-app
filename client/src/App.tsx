@@ -57,7 +57,6 @@ const KPIDashboard = loadable(() => import('./pages/KPIDashboard'));
 const CostAnalysis = loadable(() => import('./pages/CostAnalysis'));
 const BudgetPlanning = loadable(() => import('./pages/BudgetPlanning'));
 const CashFlowManagement = loadable(() => import('./pages/CashFlowManagement'));
-const AccountingPeriods = loadable(() => import('./pages/AccountingPeriods'));
 
 // AR Pages
 const ARMatching = loadable(() => import('./pages/ARMatching'));
@@ -115,11 +114,7 @@ function App() {
                 <Route index element={<FinancialDashboard />} />
                 <Route path="accounts" element={<ChartOfAccounts />} />
                 <Route path="chart-of-accounts" element={<ChartOfAccounts />} />
-                <Route path="accounts-management" element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
-                    <AccountsManagement />
-                  </ProtectedRoute>
-                } />
+                <Route path="accounts-management" element={<AccountsManagement />} />
                 <Route path="account-statement" element={<AccountStatement />} />
                 <Route path="instant-reports" element={<InstantReports />} />
                 <Route path="journal" element={<JournalEntries />} />
@@ -140,7 +135,6 @@ function App() {
                 <Route path="cost-analysis" element={<CostAnalysis />} />
                 <Route path="budget-planning" element={<BudgetPlanning />} />
                 <Route path="cash-flow-management" element={<CashFlowManagement />} />
-                <Route path="accounting-periods" element={<AccountingPeriods />} />
                 <Route path="receipt-vouchers" element={<ReceiptVouchers />} />
                 <Route path="payment-vouchers" element={<PaymentVouchers />} />
                 <Route path="settings" element={<SystemSettings />} />

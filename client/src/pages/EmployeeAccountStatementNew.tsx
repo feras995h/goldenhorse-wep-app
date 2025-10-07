@@ -15,7 +15,7 @@ import {
 import { Modal } from '../components/UI/Modal';
 import { SearchFilter } from '../components/UI/SearchFilter';
 import { FormField } from '../components/UI/FormField';
-import { financialAPI } from '../services/api';
+import api from '../services/api';
 
 interface Employee {
   id: string;
@@ -82,7 +82,7 @@ const EmployeeAccountStatementNew: React.FC = () => {
   const loadEmployees = async () => {
     try {
       setLoading(true);
-      const response = await financialAPI.get('/financial/employees', {
+      const response = await api.get('/financial/employees', {
         params: {
           search: searchTerm,
           department: departmentFilter
@@ -99,7 +99,7 @@ const EmployeeAccountStatementNew: React.FC = () => {
   // Load employee with accounts
   const loadEmployeeWithAccounts = async (employeeId: string) => {
     try {
-      const response = await financialAPI.get(`/financial/employees/${employeeId}`);
+      const response = await api.get(`/financial/employees/${employeeId}`);
       return response.data.data;
     } catch (error) {
       console.error('Error loading employee with accounts:', error);
@@ -110,7 +110,7 @@ const EmployeeAccountStatementNew: React.FC = () => {
   // Load account statement
   const loadAccountStatement = async (employeeId: string, accountType: string, startDate?: string, endDate?: string) => {
     try {
-      const response = await financialAPI.get(`/financial/employees/${employeeId}/statement`, {
+      const response = await api.get(`/financial/employees/${employeeId}/statement`, {
         params: {
           accountType,
           startDate,

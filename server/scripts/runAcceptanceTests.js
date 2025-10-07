@@ -7,7 +7,8 @@ import fs from 'fs';
 // تحميل متغيرات البيئة
 dotenv.config();
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:XIclgABy2kg3ZZ2Nyh7GOYexxcm206RTNsSAJavhbF4ukgMfDiNqXSOhy8SIALUP@72.60.92.146:5432/golden_horse_dev';
+// استخدم متغيرات البيئة بدلاً من hardcoded credentials
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://username:password@host:5432/database';
 
 const sequelize = new Sequelize(DATABASE_URL, {
   dialect: 'postgres',

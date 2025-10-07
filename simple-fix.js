@@ -5,7 +5,8 @@
 import pg from 'pg';
 const { Client } = pg;
 
-const DATABASE_URL = 'postgres://postgres:XIclgABy2kg3ZZ2Nyh7GOYexxcm206RTNsSAJavhbF4ukgMfDiNqXSOhy8SIALUP@72.60.92.146:5432/postgres';
+// استخدم متغيرات البيئة بدلاً من hardcoded credentials
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://username:password@host:5432/database';
 
 async function simpleFix() {
   const client = new Client({ connectionString: DATABASE_URL, ssl: false });

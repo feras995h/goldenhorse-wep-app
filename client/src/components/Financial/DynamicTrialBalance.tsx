@@ -48,9 +48,6 @@ const DynamicTrialBalance: React.FC<DynamicTrialBalanceProps> = ({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [filterType, setFilterType] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [minBalance, setMinBalance] = useState<number | ''>('');
-  const [maxBalance, setMaxBalance] = useState<number | ''>('');
-  const [showZeroBalances, setShowZeroBalances] = useState(true);
 
   // WebSocket connection for real-time updates
   const { isConnected } = useFinancialUpdates({
@@ -147,13 +144,7 @@ const DynamicTrialBalance: React.FC<DynamicTrialBalanceProps> = ({
         account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         account.code.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // Balance filters
-      const balance = Math.abs(account.balance);
-      const matchesMinBalance = minBalance === '' || balance >= minBalance;
-      const matchesMaxBalance = maxBalance === '' || balance <= maxBalance;
-      const matchesZeroBalance = showZeroBalances || balance > 0;
-      
-      return matchesType && matchesSearch && matchesMinBalance && matchesMaxBalance && matchesZeroBalance;
+      return matchesType && matchesSearch;
     });
   };
 
@@ -293,71 +284,7 @@ const DynamicTrialBalance: React.FC<DynamicTrialBalanceProps> = ({
               <option value="expense">المصروفات</option>
             </select>
           </div>
-          <div>
-            <input
-              type="date"
-              value={asOfDate || new Date().toISOString().split('T')[0]}
-              onChange={(e) => {
-                const newDate = e.target.value;
-                // Call parent component's date change handler if available
-                if (typeof window !== 'undefined' && (window as any).onDateChange) {
-                  (window as any).onDateChange(newDate);
-                }
-                loadTrialBalance();
-              }}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
-            />
-          </div>
-          <div>
-            <select
-              value={showHierarchy ? 'hierarchy' : 'flat'}
-              onChange={(e) => {
-                const newShowHierarchy = e.target.value === 'hierarchy';
-                // Update hierarchy display and reload
-                if (typeof window !== 'undefined' && (window as any).onHierarchyChange) {
-                  (window as any).onHierarchyChange(newShowHierarchy);
-                }
-                loadTrialBalance();
-              }}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
-            >
-              <option value="hierarchy">عرض هرمي</option>
-              <option value="flat">عرض مسطح</option>
-           </select>
-         </div>
-       </div>
-
-       {/* Advanced Filters */}
-       <div className="flex flex-col sm:flex-row gap-4 mt-4 p-4 bg-gray-50 rounded-lg">
-         <div className="text-sm font-medium text-gray-700 flex items-center">
-           فلاتر متقدمة:
-         </div>
-         <div className="flex flex-col sm:flex-row gap-2">
-           <input
-             type="number"
-             value={minBalance}
-             onChange={(e) => setMinBalance(e.target.value === '' ? '' : Number(e.target.value))}
-             placeholder="أقل رصيد"
-             className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
-           />
-           <input
-             type="number"
-             value={maxBalance}
-             onChange={(e) => setMaxBalance(e.target.value === '' ? '' : Number(e.target.value))}
-             placeholder="أعلى رصيد"
-             className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-golden-500 focus:border-golden-500"
-           />
-           <label className="flex items-center text-sm">
-             <input
-               type="checkbox"
-               checked={showZeroBalances}
-               onChange={(e) => setShowZeroBalances(e.target.checked)}
-               className="ml-2 rounded border-gray-300 text-golden-600 focus:ring-golden-500"
-             />
-             إظهار الأرصدة الصفرية
-           </label>
-         </div>
-       </div>
+        </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">

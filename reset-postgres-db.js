@@ -20,7 +20,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // الاتصال المضمّن (نفسه كما في setup-database.js)
-const DATABASE_URL = 'postgres://postgres:XIclgABy2kg3ZZ2Nyh7GOYexxcm206RTNsSAJavhbF4ukgMfDiNqXSOhy8SIALUP@72.60.92.146:5432/postgres';
+// استخدم متغيرات البيئة بدلاً من hardcoded credentials
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://username:password@host:5432/database';
 
 // لتهيئة نظيفة: نطبق ملفات الإنشاء أولاً (مطلوبة)، ثم نحاول ملفات الترقيات/التصحيحات (اختيارية)
 const REQUIRED_FILES = [

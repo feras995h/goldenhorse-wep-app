@@ -3,7 +3,7 @@ import { Users, Plus, Eye, Edit, DollarSign, CreditCard, Shield, Search, Filter 
 import { Modal } from '../components/UI/Modal';
 import { FormField } from '../components/UI/FormField';
 import { SearchFilter } from '../components/UI/SearchFilter';
-import { financialAPI } from '../services/api';
+import api from '../services/api';
 
 interface Employee {
   id: string;
@@ -82,7 +82,7 @@ const EmployeeManagement: React.FC = () => {
   const loadEmployees = async () => {
     try {
       setLoading(true);
-      const response = await financialAPI.get('/financial/employees', {
+      const response = await api.get('/financial/employees', {
         params: {
           search: searchTerm,
           department: departmentFilter,
@@ -100,7 +100,7 @@ const EmployeeManagement: React.FC = () => {
   // Load employee with accounts
   const loadEmployeeWithAccounts = async (employeeId: string) => {
     try {
-      const response = await financialAPI.get(`/financial/employees/${employeeId}`);
+      const response = await api.get(`/financial/employees/${employeeId}`);
       return response.data.data;
     } catch (error) {
       console.error('Error loading employee with accounts:', error);
@@ -168,28 +168,24 @@ const EmployeeManagement: React.FC = () => {
     
     try {
       if (modalType === 'create') {
-        await financialAPI.createEmployee({
+        await api.post('/financial/employees', {
           ...formData,
           salary: parseFloat(formData.salary)
         });
       } else if (modalType === 'edit' && selectedEmployee) {
-        await financialAPI.updateEmployee(selectedEmployee.employee.id, {
+        await api.put(`/financial/employees/${selectedEmployee.employee.id}`, {
           ...formData,
           salary: parseFloat(formData.salary)
         });
       } else if (modalType === 'salary' && selectedEmployee) {
-        await financialAPI.createPayrollEntry({
-          employeeId: selectedEmployee.employee.id,
+        await api.post(`/financial/employees/${selectedEmployee.employee.id}/salary-payment`, {
           ...salaryFormData,
-          basicSalary: parseFloat(salaryFormData.amount),
-          month: new Date().getMonth() + 1,
-          year: new Date().getFullYear()
+          amount: parseFloat(salaryFormData.amount)
         });
       } else if (modalType === 'advance' && selectedEmployee) {
-        await financialAPI.createAdvanceRequest({
-          employeeId: selectedEmployee.employee.id,
-          amount: parseFloat(advanceFormData.amount),
-          reason: advanceFormData.description
+        await api.post(`/financial/employees/${selectedEmployee.employee.id}/advance`, {
+          ...advanceFormData,
+          amount: parseFloat(advanceFormData.amount)
         });
       }
       

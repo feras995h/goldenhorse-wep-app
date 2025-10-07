@@ -7,7 +7,11 @@ export default (sequelize) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
-    year: {
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    fiscalYear: {
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: {
@@ -15,28 +19,24 @@ export default (sequelize) => {
         max: 2050
       }
     },
-    month: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      validate: {
-        min: 1,
-        max: 12
-      }
-    },
     status: {
       type: DataTypes.ENUM('open', 'closed', 'archived'),
       defaultValue: 'open',
       allowNull: false
     },
+    isCurrent: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     startDate: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: false,
       validate: {
         isDate: true
       }
     },
     endDate: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: false,
       validate: {
         isDate: true
@@ -47,7 +47,7 @@ export default (sequelize) => {
       allowNull: true
     },
     closedBy: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: 'users',
@@ -59,7 +59,7 @@ export default (sequelize) => {
       allowNull: true
     },
     archivedBy: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: 'users',
@@ -402,12 +402,24 @@ export default (sequelize) => {
    * @returns {Promise<AccountingPeriod|null>}
    */
   AccountingPeriod.getCurrentPeriod = async function() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    // البحث عن الفترة المحددة كفترة حالية
+    const current = await this.findOne({
+      where: { isCurrent: true }
+    });
     
+    if (current) {
+      return current;
+    }
+    
+    // إذا لم توجد، ابحث عن الفترة التي تحتوي على التاريخ الحالي
+    const now = new Date();
     return await this.findOne({
-      where: { year, month }
+      where: {
+        startDate: { [sequelize.Op.lte]: now },
+        endDate: { [sequelize.Op.gte]: now },
+        status: 'open'
+      },
+      order: [['startDate', 'DESC']]
     });
   };
   

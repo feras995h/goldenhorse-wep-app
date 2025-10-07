@@ -77,7 +77,7 @@ export default {
       
       if (!accountMappingsColumns.createdBy) {
         await queryInterface.addColumn('account_mappings', 'createdBy', {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: { model: 'users', key: 'id' }
         }, { transaction });
@@ -85,7 +85,7 @@ export default {
       
       if (!accountMappingsColumns.updatedBy) {
         await queryInterface.addColumn('account_mappings', 'updatedBy', {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull: true,
           references: { model: 'users', key: 'id' }
         }, { transaction });

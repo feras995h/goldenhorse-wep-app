@@ -3,7 +3,7 @@ import request from 'supertest';
 import { sequelize } from '../src/models/index.js';
 import { Account, AccountMapping, Customer, SalesInvoice, JournalEntry, GLEntry } from '../src/models/index.js';
 import AccountingHealthMonitor from '../src/services/accountingHealthMonitor.js';
-import AccountingInitializer from '../src/utils/accountingInitializer.js';
+import AccountingInitializer from '../src/utils/accountingMigration.js';
 
 describe('Enhanced Accounting Engine Tests', function() {
   this.timeout(30000); // 30 seconds timeout for complex operations

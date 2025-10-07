@@ -5,7 +5,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATABASE_URL = 'postgresql://postgres:XIclgABy2kg3ZZ2Nyh7GOYexxcm206RTNsSAJavhbF4ukgMfDiNqXSOhy8SIALUP@72.60.92.146:5432/postgres';
+// استخدم متغيرات البيئة بدلاً من hardcoded credentials
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://username:password@host:5432/database';
 
 console.log('╔════════════════════════════════════════════════════════════════╗');
 console.log('║           تطبيق الإصلاحات - Golden Horse Shipping              ║');

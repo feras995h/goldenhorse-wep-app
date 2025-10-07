@@ -13,7 +13,8 @@ console.log('🔍 Comprehensive Database Scan');
 console.log('==============================');
 
 // Production database connection
-const databaseUrl = 'postgres://postgres:XIclgABy2kg3ZZ2Nyh7GOYexxcm206RTNsSAJavhbF4ukgMfDiNqXSOhy8SIALUP@72.60.92.146:5432/golden-horse-shipping';
+// استخدم متغيرات البيئة بدلاً من hardcoded credentials
+const databaseUrl = process.env.DATABASE_URL || 'postgresql://username:password@host:5432/database';
 
 const sequelize = new Sequelize(databaseUrl, {
   dialect: 'postgres',

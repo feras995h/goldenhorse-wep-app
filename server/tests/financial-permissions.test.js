@@ -4,31 +4,31 @@ import bcrypt from 'bcryptjs';
 import { app } from '../src/server.js';
 import models, { sequelize } from '../src/models/index.js';
 
-const { User, Account, AuditLog } = models as any;
+const { User, Account, AuditLog } = models;
 
 // Helper: create user with role and return credentials
-async function createUser(username: string, role: string, password: string = 'P@ssw0rd!') {
+async function createUser(username, role, password = 'P@ssw0rd!') {
   const hash = await bcrypt.hash(password, 10);
   const user = await User.create({ username, password: hash, role, isActive: true, email: `${username}@example.com` });
   return { user, password };
 }
 
-async function login(username: string, password: string) {
+async function login(username, password) {
   const res = await request(app)
     .post('/api/auth/login')
     .send({ username, password });
   expect(res.status).to.equal(200);
   expect(res.body).to.have.property('accessToken');
-  return res.body.accessToken as string;
+  return res.body.accessToken;
 }
 
 describe('Financial API permissions and audit integration tests', function() {
   this.timeout(20000);
 
-  let adminToken: string;
-  let finToken: string;
-  let adminUser: any;
-  let finUser: any;
+  let adminToken;
+  let finToken;
+  let adminUser;
+  let finUser;
 
   before(async () => {
     process.env.SKIP_SERVER_STARTUP = 'true';
@@ -49,7 +49,7 @@ describe('Financial API permissions and audit integration tests', function() {
   });
 
   describe('Force delete account permissions', () => {
-    let testAccount: any;
+    let testAccount;
 
     beforeEach(async () => {
       testAccount = await Account.create({ code: '9.9.9', name: 'حساب اختبار للحذف', type: 'asset', isActive: true, balance: 0 });
@@ -87,7 +87,7 @@ describe('Financial API permissions and audit integration tests', function() {
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property('createdAccounts');
 
-      const createdCount = res.body.createdAccounts as number;
+      const createdCount = res.body.createdAccounts;
       if (createdCount > 0) {
         // Verify audit logs exist for at least one created account
         const anyAudit = await AuditLog.findOne({ where: { tableName: 'accounts', action: 'CREATE' } });
